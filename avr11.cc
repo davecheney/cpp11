@@ -1,14 +1,34 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <termios.h>
+#include <string.h>
 #include "avr11.h"
 #include "rk05.h"
 #include "cons.h"
 #include "unibus.h"
 #include "cpu.h"
 
-void setup(void)
-{
+void setup() {
+
+  struct termios old_terminal_settings, new_terminal_settings;
+
+  // Get the current terminal settings
+  if (tcgetattr(0, &old_terminal_settings) < 0)
+    perror("tcgetattr()");
+
+  memcpy(&new_terminal_settings, &old_terminal_settings,
+         sizeof(struct termios));
+
+  // disable canonical mode processing in the line discipline driver
+  new_terminal_settings.c_lflag &= ~ICANON;
+
+  // apply our new settings
+  if (tcsetattr(0, TCSANOW, &new_terminal_settings) < 0)
+    perror("tcsetattr ICANON");
+
+  rk11::rkdata = fopen("rk0", "r+");
+
   printf("Reset\n");
   cpu::reset();
   printf("Ready\n");
@@ -25,15 +45,9 @@ void loop() {
   uint16_t vec = setjmp(trapbuf);
   if (vec == 0) {
     loop0();
-  }  else {
+  } else {
     cpu::trapat(vec);
   }
-}
-
-int main() {
-	setup();
-	while(1) 
-		loop();
 }
 
 void loop0() {
@@ -60,7 +74,13 @@ void loop0() {
   }
 }
 
+int main() {
+  setup();
+  while (1)
+    loop();
+}
+
 void panic() {
   printstate();
-  exit(1);
+  abort();
 }

@@ -3,7 +3,6 @@
 
 #include "avr11.h"
 #include "cpu.h"
-#include "mmu.h"
 #include "unibus.h"
 
 char* rs[] = {
@@ -309,7 +308,7 @@ void disasm(uint32_t a) {
   uint16_t ins;
   ins = unibus::read16(a);
 
-  D l;
+  D l = disamtable[(sizeof(disamtable)/sizeof(disamtable[0]))-1];
   uint8_t i;
   for (i = 0; disamtable[i].inst; i++) {
     l = disamtable[i];

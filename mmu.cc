@@ -3,7 +3,6 @@
 
 #include "avr11.h"
 #include "cpu.h"
-#include "mmu.h"
 
 namespace mmu {
 
@@ -38,8 +37,8 @@ void dumppages() {
   }
 }
 
-uint32_t decode( uint16_t a,  uint8_t w,  uint8_t user) {
-  if (((uint8_t)SR0 & 1) == 0) {
+uint32_t decode(uint16_t a,  uint8_t w,  uint8_t user) {
+  if ((SR0 & 1) == 0) {
     return a > 0167777 ? ((uint32_t)a) + 0600000 : a;
   }
   uint8_t i = user ? ((a >> 13) + 8) : (a >> 13);
@@ -81,10 +80,10 @@ uint32_t decode( uint16_t a,  uint8_t w,  uint8_t user) {
     pages[i].pdr |= 1 << 6;
   }
   // danger, this can be cast to a uint16_t if you aren't careful
-  //uint32_t aa = block + p.addr();
-  //aa = aa << 6;
-  //aa += disp;
-  uint32_t aa = (((uint32_t)block) + ((uint32_t)(pages[i].addr())) << 6) + disp;
+    uint32_t aa = pages[i].par & 07777;
+    aa += block;
+    aa <<= 6;
+    aa += disp;
   if (DEBUG_MMU) {
     printf("decode: slow %06o -> %06o\n",a, aa);
   }

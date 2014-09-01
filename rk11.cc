@@ -8,10 +8,11 @@
 
 namespace rk11 {
 
+FILE *rkdata;
+
 uint32_t RKBA, RKDS, RKER, RKCS, RKWC;
 uint32_t drive, sector, surface, cylinder;
 
-FILE rkdata;
 
 uint16_t read16(uint32_t a) {
   switch (a) {
@@ -30,6 +31,7 @@ uint16_t read16(uint32_t a) {
     default:
       printf("rk11::read16 invalid read\n");
       panic();
+      return 0; // not reached
   }
 }
 
@@ -61,6 +63,7 @@ void step() {
     default:
       printf("unimplemented RK05 operation %#o", ((RKCS & 017) >> 1));
       panic();
+      return; // unreached
   }
 
   if (DEBUG_RK05) {
@@ -78,7 +81,7 @@ void step() {
   }
 
   uint32_t pos = (cylinder * 24 + surface * 12 + sector) * 512;
-  if (!fseek(&rkdata, pos, SEEK_SET)) {
+  if (fseek(rkdata, pos, SEEK_SET)) {
     printf("rkstep: failed to seek\n");
     panic();
   }
@@ -88,10 +91,10 @@ void step() {
   for (i = 0; i < 256 && RKWC != 0; i++) {
     if (w) {
       val = unibus::read16(RKBA);
-      fputc(val & 0xFF, &rkdata);
-      fputc((val >> 8) & 0xFF, &rkdata);
+      fputc(val & 0xFF, rkdata);
+      fputc((val >> 8) & 0xFF, rkdata);
     } else {
-      unibus::write16(RKBA, fgetc(&rkdata) | (fgetc(&rkdata) << 8));
+      unibus::write16(RKBA, fgetc(rkdata) | (fgetc(rkdata) << 8));
     }
     RKBA += 2;
     RKWC = (RKWC + 1) & 0xFFFF;
@@ -119,7 +122,7 @@ void step() {
 }
 
 void write16(uint32_t a, uint16_t v) {
-  printf("rkwrite: %06o\n",a);
+  // printf("rkwrite: %06o\n",a);
   switch (a) {
     case 0777400:
       break;

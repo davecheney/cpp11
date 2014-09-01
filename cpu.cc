@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "avr11.h"
-#include "mmu.h"
 #include "cons.h"
 #include "unibus.h"
 #include "cpu.h"
@@ -32,6 +31,22 @@ void reset(void) {
   R[7] = 002002;
   cons::clearterminal();
   rk11::reset();
+}
+
+static bool N() {
+  return (uint8_t)PS & FLAGN;
+}
+
+static bool Z() {
+  return (uint8_t)PS & FLAGZ;
+}
+
+static bool V() {
+  return (uint8_t)PS & FLAGV;
+}
+
+static bool C() {
+  return (uint8_t)PS & FLAGC;
 }
 
 static uint16_t read8(const uint16_t a) {
@@ -294,7 +309,6 @@ static void BIS(uint16_t instr) {
 static void ADD(uint16_t instr) {
   uint8_t d = instr & 077;
   uint8_t s = (instr & 07700) >> 6;
-  uint8_t l = 2 - (instr >> 15);
   uint16_t val1 = memread16(aget(s, 2));
   uint16_t da = aget(d, 2);
   uint16_t val2 = memread16(da);
@@ -316,7 +330,6 @@ static void ADD(uint16_t instr) {
 static void SUB(uint16_t instr) {
   uint8_t d = instr & 077;
   uint8_t s = (instr & 07700) >> 6;
-  uint8_t l = 2 - (instr >> 15);
   uint16_t val1 = memread16(aget(s, 2));
   uint16_t da = aget(d, 2);
   uint16_t val2 = memread16(da);
@@ -514,7 +527,6 @@ static void CLR(uint16_t instr) {
 
 static void COM(uint16_t instr) {
   uint8_t d = instr & 077;
-  uint8_t s = (instr & 07700) >> 6;
   uint8_t l = 2 - (instr >> 15);
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
@@ -821,6 +833,7 @@ static void MFPI(uint16_t instr) {
   else if (isReg(da)) {
     printf("invalid MFPI instruction\n");
     panic();
+	return; // unreached
   }
   else {
     uval = unibus::read16(mmu::decode((uint16_t)da, false, prevuser));

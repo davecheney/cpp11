@@ -42,22 +42,18 @@ void trapat(uint16_t vec);
 void interrupt(uint8_t vec, uint8_t pri);
 void handleinterrupt();
 
-static bool N() {
-  return (uint8_t)PS & FLAGN;
-}
+};
 
-static bool Z() {
-  return (uint8_t)PS & FLAGZ;
-}
+namespace mmu {
 
-static bool V() {
-  return (uint8_t)PS & FLAGV;
-}
+    extern uint16_t SR0;
+    extern uint16_t SR2;
 
-static bool C() {
-  return (uint8_t)PS & FLAGC;
-}
+    uint32_t decode(uint16_t a, uint8_t w, uint8_t user);
+    uint16_t read16(uint32_t a);
+    void write16(uint32_t a, uint16_t v);
 
 };
+
 
 
