@@ -8,7 +8,7 @@ CFLAGS+=$(addprefix -I,$(INCLUDES))
 CFLAGS+=-include "$(SETTINGS)"
 
 CXXSTD=gnu++98
-CXXOPT=$(COPT) -fno-exceptions -fno-rtti -g
+CXXOPT=$(COPT) -fno-exceptions -g
 CXXFLAGS=-std=$(CXXSTD) $(CXXOPT) -Wall -Werror -Wno-write-strings -Wno-format-security
 CXXFLAGS+=$(addprefix -I,$(INCLUDES))
 

@@ -65,7 +65,7 @@ again:
   }
 
   if (DEBUG_RK05) {
-    printf("rkstep: RKBA: %x RKWC: %x cylinder: %x sector: %x write: %s\n",
+    printf("rkstep: RKBA: %06o RKWC: %06o cylinder: %03o sector: %03o write: %s\n",
            RKBA, RKWC, cylinder, sector, w ? "true" : "false");
   }
 
