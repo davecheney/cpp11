@@ -16,9 +16,9 @@ namespace cpu {
 // signed integer registers
 int32_t R[8];
 
-uint16_t	PS; // processor status
-uint16_t	PC; // address of current instruction
-uint16_t   KSP, USP; // kernel and user stack pointer
+uint16_t PS;       // processor status
+uint16_t PC;       // address of current instruction
+uint16_t KSP, USP; // kernel and user stack pointer
 uint16_t LKS;
 bool curuser, prevuser;
 
@@ -33,21 +33,13 @@ void reset(void) {
   rk11::reset();
 }
 
-static bool N() {
-  return (uint8_t)PS & FLAGN;
-}
+static bool N() { return (uint8_t)PS & FLAGN; }
 
-static bool Z() {
-  return (uint8_t)PS & FLAGZ;
-}
+static bool Z() { return (uint8_t)PS & FLAGZ; }
 
-static bool V() {
-  return (uint8_t)PS & FLAGV;
-}
+static bool V() { return (uint8_t)PS & FLAGV; }
 
-static bool C() {
-  return (uint8_t)PS & FLAGC;
-}
+static bool C() { return (uint8_t)PS & FLAGC; }
 
 static uint16_t read8(const uint16_t a) {
   return unibus::read8(mmu::decode(a, false, curuser));
@@ -65,9 +57,7 @@ static void write16(const uint16_t a, const uint16_t v) {
   unibus::write16(mmu::decode(a, true, curuser), v);
 }
 
-static bool isReg(const uint16_t a) {
-  return (a & 0177770) == 0170000;
-}
+static bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
 static uint16_t memread16(const uint16_t a) {
   if (isReg(a)) {
@@ -81,8 +71,7 @@ static uint16_t memread(uint16_t a, uint8_t l) {
     const uint8_t r = a & 7;
     if (l == 2) {
       return R[r];
-    }
-    else {
+    } else {
       return R[r] & 0xFF;
     }
   }
@@ -105,8 +94,7 @@ static void memwrite(const uint16_t a, const uint8_t l, const uint16_t v) {
     const uint8_t r = a & 7;
     if (l == 2) {
       R[r] = v;
-    }
-    else {
+    } else {
       R[r] &= 0xFF00;
       R[r] |= v;
     }
@@ -114,8 +102,7 @@ static void memwrite(const uint16_t a, const uint8_t l, const uint16_t v) {
   }
   if (l == 2) {
     write16(a, v);
-  }
-  else {
+  } else {
     write8(a, v);
   }
 }
@@ -151,22 +138,22 @@ static uint16_t aget(uint8_t v, uint8_t l) {
   }
   uint16_t addr = 0;
   switch (v & 060) {
-    case 000:
-      v &= 7;
-      addr = R[v & 7];
-      break;
-    case 020:
-      addr = R[v & 7];
-      R[v & 7] += l;
-      break;
-    case 040:
-      R[v & 7] -= l;
-      addr = R[v & 7];
-      break;
-    case 060:
-      addr = fetch16();
-      addr += R[v & 7];
-      break;
+  case 000:
+    v &= 7;
+    addr = R[v & 7];
+    break;
+  case 020:
+    addr = R[v & 7];
+    R[v & 7] += l;
+    break;
+  case 040:
+    R[v & 7] -= l;
+    addr = R[v & 7];
+    break;
+  case 060:
+    addr = fetch16();
+    addr += R[v & 7];
+    break;
   }
   if (v & 010) {
     addr = read16(addr);
@@ -187,14 +174,12 @@ void switchmode(const bool newm) {
   curuser = newm;
   if (prevuser) {
     USP = R[6];
-  }
-  else {
+  } else {
     KSP = R[6];
   }
   if (curuser) {
     R[6] = USP;
-  }
-  else {
+  } else {
     R[6] = KSP;
   }
   PS &= 0007777;
@@ -207,8 +192,8 @@ void switchmode(const bool newm) {
 }
 
 static void setZ(bool b) {
-   if (b) 
-     PS |= FLAGZ;
+  if (b)
+    PS |= FLAGZ;
 }
 
 static void MOV(const uint16_t instr) {
@@ -247,7 +232,7 @@ static void CMP(uint16_t instr) {
   if (sval & msb) {
     PS |= FLAGN;
   }
-  if (((val1 ^ val2)&msb) && (!((val2 ^ sval)&msb))) {
+  if (((val1 ^ val2) & msb) && (!((val2 ^ sval) & msb))) {
     PS |= FLAGV;
   }
   if (val1 < val2) {
@@ -428,15 +413,13 @@ static void ASH(uint16_t instr) {
     if (val1 & 0100000) {
       sval = 0xFFFF ^ (0xFFFF >> val2);
       sval |= val1 >> val2;
-    }
-    else {
+    } else {
       sval = val1 >> val2;
     }
     if (val1 & (1 << (val2 - 1))) {
       PS |= FLAGC;
     }
-  }
-  else {
+  } else {
     sval = (val1 << val2) & 0xFFFF;
     if (val1 & (1 << (16 - val2))) {
       PS |= FLAGC;
@@ -447,7 +430,7 @@ static void ASH(uint16_t instr) {
   if (sval & 0100000) {
     PS |= FLAGN;
   }
-  if ((sval & 0100000) xor (val1 & 0100000)) {
+  if ((sval & 0100000)xor(val1 & 0100000)) {
     PS |= FLAGV;
   }
 }
@@ -465,15 +448,13 @@ static void ASHC(uint16_t instr) {
     if (val1 & 0x80000000) {
       sval = 0xFFFFFFFF ^ (0xFFFFFFFF >> val2);
       sval |= val1 >> val2;
-    }
-    else {
+    } else {
       sval = val1 >> val2;
     }
     if (val1 & (1 << (val2 - 1))) {
       PS |= FLAGC;
     }
-  }
-  else {
+  } else {
     sval = (val1 << val2) & 0xFFFFFFFF;
     if (val1 & (1 << (32 - val2))) {
       PS |= FLAGC;
@@ -485,7 +466,7 @@ static void ASHC(uint16_t instr) {
   if (sval & 0x80000000) {
     PS |= FLAGN;
   }
-  if ((sval & 0x80000000) xor (val1 & 0x80000000)) {
+  if ((sval & 0x80000000)xor(val1 & 0x80000000)) {
     PS |= FLAGV;
   }
 }
@@ -588,8 +569,7 @@ static void NEG(uint16_t instr) {
   }
   if (sval == 0) {
     PS |= FLAGZ;
-  }
-  else {
+  } else {
     PS |= FLAGC;
   }
   if (sval == 0x8000) {
@@ -607,7 +587,7 @@ static void _ADC(uint16_t instr) {
   uint16_t uval = memread(da, l);
   if (PS & FLAGC) {
     PS &= 0xFFF0;
-    if ((uval + 1)&msb) {
+    if ((uval + 1) & msb) {
       PS |= FLAGN;
     }
     setZ(uval == max);
@@ -617,9 +597,8 @@ static void _ADC(uint16_t instr) {
     if (uval == 0177777) {
       PS |= FLAGC;
     }
-    memwrite(da, l, (uval + 1)&max);
-  }
-  else {
+    memwrite(da, l, (uval + 1) & max);
+  } else {
     PS &= 0xFFF0;
     if (uval & msb) {
       PS |= FLAGN;
@@ -637,7 +616,7 @@ static void SBC(uint16_t instr) {
   int32_t sval = memread(da, l);
   if (PS & FLAGC) {
     PS &= 0xFFF0;
-    if ((sval - 1)&msb) {
+    if ((sval - 1) & msb) {
       PS |= FLAGN;
     }
     setZ(sval == 1);
@@ -647,9 +626,8 @@ static void SBC(uint16_t instr) {
     if (sval == 0100000) {
       PS |= FLAGV;
     }
-    memwrite(da, l, (sval - 1)&max);
-  }
-  else {
+    memwrite(da, l, (sval - 1) & max);
+  } else {
     PS &= 0xFFF0;
     if (sval & msb) {
       PS |= FLAGN;
@@ -692,7 +670,7 @@ static void ROR(uint16_t instr) {
     PS |= FLAGN;
   }
   setZ(!(sval & max));
-  if ((sval & 1) xor (sval & (max + 1))) {
+  if ((sval & 1)xor(sval & (max + 1))) {
     PS |= FLAGV;
   }
   sval >>= 1;
@@ -717,7 +695,7 @@ static void ROL(uint16_t instr) {
     PS |= FLAGN;
   }
   setZ(!(sval & max));
-  if ((sval ^ (sval >> 1))&msb) {
+  if ((sval ^ (sval >> 1)) & msb) {
     PS |= FLAGV;
   }
   sval &= max;
@@ -737,7 +715,7 @@ static void ASR(uint16_t instr) {
   if (uval & msb) {
     PS |= FLAGN;
   }
-  if ((uval & msb) xor (uval & 1)) {
+  if ((uval & msb)xor(uval & 1)) {
     PS |= FLAGV;
   }
   uval = (uval & msb) | (uval >> 1);
@@ -760,7 +738,7 @@ static void ASL(uint16_t instr) {
   if (sval & (msb >> 1)) {
     PS |= FLAGN;
   }
-  if ((sval ^ (sval << 1))&msb) {
+  if ((sval ^ (sval << 1)) & msb) {
     PS |= FLAGV;
   }
   sval = (sval << 1) & max;
@@ -775,8 +753,7 @@ static void SXT(uint16_t instr) {
   uint16_t da = aget(d, l);
   if (PS & FLAGN) {
     memwrite(da, l, max);
-  }
-  else {
+  } else {
     PS |= FLAGZ;
     memwrite(da, l, 0);
   }
@@ -820,22 +797,18 @@ static void MFPI(uint16_t instr) {
     // val = (curuser == prevuser) ? R[6] : (prevuser ? k.USP : KSP);
     if (curuser == prevuser) {
       uval = R[6];
-    }
-    else {
+    } else {
       if (prevuser) {
         uval = USP;
-      }
-      else {
+      } else {
         uval = KSP;
       }
     }
-  }
-  else if (isReg(da)) {
+  } else if (isReg(da)) {
     printf("invalid MFPI instruction\n");
     panic();
-	return; // unreached
-  }
-  else {
+    return; // unreached
+  } else {
     uval = unibus::read16(mmu::decode((uint16_t)da, false, prevuser));
   }
   push(uval);
@@ -854,20 +827,17 @@ static void MTPI(uint16_t instr) {
   if (da == 0170006) {
     if (curuser == prevuser) {
       R[6] = uval;
-    }
-    else {
+    } else {
       if (prevuser) {
         USP = uval;
-      }
-      else {
+      } else {
         KSP = uval;
       }
     }
-  }
-  else if (isReg(da)) {
-    printf("invalid MTPI instrution\n"); panic();
-  }
-  else {
+  } else if (isReg(da)) {
+    printf("invalid MTPI instrution\n");
+    panic();
+  } else {
     unibus::write16(mmu::decode((uint16_t)da, true, prevuser), uval);
   }
   PS &= 0xFFF0;
@@ -888,14 +858,11 @@ static void EMTX(uint16_t instr) {
   uint16_t uval;
   if ((instr & 0177400) == 0104000) {
     uval = 030;
-  }
-  else if ((instr & 0177400) == 0104400) {
+  } else if ((instr & 0177400) == 0104400) {
     uval = 034;
-  }
-  else if (instr == 3) {
+  } else if (instr == 3) {
     uval = 014;
-  }
-  else {
+  } else {
     uval = 020;
   }
   uint16_t prev = PS;
@@ -932,113 +899,114 @@ void step() {
   uint16_t instr = unibus::read16(mmu::decode(PC, false, curuser));
   R[7] += 2;
 
-  if (PRINTSTATE) printstate();
+  if (PRINTSTATE)
+    printstate();
 
   switch ((instr >> 12) & 007) {
-    case 001: // MOV
-      MOV(instr);
-      return;
-    case 002: // CMP
-      CMP(instr);
-      return;
-    case 003: // BIT
-      BIT(instr);
-      return;
-    case 004: // BIC
-      BIC(instr);
-      return;
-    case 005: // BIS
-      BIS(instr);
-      return;
+  case 001: // MOV
+    MOV(instr);
+    return;
+  case 002: // CMP
+    CMP(instr);
+    return;
+  case 003: // BIT
+    BIT(instr);
+    return;
+  case 004: // BIC
+    BIC(instr);
+    return;
+  case 005: // BIS
+    BIS(instr);
+    return;
   }
   switch ((instr >> 12) & 017) {
-    case 006: // ADD
-      ADD(instr);
-      return;
-    case 016: // SUB
-      SUB(instr);
-      return;
+  case 006: // ADD
+    ADD(instr);
+    return;
+  case 016: // SUB
+    SUB(instr);
+    return;
   }
   switch ((instr >> 9) & 0177) {
-    case 0004: // JSR
-      JSR(instr);
-      return;
-    case 0070: // MUL
-      MUL(instr);
-      return;
-    case 0071: // DIV
-      DIV(instr);
-      return;
-    case 0072: // ASH
-      ASH(instr);
-      return;
-    case 0073: // ASHC
-      ASHC(instr);
-      return;
-    case 0074: // XOR
-      XOR(instr);
-      return;
-    case 0077: // SOB
-      SOB(instr);
-      return;
+  case 0004: // JSR
+    JSR(instr);
+    return;
+  case 0070: // MUL
+    MUL(instr);
+    return;
+  case 0071: // DIV
+    DIV(instr);
+    return;
+  case 0072: // ASH
+    ASH(instr);
+    return;
+  case 0073: // ASHC
+    ASHC(instr);
+    return;
+  case 0074: // XOR
+    XOR(instr);
+    return;
+  case 0077: // SOB
+    SOB(instr);
+    return;
   }
   switch ((instr >> 6) & 00777) {
-    case 00050: // CLR
-      CLR(instr);
-      return;
-    case 00051: // COM
-      COM(instr);
-      return;
-    case 00052: // INC
-      INC(instr);
-      return;
-    case 00053: // DEC
-      _DEC(instr);
-      return;
-    case 00054: // NEG
-      NEG(instr);
-      return;
-    case 00055: // ADC
-      _ADC(instr);
-      return;
-    case 00056: // SBC
-      SBC(instr);
-      return;
-    case 00057: // TST
-      TST(instr);
-      return;
-    case 00060: // ROR
-      ROR(instr);
-      return;
-    case 00061: // ROL
-      ROL(instr);
-      return;
-    case 00062: // ASR
-      ASR(instr);
-      return;
-    case 00063: // ASL
-      ASL(instr);
-      return;
-    case 00067: // SXT
-      SXT(instr);
-      return;
+  case 00050: // CLR
+    CLR(instr);
+    return;
+  case 00051: // COM
+    COM(instr);
+    return;
+  case 00052: // INC
+    INC(instr);
+    return;
+  case 00053: // DEC
+    _DEC(instr);
+    return;
+  case 00054: // NEG
+    NEG(instr);
+    return;
+  case 00055: // ADC
+    _ADC(instr);
+    return;
+  case 00056: // SBC
+    SBC(instr);
+    return;
+  case 00057: // TST
+    TST(instr);
+    return;
+  case 00060: // ROR
+    ROR(instr);
+    return;
+  case 00061: // ROL
+    ROL(instr);
+    return;
+  case 00062: // ASR
+    ASR(instr);
+    return;
+  case 00063: // ASL
+    ASL(instr);
+    return;
+  case 00067: // SXT
+    SXT(instr);
+    return;
   }
   switch (instr & 0177700) {
-    case 0000100: // JMP
-      JMP(instr);
-      return;
-    case 0000300: // SWAB
-      SWAB(instr);
-      return;
-    case 0006400: // MARK
-      MARK(instr);
-      break;
-    case 0006500: // MFPI
-      MFPI(instr);
-      return;
-    case 0006600: // MTPI
-      MTPI(instr);
-      return;
+  case 0000100: // JMP
+    JMP(instr);
+    return;
+  case 0000300: // SWAB
+    SWAB(instr);
+    return;
+  case 0006400: // MARK
+    MARK(instr);
+    break;
+  case 0006500: // MFPI
+    MFPI(instr);
+    return;
+  case 0006600: // MTPI
+    MTPI(instr);
+    return;
   }
   if ((instr & 0177770) == 0000200) { // RTS
     RTS(instr);
@@ -1046,115 +1014,116 @@ void step() {
   }
 
   switch (instr & 0177400) {
-    case 0000400:
+  case 0000400:
+    branch(instr & 0xFF);
+    return;
+  case 0001000:
+    if (!Z()) {
       branch(instr & 0xFF);
-      return;
-    case 0001000:
-      if (!Z()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0001400:
-      if (Z()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0002000:
-      if (!(N() xor V())) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0002400:
-      if (N() xor V()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0003000:
-      if ((!(N() xor V())) && (!Z())) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0003400:
-      if ((N() xor V()) || Z()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0100000:
-      if (!N()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0100400:
-      if (N()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0101000:
-      if ((!C()) && (!Z())) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0101400:
-      if (C() || Z()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0102000:
-      if (!V()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0102400:
-      if (V()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0103000:
-      if (!C()) {
-        branch(instr & 0xFF);
-      }
-      return;
-    case 0103400:
-      if (C()) {
-        branch(instr & 0xFF);
-      }
-      return;
+    }
+    return;
+  case 0001400:
+    if (Z()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0002000:
+    if (!(N() xor V())) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0002400:
+    if (N() xor V()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0003000:
+    if ((!(N() xor V())) && (!Z())) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0003400:
+    if ((N() xor V()) || Z()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0100000:
+    if (!N()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0100400:
+    if (N()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0101000:
+    if ((!C()) && (!Z())) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0101400:
+    if (C() || Z()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0102000:
+    if (!V()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0102400:
+    if (V()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0103000:
+    if (!C()) {
+      branch(instr & 0xFF);
+    }
+    return;
+  case 0103400:
+    if (C()) {
+      branch(instr & 0xFF);
+    }
+    return;
   }
-  if (((instr & 0177000) == 0104000) || (instr == 3) || (instr == 4)) { // EMT TRAP IOT BPT
+  if (((instr & 0177000) == 0104000) || (instr == 3) ||
+      (instr == 4)) { // EMT TRAP IOT BPT
     EMTX(instr);
     return;
   }
   if ((instr & 0177740) == 0240) { // CL?, SE?
     if (instr & 020) {
       PS |= instr & 017;
-    }
-    else {
+    } else {
       PS &= ~instr & 017;
     }
     return;
   }
   switch (instr & 7) {
-    case 00: // HALT
-      if (curuser) {
-        break;
-      }
-      printf("HALT\n");
-      panic();
-    case 01: // WAIT
-      if (curuser) {
-        break;
-      }
-      return;
-    case 02: // RTI
+  case 00: // HALT
+    if (curuser) {
+      break;
+    }
+    printf("HALT\n");
+    panic();
+  case 01: // WAIT
+    if (curuser) {
+      break;
+    }
+    return;
+  case 02: // RTI
 
-    case 06: // RTT
-      _RTT(instr);
-      return;
-    case 05: // RESET
-      RESET(instr);
-      return;
+  case 06: // RTT
+    _RTT(instr);
+    return;
+  case 05: // RESET
+    RESET(instr);
+    return;
   }
-  if (instr == 0170011) { // SETD ; not needed by UNIX, but used; therefore ignored
+  if (instr ==
+      0170011) { // SETD ; not needed by UNIX, but used; therefore ignored
     return;
   }
   printf("invalid instruction\n");
@@ -1166,23 +1135,23 @@ void trapat(uint16_t vec) { // , msg string) {
     printf("Thou darst calling trapat() with an odd vector number?\n");
     panic();
   }
-  printf("trap: %x\n", vec); 
+  printf("trap: %x\n", vec);
 
   /*var prev uint16
-   	defer func() {
-   		t = recover()
-   		switch t = t.(type) {
-   		case trap:
-   			writedebug("red stack trap!\n")
-   			memory[0] = uint16(k.R[7])
-   			memory[1] = prev
-   			vec = 4
-   			panic("fatal")
-   		case nil:
-   			break
-   		default:
-   			panic(t)
-   		}
+        defer func() {
+                t = recover()
+                switch t = t.(type) {
+                case trap:
+                        writedebug("red stack trap!\n")
+                        memory[0] = uint16(k.R[7])
+                        memory[1] = prev
+                        vec = 4
+                        panic("fatal")
+                case nil:
+                        break
+                default:
+                        panic(t)
+                }
    */
   uint16_t prev = PS;
   switchmode(false);
@@ -1219,7 +1188,8 @@ void interrupt(uint8_t vec, uint8_t pri) {
     }
   }
   if (i >= ITABN) {
-    printf("interrupt table full\n"); panic();
+    printf("interrupt table full\n");
+    panic();
   }
   uint8_t j;
   for (j = i + 1; j < ITABN; j++) {
@@ -1254,7 +1224,6 @@ void handleinterrupt() {
     trapat(vv);
   }
 
-
   R[7] = unibus::read16(vec);
   PS = unibus::read16(vec + 2);
   if (prevuser) {
@@ -1262,5 +1231,4 @@ void handleinterrupt() {
   }
   popirq();
 }
-
 };

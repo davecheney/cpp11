@@ -7,24 +7,16 @@
 namespace mmu {
 
 class page {
-  public:
-    uint16_t par, pdr;
+public:
+  uint16_t par, pdr;
 
-    uint16_t addr() {
-      return par & 07777;
-    }
-    uint8_t len() {
-      return (pdr >> 8) & 0x7f;
-    }
-    bool read() {
-      return pdr & 2;
-    }
-    bool write() {
-      return pdr & 6;
-    };
-    bool ed() {
-      return pdr & 8;
-    }
+  uint16_t addr() { return par & 07777; }
+  uint8_t len() { return (pdr >> 8) & 0x7f; }
+  bool read() { return pdr & 2; }
+  bool write() {
+    return pdr & 6;
+  };
+  bool ed() { return pdr & 8; }
 };
 
 page pages[16];
@@ -37,7 +29,7 @@ void dumppages() {
   }
 }
 
-uint32_t decode(uint16_t a,  uint8_t w,  uint8_t user) {
+uint32_t decode(uint16_t a, uint8_t w, uint8_t user) {
   if ((SR0 & 1) == 0) {
     return a > 0167777 ? ((uint32_t)a) + 0600000 : a;
   }
@@ -50,7 +42,7 @@ uint32_t decode(uint16_t a,  uint8_t w,  uint8_t user) {
     }
     SR2 = cpu::PC;
 
-    printf("mmu::decode write to read-only page %06o\n",a);
+    printf("mmu::decode write to read-only page %06o\n", a);
     longjmp(trapbuf, INTFAULT);
   }
   if (!pages[i].read()) {
@@ -60,7 +52,7 @@ uint32_t decode(uint16_t a,  uint8_t w,  uint8_t user) {
       SR0 |= (1 << 5) | (1 << 6);
     }
     SR2 = cpu::PC;
-    printf("mmu::decode read from no-access page %06o\n",a);
+    printf("mmu::decode read from no-access page %06o\n", a);
     longjmp(trapbuf, INTFAULT);
   }
   uint8_t block = (a >> 6) & 0177;
@@ -73,19 +65,21 @@ uint32_t decode(uint16_t a,  uint8_t w,  uint8_t user) {
       SR0 |= (1 << 5) | (1 << 6);
     }
     SR2 = cpu::PC;
-    printf("page length exceeded, address %06o (block %03o) is beyond length %03o\r\n", a, block, pages[i].len());
+    printf("page length exceeded, address %06o (block %03o) is beyond length "
+           "%03o\r\n",
+           a, block, pages[i].len());
     longjmp(trapbuf, INTFAULT);
   }
   if (w) {
     pages[i].pdr |= 1 << 6;
   }
   // danger, this can be cast to a uint16_t if you aren't careful
-    uint32_t aa = pages[i].par & 07777;
-    aa += block;
-    aa <<= 6;
-    aa += disp;
+  uint32_t aa = pages[i].par & 07777;
+  aa += block;
+  aa <<= 6;
+  aa += disp;
   if (DEBUG_MMU) {
-    printf("decode: slow %06o -> %06o\n",a, aa);
+    printf("decode: slow %06o -> %06o\n", a, aa);
   }
 
   return aa;
@@ -104,11 +98,11 @@ uint16_t read16(uint32_t a) {
   if ((a >= 0777640) && (a < 0777660)) {
     return pages[((a & 017) >> 1) + 8].par;
   }
-  printf("mmu::read16 invalid read from %06o\n",a);
+  printf("mmu::read16 invalid read from %06o\n", a);
   longjmp(trapbuf, INTBUS);
 }
 
-void write16(uint32_t a,  uint16_t v) {
+void write16(uint32_t a, uint16_t v) {
   uint8_t i = ((a & 017) >> 1);
   if ((a >= 0772300) && (a < 0772320)) {
     pages[i].pdr = v;
@@ -126,8 +120,7 @@ void write16(uint32_t a,  uint16_t v) {
     pages[i + 8].par = v;
     return;
   }
-  printf("mmu::write16 write to invalid address %06o\n",a);
+  printf("mmu::write16 write to invalid address %06o\n", a);
   longjmp(trapbuf, INTBUS);
 }
-
 };
