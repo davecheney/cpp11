@@ -2,8 +2,6 @@
 #include <stdio.h>
 
 #include "avr11.h"
-#include "cpu.h"
-#include "unibus.h"
 
 char *rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
 

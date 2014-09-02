@@ -14,7 +14,7 @@ CXXFLAGS+=$(addprefix -I,$(INCLUDES))
 
 #LDFLAGS=-lc -t
 LD=g++
-CXX=g++
+CXX=clang
 
 avr11:	$(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^ 

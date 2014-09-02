@@ -2,9 +2,6 @@
 #include <stdio.h>
 
 #include "avr11.h"
-#include "unibus.h"
-#include "rk05.h"
-#include "cpu.h"
 
 namespace rk11 {
 

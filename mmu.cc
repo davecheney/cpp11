@@ -2,7 +2,6 @@
 #include <stdio.h>
 
 #include "avr11.h"
-#include "cpu.h"
 
 namespace mmu {
 

@@ -2,10 +2,6 @@
 #include <stdio.h>
 
 #include "avr11.h"
-#include "cpu.h"
-#include "cons.h"
-#include "unibus.h"
-#include "rk05.h"
 
 namespace unibus {
 

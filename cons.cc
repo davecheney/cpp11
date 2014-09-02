@@ -4,8 +4,6 @@
 #include <unistd.h>
 
 #include "avr11.h"
-#include "cons.h"
-#include "cpu.h"
 
 namespace cons {
 

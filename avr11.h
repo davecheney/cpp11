@@ -27,3 +27,107 @@ void disasm(uint32_t ia);
 void trap(uint16_t num);
 
 
+
+enum {
+	MEMSIZE = 1<<18
+};
+
+namespace unibus {
+  
+    // operations on uint32_t types are insanely expensive
+    union addr {
+     uint8_t  bytes[4];
+     uint32_t value;
+    };
+    void init();
+  
+    uint16_t read8(uint32_t addr);
+    uint16_t read16(uint32_t addr);
+    void write8(uint32_t a, uint16_t v);
+    void write16(uint32_t a, uint16_t v);
+};
+
+namespace cons {
+
+    void write16(uint32_t a, uint16_t v);
+    uint16_t read16(uint32_t a);
+    void clearterminal();
+    void poll();
+
+};
+// this is all kinds of wrong
+#include <setjmp.h>
+
+extern jmp_buf trapbuf;
+
+namespace pdp11 {
+struct intr {
+  uint8_t vec;
+  uint8_t pri;
+};
+};
+
+#define ITABN 8
+
+extern pdp11::intr itab[ITABN];
+
+
+enum {
+  FLAGN = 8,
+  FLAGZ = 4,
+  FLAGV = 2,
+  FLAGC = 1
+};
+
+namespace cpu {
+
+extern int32_t R[8];
+
+extern uint16_t PC;
+extern uint16_t PS;
+extern uint16_t USP;
+extern uint16_t KSP;
+extern uint16_t LKS;
+extern bool curuser;
+extern bool prevuser;
+
+void step();
+void reset(void);
+void switchmode(bool newm);
+
+void trapat(uint16_t vec);
+void interrupt(uint8_t vec, uint8_t pri);
+void handleinterrupt();
+
+};
+
+namespace mmu {
+
+    extern uint16_t SR0;
+    extern uint16_t SR2;
+
+    uint32_t decode(uint16_t a, uint8_t w, uint8_t user);
+    uint16_t read16(uint32_t a);
+    void write16(uint32_t a, uint16_t v);
+
+};
+
+
+
+namespace rk11 {
+
+extern FILE *rkdata;
+
+void reset();
+void write16(uint32_t a, uint16_t v);
+uint16_t read16(uint32_t a);
+};
+
+enum {
+  RKOVR = (1 << 14),
+  RKNXD = (1 << 7),
+  RKNXC = (1 << 6),
+  RKNXS = (1 << 5)
+  };
+
+

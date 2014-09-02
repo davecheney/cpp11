@@ -2,12 +2,7 @@
 #include <stdio.h>
 
 #include "avr11.h"
-#include "cons.h"
-#include "unibus.h"
-#include "cpu.h"
-
 #include "bootrom.h"
-#include "rk05.h"
 
 pdp11::intr itab[ITABN];
 

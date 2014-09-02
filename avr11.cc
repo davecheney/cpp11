@@ -3,11 +3,8 @@
 #include <stdio.h>
 #include <termios.h>
 #include <string.h>
+
 #include "avr11.h"
-#include "rk05.h"
-#include "cons.h"
-#include "unibus.h"
-#include "cpu.h"
 
 void setup() {
 
