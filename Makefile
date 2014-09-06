@@ -13,13 +13,13 @@ CXXFLAGS=-std=$(CXXSTD) $(CXXOPT) -Wall -Werror -Wno-write-strings -Wno-format-s
 CXXFLAGS+=$(addprefix -I,$(INCLUDES))
 
 #LDFLAGS=-lc -t
-LD=g++
+LD=clang
 CXX=clang
 
 avr11:	$(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^ 
 
-%.o: %.cc
+%.o: %.cc avr11.h
 	$(CXX) $(CXXFLAGS) $<   -c -o $@
 
 clean:
