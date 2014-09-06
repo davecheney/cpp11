@@ -32,7 +32,7 @@ void write8(const uint32_t a, const uint16_t v) {
 void write16(uint32_t a, uint16_t v) {
   if (a % 1) {
     printf("unibus: write16 to odd address %x\n", a);
-    longjmp(trapbuf, INTBUS);
+    trap(INTBUS);
   }
   if (a < 0760000) {
     unibus::intptr[a >> 1] = v;
@@ -84,13 +84,13 @@ void write16(uint32_t a, uint16_t v) {
     return;
   }
   printf("unibus: write to invalid address %x\n", a);
-  longjmp(trapbuf, INTBUS);
+  trap(INTBUS);
 }
 
 uint16_t read16(uint32_t a) {
   if (a & 1) {
     printf("unibus: read16 from odd address %x\n", a);
-    longjmp(trapbuf, INTBUS);
+    trap(INTBUS);
   }
   if (a < 0760000) {
     return unibus::intptr[a >> 1];
@@ -129,6 +129,6 @@ uint16_t read16(uint32_t a) {
   }
 
   printf("unibus: read from invalid address %x\n", a);
-  longjmp(trapbuf, INTBUS);
+  return trap(INTBUS);
 }
 };

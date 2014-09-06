@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <termios.h>
 #include <string.h>
+#include <setjmp.h>
 
 #include "avr11.h"
 
@@ -37,6 +38,11 @@ uint16_t instcounter;
 jmp_buf trapbuf;
 
 void loop0();
+
+uint16_t trap(uint16_t vec) {
+    longjmp(trapbuf, INTBUS);
+    return vec; // not reached
+}	
 
 void loop() {
   uint16_t vec = setjmp(trapbuf);

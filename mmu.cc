@@ -42,7 +42,7 @@ uint32_t decode(uint16_t a, uint8_t w, uint8_t user) {
     SR2 = cpu::PC;
 
     printf("mmu::decode write to read-only page %06o\n", a);
-    longjmp(trapbuf, INTFAULT);
+    trap(INTFAULT);
   }
   if (!pages[i].read()) {
     SR0 = (1 << 15) | 1;
@@ -52,7 +52,7 @@ uint32_t decode(uint16_t a, uint8_t w, uint8_t user) {
     }
     SR2 = cpu::PC;
     printf("mmu::decode read from no-access page %06o\n", a);
-    longjmp(trapbuf, INTFAULT);
+    trap(INTFAULT);
   }
   uint8_t block = (a >> 6) & 0177;
   uint8_t disp = a & 077;
@@ -67,7 +67,7 @@ uint32_t decode(uint16_t a, uint8_t w, uint8_t user) {
     printf("page length exceeded, address %06o (block %03o) is beyond length "
            "%03o\r\n",
            a, block, pages[i].len());
-    longjmp(trapbuf, INTFAULT);
+    trap(INTFAULT);
   }
   if (w) {
     pages[i].pdr |= 1 << 6;
@@ -98,7 +98,7 @@ uint16_t read16(uint32_t a) {
     return pages[((a & 017) >> 1) + 8].par;
   }
   printf("mmu::read16 invalid read from %06o\n", a);
-  longjmp(trapbuf, INTBUS);
+  return trap(INTBUS);
 }
 
 void write16(uint32_t a, uint16_t v) {
@@ -120,6 +120,6 @@ void write16(uint32_t a, uint16_t v) {
     return;
   }
   printf("mmu::write16 write to invalid address %06o\n", a);
-  longjmp(trapbuf, INTBUS);
+  trap(INTBUS);
 }
 };

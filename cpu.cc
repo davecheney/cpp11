@@ -1,8 +1,11 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <setjmp.h>
 
 #include "avr11.h"
 #include "bootrom.h"
+
+extern jmp_buf trapbuf;
 
 pdp11::intr itab[ITABN];
 
@@ -28,13 +31,13 @@ void reset(void) {
   rk11::reset();
 }
 
-static bool N() { return (uint8_t)PS & FLAGN; }
+static bool N() { return PS & FLAGN; }
 
-static bool Z() { return (uint8_t)PS & FLAGZ; }
+static bool Z() { return PS & FLAGZ; }
 
-static bool V() { return (uint8_t)PS & FLAGV; }
+static bool V() { return PS & FLAGV; }
 
-static bool C() { return (uint8_t)PS & FLAGC; }
+static bool C() { return PS & FLAGC; }
 
 static uint16_t read8(const uint16_t a) {
   return unibus::read8(mmu::decode(a, false, curuser));
@@ -1122,7 +1125,7 @@ void step() {
     return;
   }
   printf("invalid instruction\n");
-  longjmp(trapbuf, INTINVAL);
+  trap(INTINVAL);
 }
 
 void trapat(uint16_t vec) { // , msg string) {

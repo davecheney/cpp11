@@ -24,9 +24,7 @@ void printstate();
 void panic();
 void disasm(uint32_t ia);
 
-void trap(uint16_t num);
-
-
+uint16_t trap(uint16_t num);
 
 enum {
 	MEMSIZE = 1<<18
@@ -55,10 +53,6 @@ namespace cons {
     void poll();
 
 };
-// this is all kinds of wrong
-#include <setjmp.h>
-
-extern jmp_buf trapbuf;
 
 namespace pdp11 {
 struct intr {
@@ -70,7 +64,6 @@ struct intr {
 #define ITABN 8
 
 extern pdp11::intr itab[ITABN];
-
 
 enum {
   FLAGN = 8,
