@@ -20,6 +20,7 @@ void setup() {
 
   // disable canonical mode processing in the line discipline driver
   new_terminal_settings.c_lflag &= ~ICANON;
+  new_terminal_settings.c_lflag &= ~ECHO;
 
   // apply our new settings
   if (tcsetattr(0, TCSANOW, &new_terminal_settings) < 0)
