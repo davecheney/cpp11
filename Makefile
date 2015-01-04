@@ -1,5 +1,5 @@
-SOURCES=$(wildcard *.cc)
-OBJECTS=$(SOURCES:.cc=.o)
+SRCS=$(wildcard *.cc)
+OBJECTS=$(SRCS:.cc=.o)
 
 CSTD=gnu99
 COPT=-O2 -fdata-sections -ffunction-sections -Wall -Werror -Wextra
@@ -27,3 +27,5 @@ avr11:	$(OBJECTS)
 clean:
 	rm -rf avr11 $(OBJECTS)
 
+fmt: 
+	clang-format-3.5 -i $(SRCS)
