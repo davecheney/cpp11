@@ -9,7 +9,7 @@ APP_SOURCES         = avr11.cc \
 					  rk11.cc \
 					  unibus.cc 
 APP_OBJS            = $(patsubst %.cc,$(BUILD_DIR)/%.o,$(APP_SOURCES))                      
-COMMON_CFLAGS       = -O3 -Wall -MMD -Werror -Wextra
+COMMON_CFLAGS       = -g -O2 -Wall -MMD -Werror -Wextra
 CFLAGS              += $(COMMON_CFLAGS)
 CXXFLAGS            += $(COMMON_CFLAGS) -std=c++17
 DEPS                = $(APP_OBJS:.o=.d)

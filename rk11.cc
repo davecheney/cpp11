@@ -41,8 +41,8 @@ void rkready() {
   RKCS |= 1 << 7;
 }
 
-void rkerror(int16_t e) {
-	printf("rkerror: %d\n", e);
+void rkerror(uint16_t e) {
+	printf("rk11: error %06o\n", e);
 	panic();
 }
 
@@ -59,7 +59,7 @@ again:
     w = false;
     break;
   default:
-    printf("unimplemented RK05 operation %#o", ((RKCS & 017) >> 1));
+    printf("unimplemented RK05 operation %06o\n", ((RKCS & 017) >> 1));
     panic();
     return; // unreached
   }
@@ -143,7 +143,7 @@ void write16(uint32_t a, uint16_t v) {
         step();
         break;
       default:
-        printf("unimplemented RK05 operation %#o", ((RKCS & 017) >> 1));
+        printf("unimplemented RK05 operation %06o", ((RKCS & 017) >> 1));
         panic();
       }
     }

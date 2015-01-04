@@ -139,7 +139,7 @@ void disasm(uint32_t a) {
     printf("???");
     return;
   }
-  printf(l.msg);
+  printf("%s", l.msg);
   if (l.b && (ins & 0100000)) {
     printf("B");
   }

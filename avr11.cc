@@ -8,7 +8,6 @@
 #include "avr11.h"
 
 void setup() {
-
   struct termios old_terminal_settings, new_terminal_settings;
 
   // Get the current terminal settings
@@ -25,7 +24,6 @@ void setup() {
   // apply our new settings
   if (tcsetattr(0, TCSANOW, &new_terminal_settings) < 0)
     perror("tcsetattr ICANON");
-
   rk11::rkdata = fopen("rk0", "r+");
 
   printf("Reset\n");
