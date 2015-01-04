@@ -1122,7 +1122,7 @@ void step() {
     return;
   }
   if (instr == 0170011) {
-	// SETD ; not needed by UNIX, but used; therefore ignored
+    // SETD ; not needed by UNIX, but used; therefore ignored
     return;
   }
   printf("invalid instruction\n");
