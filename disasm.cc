@@ -3,17 +3,21 @@
 
 #include "avr11.h"
 
-char *rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
+const char *rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
 
 typedef struct {
   uint16_t inst;
   uint16_t arg;
-  char *msg;
+  const char *msg;
   uint8_t flag;
   bool b;
 } D;
 
 enum { DD = 1 << 1, S = 1 << 2, RR = 1 << 3, O = 1 << 4, N = 1 << 5 };
+
+namespace cpu {
+extern uint16_t R[8];
+};
 
 D disamtable[] = { { 0077700, 0005000, "CLR", DD, true },
                    { 0077700, 0005100, "COM", DD, true },

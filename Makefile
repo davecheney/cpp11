@@ -7,16 +7,13 @@ CFLAGS=-std=$(CSTD) $(COPT)
 CFLAGS+=$(addprefix -I,$(INCLUDES))
 CFLAGS+=-include "$(SETTINGS)"
 
-CXXSTD=gnu++98
+CXXSTD=c++11
 CXXOPT=$(COPT) -fno-exceptions -g
-CXXFLAGS=-std=$(CXXSTD) $(CXXOPT) -Wno-format-security -Wno-write-strings
+CXXFLAGS=-std=$(CXXSTD) $(CXXOPT) -Wno-format-security
 CXXFLAGS+=$(addprefix -I,$(INCLUDES))
 
-#LDFLAGS=-lc -t
 LD=clang
-#LD=arm-none-eabi-ld
-CXX=clang
-#CXX=arm-none-eabi-g++
+CXX=$(LD)
 
 avr11:	$(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^ 
