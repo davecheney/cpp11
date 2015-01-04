@@ -196,12 +196,15 @@ static void setZ(const bool b) {
 
 #define D(x) (x & 077)
 #define S(x) ((x & 07700) >> 6)
+#define L(x) (2 - (x >> 15))
+#define SA(x) (aget(S(x), L(x)))
+#define DA(x) (aget(D(x), L(x)))
 
 static void MOV(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t uval = memread(aget(S(instr), l), l);
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t da = DA(instr);
   PS &= 0xFFF1;
   if (uval & msb) {
     PS |= FLAGN;
@@ -221,7 +224,7 @@ static void CMP(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t val1 = memread(aget(S(instr), l), l);
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t da = DA(instr);
   const uint16_t val2 = memread(da, l);
   const int32_t sval = (val1 - val2) & max;
   PS &= 0xFFF0;
@@ -240,8 +243,8 @@ static void CMP(const uint16_t instr) {
 static void BIT(const uint16_t instr) {
   const uint8_t l = 2 - (instr >> 15);
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-  const uint16_t val1 = memread(aget(S(instr), l), l);
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t val1 = memread(SA(instr), l);
+  const uint16_t da = DA(instr);
   const uint16_t val2 = memread(da, l);
   const uint16_t uval = val1 & val2;
   PS &= 0xFFF1;
@@ -255,8 +258,8 @@ static void BIC(const uint16_t instr) {
   const uint8_t l = 2 - (instr >> 15);
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-  const uint16_t val1 = memread(aget(S(instr), l), l);
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t val1 = memread(SA(instr), l);
+  const uint16_t da = DA(instr);
   const uint16_t val2 = memread(da, l);
   const uint16_t uval = (max ^ val1) & val2;
   PS &= 0xFFF1;
@@ -270,8 +273,8 @@ static void BIC(const uint16_t instr) {
 static void BIS(const uint16_t instr) {
   const uint8_t l = 2 - (instr >> 15);
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-  const uint16_t val1 = memread(aget(S(instr), l), l);
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t val1 = memread(SA(instr), l);
+  const uint16_t da = DA(instr);
   const uint16_t val2 = memread(da, l);
   const uint16_t uval = val1 | val2;
   PS &= 0xFFF1;
@@ -321,8 +324,7 @@ static void SUB(const uint16_t instr) {
 }
 
 static void JSR(const uint16_t instr) {
-  const uint8_t l = 2 - (instr >> 15);
-  const uint16_t uval = aget(D(instr), l);
+  const uint16_t uval = DA(instr);
   if (isReg(uval)) {
     printf("JSR called on registeri\n");
     panic();
@@ -337,8 +339,7 @@ static void MUL(const uint16_t instr) {
   if (val1 & 0x8000) {
     val1 = -((0xFFFF ^ val1) + 1);
   }
-  uint8_t l = 2 - (instr >> 15);
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   int32_t val2 = memread16(da);
   if (val2 & 0x8000) {
     val2 = -((0xFFFF ^ val2) + 1);
@@ -358,8 +359,7 @@ static void MUL(const uint16_t instr) {
 
 static void DIV(const uint16_t instr) {
   const int32_t val1 = (R[S(instr) & 7] << 16) | (R[(S(instr) & 7) | 1]);
-  const uint8_t l = 2 - (instr >> 15);
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t da = DA(instr);
   const int32_t val2 = memread16(da);
   PS &= 0xFFF0;
   if (val2 == 0) {
@@ -475,7 +475,7 @@ static void CLR(const uint16_t instr) {
   const uint8_t l = 2 - (instr >> 15);
   PS &= 0xFFF0;
   PS |= FLAGZ;
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t da = DA(instr);
   memwrite(da, l, 0);
 }
 
@@ -483,7 +483,7 @@ static void COM(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   uint16_t uval = memread(da, l) ^ max;
   PS &= 0xFFF0;
   PS |= FLAGC;
@@ -498,7 +498,7 @@ static void INC(const uint16_t instr) {
   const uint8_t l = 2 - (instr >> 15);
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t da = DA(instr);
   const uint16_t uval = (memread(da, l) + 1) & max;
   PS &= 0xFFF1;
   if (uval & msb) {
@@ -513,7 +513,7 @@ static void _DEC(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t maxp = l == 2 ? 0x7FFF : 0x7f;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   uint16_t uval = (memread(da, l) - 1) & max;
   PS &= 0xFFF1;
   if (uval & msb) {
@@ -530,7 +530,7 @@ static void NEG(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   int32_t sval = (-memread(da, l)) & max;
   PS &= 0xFFF0;
   if (sval & msb) {
@@ -551,7 +551,7 @@ static void _ADC(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   uint16_t uval = memread(da, l);
   if (PS & FLAGC) {
     PS &= 0xFFF0;
@@ -579,7 +579,7 @@ static void SBC(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   int32_t sval = memread(da, l);
   if (PS & FLAGC) {
     PS &= 0xFFF0;
@@ -621,7 +621,7 @@ static void TST(const uint16_t instr) {
 static void ROR(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   int32_t max = l == 2 ? 0xFFFF : 0xff;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   int32_t sval = memread(da, l);
   if (PS & FLAGC) {
     sval |= max + 1;
@@ -646,7 +646,7 @@ static void ROL(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   int32_t max = l == 2 ? 0xFFFF : 0xff;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   int32_t sval = memread(da, l) << 1;
   if (PS & FLAGC) {
     sval |= 1;
@@ -669,7 +669,7 @@ static void ROL(const uint16_t instr) {
 static void ASR(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   uint16_t uval = memread(da, l);
   PS &= 0xFFF0;
   if (uval & 1) {
@@ -690,7 +690,7 @@ static void ASL(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   // TODO(dfc) doesn't need to be an sval
   int32_t sval = memread(da, l);
   PS &= 0xFFF0;
@@ -711,7 +711,7 @@ static void ASL(const uint16_t instr) {
 static void SXT(const uint16_t instr) {
   const uint8_t l = 2 - (instr >> 15);
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-  const uint16_t da = aget(D(instr), l);
+  const uint16_t da = DA(instr);
   if (PS & FLAGN) {
     memwrite(da, l, max);
   } else {
@@ -731,7 +731,7 @@ static void JMP(const uint16_t instr) {
 
 static void SWAB(const uint16_t instr) {
   uint8_t l = 2 - (instr >> 15);
-  uint16_t da = aget(D(instr), l);
+  uint16_t da = DA(instr);
   uint16_t uval = memread(da, l);
   uval = ((uval >> 8) | (uval << 8)) & 0xFFFF;
   PS &= 0xFFF0;
