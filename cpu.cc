@@ -874,7 +874,7 @@ static void EMTX(uint16_t instr) {
   }
 }
 
-static void _RTT(uint16_t instr) {
+static void _RTT() {
   R[7] = pop();
   uint16_t uval = pop();
   if (curuser) {
@@ -884,7 +884,7 @@ static void _RTT(uint16_t instr) {
   unibus::write16(0777776, uval);
 }
 
-static void RESET(uint16_t instr) {
+static void RESET() {
   if (curuser) {
     return;
   }
@@ -1114,14 +1114,14 @@ void step() {
   case 02: // RTI
 
   case 06: // RTT
-    _RTT(instr);
+    _RTT();
     return;
   case 05: // RESET
-    RESET(instr);
+    RESET();
     return;
   }
-  if (instr ==
-      0170011) { // SETD ; not needed by UNIX, but used; therefore ignored
+  if (instr == 0170011) {
+	// SETD ; not needed by UNIX, but used; therefore ignored
     return;
   }
   printf("invalid instruction\n");

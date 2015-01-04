@@ -31,7 +31,7 @@ void write8(const uint32_t a, const uint16_t v) {
 
 void write16(uint32_t a, uint16_t v) {
   if (a % 1) {
-    printf("unibus: write16 to odd address %x\n", a);
+    printf("unibus: write16 to odd address %06o\n", a);
     trap(INTBUS);
   }
   if (a < 0760000) {
@@ -83,13 +83,13 @@ void write16(uint32_t a, uint16_t v) {
     mmu::write16(a, v);
     return;
   }
-  printf("unibus: write to invalid address %x\n", a);
+  printf("unibus: write to invalid address %06o\n", a);
   trap(INTBUS);
 }
 
 uint16_t read16(uint32_t a) {
   if (a & 1) {
-    printf("unibus: read16 from odd address %x\n", a);
+    printf("unibus: read16 from odd address %06o\n", a);
     trap(INTBUS);
   }
   if (a < 0760000) {
@@ -128,7 +128,7 @@ uint16_t read16(uint32_t a) {
     return mmu::read16(a);
   }
 
-  printf("unibus: read from invalid address %x\n", a);
+  printf("unibus: read from invalid address %06o\n", a);
   return trap(INTBUS);
 }
 };
