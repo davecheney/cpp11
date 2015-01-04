@@ -366,7 +366,7 @@ static void MUL(const uint16_t instr) {
     PS |= FLAGN;
   }
   setZ((sval & 0xFFFFFFFF) == 0);
-  if ((sval < (1 << 15)) || (sval >= ((1 << 15) - 1))) {
+  if ((sval < (1 << 15)) || (sval >= ((1L << 15) - 1))) {
     PS |= FLAGC;
   }
 }

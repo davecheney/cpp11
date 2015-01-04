@@ -1,30 +1,15 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <termios.h>
 #include <string.h>
 #include <setjmp.h>
 
 #include "avr11.h"
 
+void uart_init(void);
+
 void setup() {
-  struct termios old_terminal_settings, new_terminal_settings;
-
-  // Get the current terminal settings
-  if (tcgetattr(0, &old_terminal_settings) < 0)
-    perror("tcgetattr()");
-
-  memcpy(&new_terminal_settings, &old_terminal_settings,
-         sizeof(struct termios));
-
-  // disable canonical mode processing in the line discipline driver
-  new_terminal_settings.c_lflag &= ~ICANON;
-  new_terminal_settings.c_lflag &= ~ECHO;
-
-  // apply our new settings
-  if (tcsetattr(0, TCSANOW, &new_terminal_settings) < 0)
-    perror("tcsetattr ICANON");
-  rk11::rkdata = fopen("rk0", "r+");
+  uart_init();
 
   printf("Reset\n");
   cpu::reset();

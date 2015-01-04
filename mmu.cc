@@ -1,4 +1,3 @@
-#include <stdint.h>
 #include <stdio.h>
 
 #include "avr11.h"
@@ -78,7 +77,7 @@ uint32_t decode(uint16_t a, uint8_t w, uint8_t user) {
   aa <<= 6;
   aa += disp;
   if (DEBUG_MMU) {
-    printf("decode: slow %06o -> %06o\n", a, aa);
+    printf("decode: slow %06o -> %06lo\n", a, aa);
   }
 
   return aa;
@@ -97,7 +96,7 @@ uint16_t read16(uint32_t a) {
   if ((a >= 0777640) && (a < 0777660)) {
     return pages[((a & 017) >> 1) + 8].par;
   }
-  printf("mmu::read16 invalid read from %06o\n", a);
+  printf("mmu::read16 invalid read from %06lo\n", a);
   return trap(INTBUS);
 }
 
@@ -119,7 +118,7 @@ void write16(uint32_t a, uint16_t v) {
     pages[i + 8].par = v;
     return;
   }
-  printf("mmu::write16 write to invalid address %06o\n", a);
+  printf("mmu::write16 write to invalid address %06lo\n", a);
   trap(INTBUS);
 }
 };

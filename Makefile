@@ -7,7 +7,7 @@ PROGRAMMER = arduino
 PORT = /dev/ttyUSB0
 
 SRCS = $(wildcard *.cc)
-OBJS = $(SRCS:.c=.o)
+OBJS = $(SRCS:.cc=.o)
 
 TARGET = avr11
 

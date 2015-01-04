@@ -1,7 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
-#include <sys/select.h>
-#include <unistd.h>
+#include <avr/io.h>
 
 #include "avr11.h"
 
@@ -41,17 +40,8 @@ void addchar(char c) {
 
 uint8_t count;
 
-int is_key_pressed(void) {
-  struct timeval tv;
-  fd_set fds;
-  tv.tv_sec = 0;
-  tv.tv_usec = 0;
-
-  FD_ZERO(&fds);
-  FD_SET(STDIN_FILENO, &fds);
-
-  select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
-  return FD_ISSET(STDIN_FILENO, &fds);
+uint8_t is_key_pressed(void) {
+	return UCSR0A & _BV(RXC0);
 }
 
 void poll() {
@@ -60,7 +50,7 @@ void poll() {
 
   if ((TPS & 0x80) == 0) {
     if (++count > 32) {
-      fputc(TPB & 0x7f, stderr);
+      putchar(TPB & 0x7f);
       TPS |= 0x80;
       if (TPS & (1 << 6)) {
         cpu::interrupt(INTTTYOUT, 4);
@@ -88,7 +78,7 @@ uint16_t read16(uint32_t a) {
   case 0777566:
     return 0;
   default:
-    printf("consread16: read from invalid address %06o\n", a);
+    printf("consread16: read from invalid address %06lo\n", a);
     panic();
     return 0;
   }
@@ -116,7 +106,7 @@ void write16(uint32_t a, uint16_t v) {
     count = 0;
     break;
   default:
-    printf("conswrite16: write to invalid address %06o\n", a);
+    printf("conswrite16: write to invalid address %06lo\n", a);
     panic();
   }
 }

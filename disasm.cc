@@ -1,14 +1,13 @@
-#include <stdint.h>
 #include <stdio.h>
 
 #include "avr11.h"
 
-char *rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
+const char* rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
 
 typedef struct {
   uint16_t inst;
   uint16_t arg;
-  char *msg;
+  const char* msg;
   uint8_t flag;
   bool b;
 } D;
@@ -85,10 +84,10 @@ void disasmaddr(uint16_t m, uint32_t a) {
       return;
     case 067:
       a += 2;
-      printf("*%06o", (a + 2 + (unibus::read16(a))) & 0xFFFF);
+      printf("*%06lo", (a + 2 + (unibus::read16(a))) & 0xFFFF);
       return;
     case 077:
-      printf("**%06o", (a + 2 + (unibus::read16(a))) & 0xFFFF);
+      printf("**%06lo", (a + 2 + (unibus::read16(a))) & 0xFFFF);
       return;
     }
   }

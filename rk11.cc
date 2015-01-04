@@ -1,6 +1,5 @@
 #include <stdint.h>
 #include <stdio.h>
-
 #include "avr11.h"
 
 namespace rk11 {
@@ -41,7 +40,7 @@ void rkready() {
   RKCS |= 1 << 7;
 }
 
-void rkerror(uint16_t e) {
+void rkerror(int16_t e) {
 	printf("rk11: error %06o\n", e);
 }
 
@@ -58,13 +57,13 @@ again:
     w = false;
     break;
   default:
-    printf("unimplemented RK05 operation %06o\n", ((RKCS & 017) >> 1));
+    printf("unimplemented RK05 operation %06lo\n", ((RKCS & 017) >> 1));
     panic();
     return; // unreached
   }
 
   if (DEBUG_RK05) {
-    printf("rkstep: RKBA: %06o RKWC: %06o cylinder: %03o sector: %03o write: %s\n",
+    printf("rkstep: RKBA: %06lo RKWC: %06lo cylinder: %03lo sector: %03lo write: %s\n",
            RKBA, RKWC, cylinder, sector, w ? "true" : "false");
   }
 
@@ -78,11 +77,11 @@ again:
     rkerror(RKNXS);
   }
 
-  uint32_t pos = (cylinder * 24 + surface * 12 + sector) * 512;
+  /*uint32_t pos = (cylinder * 24 + surface * 12 + sector) * 512;
   if (fseek(rkdata, pos, SEEK_SET)) {
     printf("rkstep: failed to seek\n");
     panic();
-  }
+  }*/
 
   uint16_t i;
   uint16_t val;
@@ -142,7 +141,7 @@ void write16(uint32_t a, uint16_t v) {
         step();
         break;
       default:
-        printf("unimplemented RK05 operation %06o", ((RKCS & 017) >> 1));
+        printf("unimplemented RK05 operation %06lo", ((RKCS & 017) >> 1));
         panic();
       }
     }

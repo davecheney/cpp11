@@ -12,7 +12,7 @@ enum {
 };
 
 enum {
-  PRINTSTATE = false,
+  PRINTSTATE = true,
   INSTR_TIMING = true,
   DEBUG_INTER = false,
   DEBUG_RK05 = false,
@@ -27,7 +27,7 @@ void disasm(uint32_t ia);
 uint16_t trap(uint16_t num);
 
 enum {
-	MEMSIZE = 1<<18
+	MEMSIZE = 12000
 };
 
 namespace unibus {
