@@ -415,7 +415,7 @@ static void ASH(const uint16_t instr) {
 }
 
 static void ASHC(const uint16_t instr) {
-  const uint16_t val1 = R[S(instr) & 7] << 16 | R[(S(instr) & 7) | 1];
+  const uint32_t val1 = R[S(instr) & 7] << 16 | R[(S(instr) & 7) | 1];
   const uint16_t da = aget(D(instr), 2);
   uint16_t val2 = memread16(da) & 077;
   PS &= 0xFFF0;
