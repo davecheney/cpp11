@@ -2,12 +2,12 @@
 
 #include "avr11.h"
 
-const char* rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
+const char *rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
 
 typedef struct {
   uint16_t inst;
   uint16_t arg;
-  const char* msg;
+  const char *msg;
   uint8_t flag;
   bool b;
 } D;

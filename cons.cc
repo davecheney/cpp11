@@ -40,9 +40,7 @@ void addchar(char c) {
 
 uint8_t count;
 
-uint8_t is_key_pressed(void) {
-	return UCSR0A & _BV(RXC0);
-}
+uint8_t is_key_pressed(void) { return UCSR0A & _BV(RXC0); }
 
 void poll() {
   if (is_key_pressed())
