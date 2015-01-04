@@ -41,9 +41,7 @@ void rkready() {
   RKCS |= 1 << 7;
 }
 
-void rkerror(uint16_t e) {
-	printf("rk11: error %06o\n", e);
-}
+void rkerror(uint16_t e) { printf("rk11: error %06o\n", e); }
 
 void step() {
 again:
@@ -64,8 +62,9 @@ again:
   }
 
   if (DEBUG_RK05) {
-    printf("rkstep: RKBA: %06o RKWC: %06o cylinder: %03o sector: %03o write: %s\n",
-           RKBA, RKWC, cylinder, sector, w ? "true" : "false");
+    printf(
+        "rkstep: RKBA: %06o RKWC: %06o cylinder: %03o sector: %03o write: %s\n",
+        RKBA, RKWC, cylinder, sector, w ? "true" : "false");
   }
 
   if (drive != 0) {
