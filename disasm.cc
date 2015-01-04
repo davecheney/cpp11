@@ -15,7 +15,11 @@ typedef struct {
 
 enum { DD = 1 << 1, S = 1 << 2, RR = 1 << 3, O = 1 << 4, N = 1 << 5 };
 
-const D disamtable[] = { { 0077700, 0005000, "CLR", DD, true },
+namespace cpu {
+extern uint16_t R[8];
+};
+
+D disamtable[] = { { 0077700, 0005000, "CLR", DD, true },
                    { 0077700, 0005100, "COM", DD, true },
                    { 0077700, 0005200, "INC", DD, true },
                    { 0077700, 0005300, "DEC", DD, true },
