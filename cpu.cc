@@ -83,7 +83,7 @@ static void memwrite16(const uint16_t a, const uint16_t v) {
   }
 }
 
-template<uint8_t l> inline void wr(uint16_t a, uint16_t v) { 
+template<uint8_t l> void memwrite(uint16_t a, uint16_t v) { 
   if (isReg(a)) {
     const uint8_t r = a & 7;
     if (l == 2) {
@@ -99,14 +99,6 @@ template<uint8_t l> inline void wr(uint16_t a, uint16_t v) {
   } else {
     write8(a, v);
   }
-}
-
-static void memwrite(uint16_t a, uint8_t l, uint16_t v) {
-	if (l==2) {
-		wr<2>(a, v);
-	} else {
-		wr<1>(a, v);
-	}
 }
 
 inline uint16_t fetch16() {
@@ -217,10 +209,10 @@ template<uint8_t l> void MOV(const uint16_t instr) {
     if (uval & msb) {
       uval |= 0xFF00;
     }
-    wr<2>(da, uval);
+    memwrite<2>(da, uval);
     return;
   }
-  wr<l>(da, uval);
+  memwrite<l>(da, uval);
 }
 
 template<uint8_t l> void CMP(const uint16_t instr) {
@@ -268,7 +260,7 @@ template<uint8_t l> void BIC(const uint16_t instr) {
   if (uval & msb) {
     PS |= FLAGN;
   }
-  memwrite(da, l, uval);
+  memwrite<l>(da, uval);
 }
 
 template<uint8_t l> void BIS(const uint16_t instr) {
@@ -282,7 +274,7 @@ template<uint8_t l> void BIS(const uint16_t instr) {
   if (uval & msb) {
     PS |= FLAGN;
   }
-  memwrite(da, l, uval);
+  memwrite<l>(da, uval);
 }
 
 static void ADD(const uint16_t instr) {
@@ -475,7 +467,7 @@ template<uint8_t l> void CLR(const uint16_t instr) {
   PS &= 0xFFF0;
   PS |= FLAGZ;
   const uint16_t da = DA(instr);
-  memwrite(da, l, 0);
+  memwrite<l>(da, 0);
 }
 
 template<uint8_t l> void COM(const uint16_t instr) {
@@ -489,7 +481,7 @@ template<uint8_t l> void COM(const uint16_t instr) {
     PS |= FLAGN;
   }
   setZ(uval == 0);
-  memwrite(da, l, uval);
+  memwrite<l>(da, uval);
 }
 
 template<uint8_t l> void INC(const uint16_t instr) {
@@ -502,7 +494,7 @@ template<uint8_t l> void INC(const uint16_t instr) {
     PS |= FLAGN | FLAGV;
   }
   setZ(uval == 0);
-  memwrite(da, l, uval);
+  memwrite<l>(da, uval);
 }
 
 template<uint8_t l> void _DEC(const uint16_t instr) {
@@ -519,7 +511,7 @@ template<uint8_t l> void _DEC(const uint16_t instr) {
     PS |= FLAGV;
   }
   setZ(uval == 0);
-  memwrite(da, l, uval);
+  memwrite<l>(da, uval);
 }
 
 template<uint8_t l> void NEG(const uint16_t instr) {
@@ -539,7 +531,7 @@ template<uint8_t l> void NEG(const uint16_t instr) {
   if (sval == 0x8000) {
     PS |= FLAGV;
   }
-  memwrite(da, l, sval);
+  memwrite<l>(da, sval);
 }
 
 template<uint8_t l> void _ADC(const uint16_t instr) {
@@ -559,7 +551,7 @@ template<uint8_t l> void _ADC(const uint16_t instr) {
     if (uval == 0177777) {
       PS |= FLAGC;
     }
-    memwrite(da, l, (uval + 1) & max);
+    memwrite<l>(da, (uval + 1) & max);
   } else {
     PS &= 0xFFF0;
     if (uval & msb) {
@@ -586,7 +578,7 @@ template<uint8_t l> void SBC(const uint16_t instr) {
     if (sval == 0100000) {
       PS |= FLAGV;
     }
-    memwrite(da, l, (sval - 1) & max);
+    memwrite<l>(da, (sval - 1) & max);
   } else {
     PS &= 0xFFF0;
     if (sval & msb) {
@@ -630,7 +622,7 @@ template<uint8_t l> void ROR(const uint16_t instr) {
     PS |= FLAGV;
   }
   sval >>= 1;
-  memwrite(da, l, sval);
+  memwrite<l>(da, sval);
 }
 
 template<uint8_t l> void ROL(const uint16_t instr) {
@@ -653,7 +645,7 @@ template<uint8_t l> void ROL(const uint16_t instr) {
     PS |= FLAGV;
   }
   sval &= max;
-  memwrite(da, l, sval);
+  memwrite<l>(da, sval);
 }
 
 template<uint8_t l> void ASR(const uint16_t instr) {
@@ -672,7 +664,7 @@ template<uint8_t l> void ASR(const uint16_t instr) {
   }
   uval = (uval & msb) | (uval >> 1);
   setZ(uval == 0);
-  memwrite(da, l, uval);
+  memwrite<l>(da, uval);
 }
 
 template<uint8_t l> void ASL(const uint16_t instr) {
@@ -693,17 +685,17 @@ template<uint8_t l> void ASL(const uint16_t instr) {
   }
   sval = (sval << 1) & max;
   setZ(sval == 0);
-  memwrite(da, l, sval);
+  memwrite<l>(da, sval);
 }
 
 template<uint8_t l> void SXT(const uint16_t instr) {
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t da = DA(instr);
   if (PS & FLAGN) {
-    memwrite(da, l, max);
+    memwrite<l>(da, max);
   } else {
     PS |= FLAGZ;
-    memwrite(da, l, 0);
+    memwrite<l>(da, 0);
   }
 }
 
@@ -725,7 +717,7 @@ template<uint8_t l> void SWAB(const uint16_t instr) {
   if (uval & 0x80) {
     PS |= FLAGN;
   }
-  memwrite(da, l, uval);
+  memwrite<l>(da, uval);
 }
 
 static void MARK(const uint16_t instr) {
