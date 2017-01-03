@@ -75,14 +75,6 @@ static uint16_t memread(uint16_t a, uint8_t l) {
   return read8(a);
 }
 
-static void memwrite16(const uint16_t a, const uint16_t v) {
-  if (isReg(a)) {
-    R[a & 7] = v;
-  } else {
-    access<1>(a, v);
-  }
-}
-
 template<uint8_t l> void memwrite(uint16_t a, uint16_t v) { 
   if (isReg(a)) {
     const uint8_t r = a & 7;
@@ -293,7 +285,7 @@ static void ADD(const uint16_t instr) {
   if ((val1 + val2) >= 0xFFFF) {
     PS |= FLAGC;
   }
-  memwrite16(da, uval);
+  memwrite<2>(da, uval);
 }
 
 static void SUB(const uint16_t instr) {
@@ -312,7 +304,7 @@ static void SUB(const uint16_t instr) {
   if (val1 > val2) {
     PS |= FLAGC;
   }
-  memwrite16(da, uval);
+  memwrite<2>(da, uval);
 }
 
 static void JSR(const uint16_t instr) {
@@ -450,7 +442,7 @@ static void XOR(const uint16_t instr) {
   if (uval & 0x8000) {
     PS |= FLAGN;
   }
-  memwrite16(da, uval);
+  memwrite<2>(da, uval);
 }
 
 static void SOB(const uint16_t instr) {
