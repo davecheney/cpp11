@@ -2,7 +2,7 @@ SRCS=$(wildcard *.cc)
 OBJECTS=$(SRCS:.cc=.o)
 
 CSTD=gnu99
-COPT=-O2 -fdata-sections -ffunction-sections -Wall -Werror -Wextra
+COPT=-O3 -g -fdata-sections -ffunction-sections -Wall -Werror -Wextra
 CFLAGS=-std=$(CSTD) $(COPT) 
 CFLAGS+=$(addprefix -I,$(INCLUDES))
 CFLAGS+=-include "$(SETTINGS)"
