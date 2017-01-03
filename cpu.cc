@@ -471,8 +471,7 @@ static void SOB(const uint16_t instr) {
   }
 }
 
-static void CLR(const uint16_t instr) {
-  const uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void CLR(const uint16_t instr) {
   PS &= 0xFFF0;
   PS |= FLAGZ;
   const uint16_t da = DA(instr);
@@ -570,8 +569,7 @@ template<uint8_t l> void _ADC(const uint16_t instr) {
   }
 }
 
-static void SBC(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void SBC(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -602,8 +600,7 @@ static void SBC(const uint16_t instr) {
   }
 }
 
-static void TST(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void TST(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t uval = memread(aget(D(instr), l), l);
   PS &= 0xFFF0;
@@ -613,8 +610,7 @@ static void TST(const uint16_t instr) {
   setZ(uval == 0);
 }
 
-static void ROR(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void ROR(const uint16_t instr) {
   int32_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
   int32_t sval = memread(da, l);
@@ -679,8 +675,7 @@ template<uint8_t l> void ASR(const uint16_t instr) {
   memwrite(da, l, uval);
 }
 
-static void ASL(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void ASL(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -701,8 +696,7 @@ static void ASL(const uint16_t instr) {
   memwrite(da, l, sval);
 }
 
-static void SXT(const uint16_t instr) {
-  const uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void SXT(const uint16_t instr) {
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t da = DA(instr);
   if (PS & FLAGN) {
@@ -722,8 +716,7 @@ static void JMP(const uint16_t instr) {
   R[7] = uval;
 }
 
-static void SWAB(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void SWAB(const uint16_t instr) {
   uint16_t da = DA(instr);
   uint16_t uval = memread(da, l);
   uval = ((uval >> 8) | (uval << 8)) & 0xFFFF;
@@ -910,8 +903,10 @@ void step() {
     SOB(instr);
     return;
   case 0005000 ... 0005077: // CLR
+    CLR<2>(instr);
+    return;
   case 0105000 ... 0105077: // CLRB
-    CLR(instr);
+    CLR<1>(instr);
     return;
   case 0005100 ... 0005177: // COM
     COM<2>(instr);
@@ -944,16 +939,22 @@ void step() {
     _ADC<1>(instr);
     return;
   case 0005600 ... 0005677: // SBC
+    SBC<2>(instr);
+    return;
   case 0105600 ... 0105677: // SBCB
-    SBC(instr);
+    SBC<1>(instr);
     return;
   case 0005700 ... 0005777: // TST
+    TST<2>(instr);
+    return;
   case 0105700 ... 0105777: // TSTB
-    TST(instr);
+    TST<1>(instr);
     return;
   case 0006000 ... 0006077: // ROR
+    ROR<2>(instr);
+    return;
   case 0106000 ... 0106077: // RORB
-    ROR(instr);
+    ROR<1>(instr);
     return;
   case 0006100 ... 0006177: // ROL
     ROL<2>(instr);
@@ -968,17 +969,19 @@ void step() {
     ASR<1>(instr);
     return;
   case 0006300 ... 0006377: // ASL
+    ASL<2>(instr);
+    return;
   case 0106300 ... 0106377: // ASLB
-    ASL(instr);
+    ASL<1>(instr);
     return;
   case 0006700 ... 0006777: // SXT
-    SXT(instr);
+    SXT<2>(instr);
     return;
   case 0000100 ... 0000177: // JMP
     JMP(instr);
     return;
   case 0000300 ... 0000377: // SWAB
-    SWAB(instr);
+    SWAB<2>(instr);
     return;
   case 0006400 ... 0006477: // MARK
     MARK(instr);
