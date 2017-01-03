@@ -40,7 +40,7 @@ static bool V() { return PS & FLAGV; }
 static bool C() { return PS & FLAGC; }
 
 template <bool wr> inline uint16_t access(uint16_t addr, uint16_t v = 0) {
-  return unibus::access<wr>(mmu::decode(addr, false, curuser), v);
+  return unibus::access<wr>(mmu::decode(addr, wr, curuser), v);
 }
 
 static inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }

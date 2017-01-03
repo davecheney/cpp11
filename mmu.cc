@@ -5,16 +5,11 @@
 
 namespace mmu {
 
-class page {
-public:
-  uint16_t par, pdr;
-
-  uint16_t addr() { return par & 07777; }
-  uint8_t len() { return (pdr >> 8) & 0x7f; }
-  bool read() { return pdr & 2; }
-  bool write() { return pdr & 6; };
-  bool ed() { return pdr & 8; }
-};
+  uint16_t page::addr() { return par & 07777; }
+  uint8_t page::len() { return (pdr >> 8) & 0x7f; }
+  bool page::read() { return pdr & 2; }
+  bool page::write() { return pdr & 6; };
+  bool page::ed() { return pdr & 8; }
 
 page pages[16];
 uint16_t SR0, SR2;
