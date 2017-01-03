@@ -14,9 +14,11 @@ CXXFLAGS+=$(addprefix -I,$(INCLUDES))
 
 LD=clang
 CXX=$(LD)
+SIZE=size
 
 avr11:	$(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^ 
+	$(SIZE) $@
 
 %.o: %.cc avr11.h
 	$(CXX) $(CXXFLAGS) $<   -c -o $@

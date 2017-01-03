@@ -83,7 +83,7 @@ static void memwrite16(const uint16_t a, const uint16_t v) {
   }
 }
 
-static void memwrite(const uint16_t a, const uint8_t l, const uint16_t v) {
+template<uint8_t l> inline void wr(uint16_t a, uint16_t v) { 
   if (isReg(a)) {
     const uint8_t r = a & 7;
     if (l == 2) {
@@ -99,6 +99,14 @@ static void memwrite(const uint16_t a, const uint8_t l, const uint16_t v) {
   } else {
     write8(a, v);
   }
+}
+
+static void memwrite(uint16_t a, uint8_t l, uint16_t v) {
+	if (l==2) {
+		wr<2>(a, v);
+	} else {
+		wr<1>(a, v);
+	}
 }
 
 inline uint16_t fetch16() {
@@ -209,10 +217,10 @@ template<uint8_t l> void MOV(const uint16_t instr) {
     if (uval & msb) {
       uval |= 0xFF00;
     }
-    memwrite(da, 2, uval);
+    wr<2>(da, uval);
     return;
   }
-  memwrite(da, l, uval);
+  wr<l>(da, uval);
 }
 
 template<uint8_t l> void CMP(const uint16_t instr) {
@@ -471,8 +479,7 @@ static void CLR(const uint16_t instr) {
   memwrite(da, l, 0);
 }
 
-static void COM(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void COM(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -486,8 +493,7 @@ static void COM(const uint16_t instr) {
   memwrite(da, l, uval);
 }
 
-static void INC(const uint16_t instr) {
-  const uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void INC(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t da = DA(instr);
@@ -500,8 +506,7 @@ static void INC(const uint16_t instr) {
   memwrite(da, l, uval);
 }
 
-static void _DEC(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void _DEC(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t maxp = l == 2 ? 0x7FFF : 0x7f;
@@ -518,8 +523,7 @@ static void _DEC(const uint16_t instr) {
   memwrite(da, l, uval);
 }
 
-static void NEG(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void NEG(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -539,8 +543,7 @@ static void NEG(const uint16_t instr) {
   memwrite(da, l, sval);
 }
 
-static void _ADC(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void _ADC(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -634,8 +637,7 @@ static void ROR(const uint16_t instr) {
   memwrite(da, l, sval);
 }
 
-static void ROL(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void ROL(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   int32_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -658,8 +660,7 @@ static void ROL(const uint16_t instr) {
   memwrite(da, l, sval);
 }
 
-static void ASR(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void ASR(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t da = DA(instr);
   uint16_t uval = memread(da, l);
@@ -908,66 +909,87 @@ void step() {
   case 0077000 ... 0077777: // SOB
     SOB(instr);
     return;
-  }
-  switch ((instr >> 6) & 00777) {
-  case 00050: // CLR
+  case 0005000 ... 0005077: // CLR
+  case 0105000 ... 0105077: // CLRB
     CLR(instr);
     return;
-  case 00051: // COM
-    COM(instr);
+  case 0005100 ... 0005177: // COM
+    COM<2>(instr);
     return;
-  case 00052: // INC
-    INC(instr);
+  case 0105100 ... 0105177: // COMB
+    COM<1>(instr);
     return;
-  case 00053: // DEC
-    _DEC(instr);
+  case 0005200 ... 0005277: // INC
+    INC<2>(instr);
     return;
-  case 00054: // NEG
-    NEG(instr);
+  case 0105200 ... 0105277: // INCB
+    INC<1>(instr);
     return;
-  case 00055: // ADC
-    _ADC(instr);
+  case 0005300 ... 0005377: // DEC
+    _DEC<2>(instr);
     return;
-  case 00056: // SBC
+  case 0105300 ... 0105377: // DECB
+    _DEC<1>(instr);
+    return;
+  case 0005400 ... 0005477: // NEG
+    NEG<2>(instr);
+    return;
+  case 0105400 ... 0105477: // NEGB
+    NEG<1>(instr);
+    return;
+  case 0005500 ... 0005577: // ADC
+    _ADC<2>(instr);
+    return;
+  case 0105500 ... 0105577: // ADCB
+    _ADC<1>(instr);
+    return;
+  case 0005600 ... 0005677: // SBC
+  case 0105600 ... 0105677: // SBCB
     SBC(instr);
     return;
-  case 00057: // TST
+  case 0005700 ... 0005777: // TST
+  case 0105700 ... 0105777: // TSTB
     TST(instr);
     return;
-  case 00060: // ROR
+  case 0006000 ... 0006077: // ROR
+  case 0106000 ... 0106077: // RORB
     ROR(instr);
     return;
-  case 00061: // ROL
-    ROL(instr);
+  case 0006100 ... 0006177: // ROL
+    ROL<2>(instr);
     return;
-  case 00062: // ASR
-    ASR(instr);
+  case 0106100 ... 0106177: // ROLB
+    ROL<1>(instr);
     return;
-  case 00063: // ASL
+  case 0006200 ... 0006277: // ASR
+    ASR<2>(instr);
+    return;
+  case 0106200 ... 0106277: // ASRB
+    ASR<1>(instr);
+    return;
+  case 0006300 ... 0006377: // ASL
+  case 0106300 ... 0106377: // ASLB
     ASL(instr);
     return;
-  case 00067: // SXT
+  case 0006700 ... 0006777: // SXT
     SXT(instr);
     return;
-  }
-  switch (instr & 0177700) {
-  case 0000100: // JMP
+  case 0000100 ... 0000177: // JMP
     JMP(instr);
     return;
-  case 0000300: // SWAB
+  case 0000300 ... 0000377: // SWAB
     SWAB(instr);
     return;
-  case 0006400: // MARK
+  case 0006400 ... 0006477: // MARK
     MARK(instr);
     break;
-  case 0006500: // MFPI
+  case 0006500 ... 0006577: // MFPI
     MFPI(instr);
     return;
-  case 0006600: // MTPI
+  case 0006600 ... 0006677: // MTPI
     MTPI(instr);
     return;
-  }
-  if ((instr & 0177770) == 0000200) { // RTS
+  case 0000200 ... 0000207: // RTS
     RTS(instr);
     return;
   }
