@@ -190,8 +190,6 @@ void printstate() {
          cpu::PS & FLAGV ? "V" : " ", cpu::PS & FLAGC ? "C" : " ");
   printf("]  instr %06o: %06o\t ", cpu::PC,
          unibus::read16(mmu::decode(cpu::PC, false, cpu::curuser)));
-#ifdef __AVR_ATmega2560__
   disasm(mmu::decode(cpu::PC, false, cpu::curuser));
-  Serial.println("");
-#endif
+  printf("\n");
 }

@@ -24,7 +24,7 @@ void reset(void) {
   LKS = 1 << 7;
   uint16_t i;
   for (i = 0; i < 29; i++) {
-    unibus::write16(02000 + (i * 2), bootrom[i]);
+    unibus::access<1>(02000 + (i * 2), bootrom[i]);
   }
   R[7] = 002002;
   cons::clearterminal();
@@ -43,16 +43,12 @@ static uint16_t read8(const uint16_t a) {
   return unibus::read8(mmu::decode(a, false, curuser));
 }
 
-static uint16_t read16(const uint16_t a) {
-  return unibus::read16(mmu::decode(a, false, curuser));
+template<bool wr> inline uint16_t access(uint16_t addr, uint16_t v = 0) {
+	return unibus::access<wr>(mmu::decode(addr, false, curuser), v);
 }
 
 static void write8(const uint16_t a, const uint16_t v) {
   unibus::write8(mmu::decode(a, true, curuser), v);
-}
-
-static void write16(const uint16_t a, const uint16_t v) {
-  unibus::write16(mmu::decode(a, true, curuser), v);
 }
 
 static bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
@@ -61,7 +57,7 @@ static uint16_t memread16(const uint16_t a) {
   if (isReg(a)) {
     return R[a & 7];
   }
-  return read16(a);
+  return access<0>(a);
 }
 
 static uint16_t memread(uint16_t a, uint8_t l) {
@@ -74,7 +70,7 @@ static uint16_t memread(uint16_t a, uint8_t l) {
     }
   }
   if (l == 2) {
-    return read16(a);
+    return access<0>(a);
   }
   return read8(a);
 }
@@ -83,7 +79,7 @@ static void memwrite16(const uint16_t a, const uint16_t v) {
   if (isReg(a)) {
     R[a & 7] = v;
   } else {
-    write16(a, v);
+    access<1>(a, v);
   }
 }
 
@@ -99,25 +95,25 @@ static void memwrite(const uint16_t a, const uint8_t l, const uint16_t v) {
     return;
   }
   if (l == 2) {
-    write16(a, v);
+    access<1>(a, v);
   } else {
     write8(a, v);
   }
 }
 
-static uint16_t fetch16() {
-  const uint16_t val = read16(R[7]);
+inline uint16_t fetch16() {
+  const uint16_t val = access<0>(R[7]);
   R[7] += 2;
   return val;
 }
 
-static void push(const uint16_t v) {
+inline void push(const uint16_t v) {
   R[6] -= 2;
-  write16(R[6], v);
+  access<1>(R[6], v);
 }
 
-static uint16_t pop() {
-  const uint16_t val = read16(R[6]);
+inline uint16_t pop() {
+  const uint16_t val = access<0>(R[6]);
   R[6] += 2;
   return val;
 }
@@ -154,7 +150,7 @@ static uint16_t aget(uint8_t v, uint8_t l) {
     break;
   }
   if (v & 010) {
-    addr = read16(addr);
+    addr = access<0>(addr);
   }
   return addr;
 }
@@ -852,57 +848,58 @@ static void RESET() {
 
 void step() {
   PC = R[7];
-  uint16_t instr = unibus::read16(mmu::decode(PC, false, curuser));
+  uint16_t instr = access<0>(PC);
   R[7] += 2;
 
   if (PRINTSTATE)
     printstate();
 
-  switch ((instr >> 12) & 007) {
-  case 001: // MOV
+  switch (instr) {
+  case 0010000 ... 0017777: // MOVB
+  case 0110000 ... 0117777: // MOV
     MOV(instr);
     return;
-  case 002: // CMP
+  case 0020000 ... 0027777: // CMP
+  case 0120000 ... 0127777: // CMP
     CMP(instr);
     return;
-  case 003: // BIT
+  case 0030000 ... 0037777: // BIT
+  case 0130000 ... 0137777: // BIT
     BIT(instr);
     return;
-  case 004: // BIC
+  case 0040000 ... 0047777: // BIC
+  case 0140000 ... 0147777: // BIC
     BIC(instr);
     return;
-  case 005: // BIS
+  case 0050000 ... 0057777: // BIS
+  case 0150000 ... 0157777: // BIS
     BIS(instr);
     return;
-  }
-  switch ((instr >> 12) & 017) {
-  case 006: // ADD
+  case 0060000 ... 0067777: // ADD
     ADD(instr);
     return;
-  case 016: // SUB
+  case 0160000 ... 0167777: // SUB
     SUB(instr);
     return;
-  }
-  switch ((instr >> 9) & 0177) {
-  case 0004: // JSR
+  case 0004000 ... 0004777: // JSR
     JSR(instr);
     return;
-  case 0070: // MUL
+  case 0070000 ... 0070777: // MUL
     MUL(instr);
     return;
-  case 0071: // DIV
+  case 0071000 ... 0071777: // DIV
     DIV(instr);
     return;
-  case 0072: // ASH
+  case 0072000 ... 0072777: // ASH
     ASH(instr);
     return;
-  case 0073: // ASHC
+  case 0073000 ... 0073777: // ASHC
     ASHC(instr);
     return;
-  case 0074: // XOR
+  case 0074000 ... 0074777: // XOR
     XOR(instr);
     return;
-  case 0077: // SOB
+  case 0077000 ... 0077777: // SOB
     SOB(instr);
     return;
   }
