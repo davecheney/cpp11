@@ -12,9 +12,7 @@ public:
   uint16_t addr() { return par & 07777; }
   uint8_t len() { return (pdr >> 8) & 0x7f; }
   bool read() { return pdr & 2; }
-  bool write() {
-    return pdr & 6;
-  };
+  bool write() { return pdr & 6; };
   bool ed() { return pdr & 8; }
 };
 

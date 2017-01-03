@@ -1,7 +1,7 @@
+#include <sched.h>
+#include <setjmp.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <setjmp.h>
-#include <sched.h>
 
 #include "avr11.h"
 #include "bootrom.h"
@@ -39,13 +39,13 @@ static bool V() { return PS & FLAGV; }
 
 static bool C() { return PS & FLAGC; }
 
-template<bool wr> inline uint16_t access(uint16_t addr, uint16_t v = 0) {
-	return unibus::access<wr>(mmu::decode(addr, false, curuser), v);
+template <bool wr> inline uint16_t access(uint16_t addr, uint16_t v = 0) {
+  return unibus::access<wr>(mmu::decode(addr, false, curuser), v);
 }
 
 static inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
-template<uint8_t l> uint16_t memread(uint16_t a) {
+template <uint8_t l> uint16_t memread(uint16_t a) {
   if (isReg(a)) {
     if (l == 2) {
       return R[a & 7];
@@ -56,7 +56,7 @@ template<uint8_t l> uint16_t memread(uint16_t a) {
   return unibus::read<l>(mmu::decode(a, false, curuser));
 }
 
-template<uint8_t l> void memwrite(uint16_t a, uint16_t v) { 
+template <uint8_t l> void memwrite(uint16_t a, uint16_t v) {
   if (isReg(a)) {
     const uint8_t r = a & 7;
     if (l == 2) {
@@ -165,7 +165,7 @@ static void setZ(const bool b) {
 #define SA(x) (aget(S(x), L(x)))
 #define DA(x) (aget(D(x), L(x)))
 
-template<uint8_t l> void MOV(const uint16_t instr) {
+template <uint8_t l> void MOV(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t uval = memread<l>(aget(S(instr), l));
   const uint16_t da = DA(instr);
@@ -184,7 +184,7 @@ template<uint8_t l> void MOV(const uint16_t instr) {
   memwrite<l>(da, uval);
 }
 
-template<uint8_t l> void CMP(const uint16_t instr) {
+template <uint8_t l> void CMP(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t val1 = memread<l>(aget(S(instr), l));
@@ -204,7 +204,7 @@ template<uint8_t l> void CMP(const uint16_t instr) {
   }
 }
 
-template<uint8_t l> void BIT(const uint16_t instr) {
+template <uint8_t l> void BIT(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t val1 = memread<l>(SA(instr));
   const uint16_t da = DA(instr);
@@ -217,7 +217,7 @@ template<uint8_t l> void BIT(const uint16_t instr) {
   }
 }
 
-template<uint8_t l> void BIC(const uint16_t instr) {
+template <uint8_t l> void BIC(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t val1 = memread<l>(SA(instr));
@@ -232,7 +232,7 @@ template<uint8_t l> void BIC(const uint16_t instr) {
   memwrite<l>(da, uval);
 }
 
-template<uint8_t l> void BIS(const uint16_t instr) {
+template <uint8_t l> void BIS(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t val1 = memread<l>(SA(instr));
   const uint16_t da = DA(instr);
@@ -370,7 +370,7 @@ static void ASH(const uint16_t instr) {
   if (sval & 0100000) {
     PS |= FLAGN;
   }
-  if ((sval & 0100000)xor(val1 & 0100000)) {
+  if ((sval & 0100000) xor (val1 & 0100000)) {
     PS |= FLAGV;
   }
 }
@@ -404,7 +404,7 @@ static void ASHC(const uint16_t instr) {
   if (sval & 0x80000000) {
     PS |= FLAGN;
   }
-  if ((sval & 0x80000000)xor(val1 & 0x80000000)) {
+  if ((sval & 0x80000000) xor (val1 & 0x80000000)) {
     PS |= FLAGV;
   }
 }
@@ -432,14 +432,14 @@ static void SOB(const uint16_t instr) {
   }
 }
 
-template<uint8_t l> void CLR(const uint16_t instr) {
+template <uint8_t l> void CLR(const uint16_t instr) {
   PS &= 0xFFF0;
   PS |= FLAGZ;
   const uint16_t da = DA(instr);
   memwrite<l>(da, 0);
 }
 
-template<uint8_t l> void COM(const uint16_t instr) {
+template <uint8_t l> void COM(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -453,7 +453,7 @@ template<uint8_t l> void COM(const uint16_t instr) {
   memwrite<l>(da, uval);
 }
 
-template<uint8_t l> void INC(const uint16_t instr) {
+template <uint8_t l> void INC(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t da = DA(instr);
@@ -466,7 +466,7 @@ template<uint8_t l> void INC(const uint16_t instr) {
   memwrite<l>(da, uval);
 }
 
-template<uint8_t l> void _DEC(const uint16_t instr) {
+template <uint8_t l> void _DEC(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t maxp = l == 2 ? 0x7FFF : 0x7f;
@@ -483,7 +483,7 @@ template<uint8_t l> void _DEC(const uint16_t instr) {
   memwrite<l>(da, uval);
 }
 
-template<uint8_t l> void NEG(const uint16_t instr) {
+template <uint8_t l> void NEG(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -503,7 +503,7 @@ template<uint8_t l> void NEG(const uint16_t instr) {
   memwrite<l>(da, sval);
 }
 
-template<uint8_t l> void _ADC(const uint16_t instr) {
+template <uint8_t l> void _ADC(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -530,7 +530,7 @@ template<uint8_t l> void _ADC(const uint16_t instr) {
   }
 }
 
-template<uint8_t l> void SBC(const uint16_t instr) {
+template <uint8_t l> void SBC(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -561,7 +561,7 @@ template<uint8_t l> void SBC(const uint16_t instr) {
   }
 }
 
-template<uint8_t l> void TST(const uint16_t instr) {
+template <uint8_t l> void TST(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t uval = memread<l>(aget(D(instr), l));
   PS &= 0xFFF0;
@@ -571,7 +571,7 @@ template<uint8_t l> void TST(const uint16_t instr) {
   setZ(uval == 0);
 }
 
-template<uint8_t l> void ROR(const uint16_t instr) {
+template <uint8_t l> void ROR(const uint16_t instr) {
   int32_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
   int32_t sval = memread<l>(da);
@@ -587,14 +587,14 @@ template<uint8_t l> void ROR(const uint16_t instr) {
     PS |= FLAGN;
   }
   setZ(!(sval & max));
-  if ((sval & 1)xor(sval & (max + 1))) {
+  if ((sval & 1) xor (sval & (max + 1))) {
     PS |= FLAGV;
   }
   sval >>= 1;
   memwrite<l>(da, sval);
 }
 
-template<uint8_t l> void ROL(const uint16_t instr) {
+template <uint8_t l> void ROL(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   int32_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -617,7 +617,7 @@ template<uint8_t l> void ROL(const uint16_t instr) {
   memwrite<l>(da, sval);
 }
 
-template<uint8_t l> void ASR(const uint16_t instr) {
+template <uint8_t l> void ASR(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t da = DA(instr);
   uint16_t uval = memread<l>(da);
@@ -628,7 +628,7 @@ template<uint8_t l> void ASR(const uint16_t instr) {
   if (uval & msb) {
     PS |= FLAGN;
   }
-  if ((uval & msb)xor(uval & 1)) {
+  if ((uval & msb) xor (uval & 1)) {
     PS |= FLAGV;
   }
   uval = (uval & msb) | (uval >> 1);
@@ -636,7 +636,7 @@ template<uint8_t l> void ASR(const uint16_t instr) {
   memwrite<l>(da, uval);
 }
 
-template<uint8_t l> void ASL(const uint16_t instr) {
+template <uint8_t l> void ASL(const uint16_t instr) {
   uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t max = l == 2 ? 0xFFFF : 0xff;
   uint16_t da = DA(instr);
@@ -657,7 +657,7 @@ template<uint8_t l> void ASL(const uint16_t instr) {
   memwrite<l>(da, sval);
 }
 
-template<uint8_t l> void SXT(const uint16_t instr) {
+template <uint8_t l> void SXT(const uint16_t instr) {
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t da = DA(instr);
   if (PS & FLAGN) {
@@ -677,7 +677,7 @@ static void JMP(const uint16_t instr) {
   R[7] = uval;
 }
 
-template<uint8_t l> void SWAB(const uint16_t instr) {
+template <uint8_t l> void SWAB(const uint16_t instr) {
   uint16_t da = DA(instr);
   uint16_t uval = memread<l>(da);
   uval = ((uval >> 8) | (uval << 8)) & 0xFFFF;
