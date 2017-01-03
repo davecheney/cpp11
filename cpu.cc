@@ -39,33 +39,21 @@ static bool V() { return PS & FLAGV; }
 
 static bool C() { return PS & FLAGC; }
 
-static uint16_t read8(const uint16_t a) {
-  return unibus::read8(mmu::decode(a, false, curuser));
-}
-
 template<bool wr> inline uint16_t access(uint16_t addr, uint16_t v = 0) {
 	return unibus::access<wr>(mmu::decode(addr, false, curuser), v);
 }
 
-static void write8(const uint16_t a, const uint16_t v) {
-  unibus::write8(mmu::decode(a, true, curuser), v);
-}
-
-static bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
+static inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
 template<uint8_t l> uint16_t memread(uint16_t a) {
   if (isReg(a)) {
-    const uint8_t r = a & 7;
     if (l == 2) {
-      return R[r];
+      return R[a & 7];
     } else {
-      return R[r] & 0xFF;
+      return R[a & 7] & 0xFF;
     }
   }
-  if (l == 2) {
-    return access<0>(a);
-  }
-  return read8(a);
+  return unibus::read<l>(mmu::decode(a, false, curuser));
 }
 
 template<uint8_t l> void memwrite(uint16_t a, uint16_t v) { 
@@ -79,11 +67,7 @@ template<uint8_t l> void memwrite(uint16_t a, uint16_t v) {
     }
     return;
   }
-  if (l == 2) {
-    access<1>(a, v);
-  } else {
-    write8(a, v);
-  }
+  unibus::write<l>(mmu::decode(a, true, curuser), v);
 }
 
 inline uint16_t fetch16() {

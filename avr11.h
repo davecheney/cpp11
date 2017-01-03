@@ -52,6 +52,21 @@ namespace unibus {
            }
            return read16(addr);
     }
+
+    template<uint8_t l> inline uint16_t read(const uint32_t a) {
+	if (l == 2) {
+               return read16(a);
+        }
+        return read8(a);
+    }
+
+    template<uint8_t l> inline void write(const uint32_t addr, uint16_t v) {
+	    if (l == 2) {
+		    return write16(addr, v);
+	    } 
+	    return write8(addr, v);
+    }
+
 };
 
 namespace cons {
