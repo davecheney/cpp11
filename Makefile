@@ -12,7 +12,7 @@ CXXOPT=$(COPT) -fno-exceptions -g
 CXXFLAGS=-std=$(CXXSTD) $(CXXOPT) -Wno-format-security
 CXXFLAGS+=$(addprefix -I,$(INCLUDES))
 
-LD=clang
+LD=gcc
 CXX=$(LD)
 SIZE=size
 
