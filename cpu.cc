@@ -53,13 +53,6 @@ static void write8(const uint16_t a, const uint16_t v) {
 
 static bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
-static uint16_t memread16(const uint16_t a) {
-  if (isReg(a)) {
-    return R[a & 7];
-  }
-  return access<0>(a);
-}
-
 template<uint8_t l> uint16_t memread(uint16_t a) {
   if (isReg(a)) {
     const uint8_t r = a & 7;
@@ -270,9 +263,9 @@ template<uint8_t l> void BIS(const uint16_t instr) {
 }
 
 static void ADD(const uint16_t instr) {
-  const uint16_t val1 = memread16(aget(S(instr), 2));
+  const uint16_t val1 = memread<2>(aget(S(instr), 2));
   const uint16_t da = aget(D(instr), 2);
-  const uint16_t val2 = memread16(da);
+  const uint16_t val2 = memread<2>(da);
   const uint16_t uval = (val1 + val2) & 0xFFFF;
   PS &= 0xFFF0;
   setZ(uval == 0);
@@ -289,9 +282,9 @@ static void ADD(const uint16_t instr) {
 }
 
 static void SUB(const uint16_t instr) {
-  const uint16_t val1 = memread16(aget(S(instr), 2));
+  const uint16_t val1 = memread<2>(aget(S(instr), 2));
   const uint16_t da = aget(D(instr), 2);
-  const uint16_t val2 = memread16(da);
+  const uint16_t val2 = memread<2>(da);
   const uint16_t uval = (val2 - val1) & 0xFFFF;
   PS &= 0xFFF0;
   setZ(uval == 0);
@@ -324,7 +317,7 @@ static void MUL(const uint16_t instr) {
     val1 = -((0xFFFF ^ val1) + 1);
   }
   uint16_t da = DA(instr);
-  int32_t val2 = memread16(da);
+  int32_t val2 = memread<2>(da);
   if (val2 & 0x8000) {
     val2 = -((0xFFFF ^ val2) + 1);
   }
@@ -344,7 +337,7 @@ static void MUL(const uint16_t instr) {
 static void DIV(const uint16_t instr) {
   const int32_t val1 = (R[S(instr) & 7] << 16) | (R[(S(instr) & 7) | 1]);
   const uint16_t da = DA(instr);
-  const int32_t val2 = memread16(da);
+  const int32_t val2 = memread<2>(da);
   PS &= 0xFFF0;
   if (val2 == 0) {
     PS |= FLAGC;
@@ -368,7 +361,7 @@ static void DIV(const uint16_t instr) {
 static void ASH(const uint16_t instr) {
   const uint16_t val1 = R[S(instr) & 7];
   const uint16_t da = aget(D(instr), 2);
-  uint16_t val2 = memread16(da) & 077;
+  uint16_t val2 = memread<2>(da) & 077;
   PS &= 0xFFF0;
   int32_t sval;
   if (val2 & 040) {
@@ -401,7 +394,7 @@ static void ASH(const uint16_t instr) {
 static void ASHC(const uint16_t instr) {
   const uint32_t val1 = R[S(instr) & 7] << 16 | R[(S(instr) & 7) | 1];
   const uint16_t da = aget(D(instr), 2);
-  uint16_t val2 = memread16(da) & 077;
+  uint16_t val2 = memread<2>(da) & 077;
   PS &= 0xFFF0;
   int32_t sval;
   if (val2 & 040) {
@@ -435,7 +428,7 @@ static void ASHC(const uint16_t instr) {
 static void XOR(const uint16_t instr) {
   const uint16_t val1 = R[S(instr) & 7];
   const uint16_t da = aget(D(instr), 2);
-  const uint16_t val2 = memread16(da);
+  const uint16_t val2 = memread<2>(da);
   const uint16_t uval = val1 ^ val2;
   PS &= 0xFFF1;
   setZ(uval == 0);
