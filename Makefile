@@ -27,4 +27,4 @@ clean:
 	rm -rf avr11 $(OBJECTS)
 
 fmt: 
-	clang-format-3.5 -i $(SRCS)
+	clang-format -i $(SRCS)
