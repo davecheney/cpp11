@@ -196,8 +196,7 @@ static void setZ(const bool b) {
 #define SA(x) (aget(S(x), L(x)))
 #define DA(x) (aget(D(x), L(x)))
 
-static void MOV(const uint16_t instr) {
-  uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void MOV(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   uint16_t uval = memread(aget(S(instr), l), l);
   const uint16_t da = DA(instr);
@@ -207,16 +206,16 @@ static void MOV(const uint16_t instr) {
   }
   setZ(uval == 0);
   if ((isReg(da)) && (l == 1)) {
-    l = 2;
     if (uval & msb) {
       uval |= 0xFF00;
     }
+    memwrite(da, 2, uval);
+    return;
   }
   memwrite(da, l, uval);
 }
 
-static void CMP(const uint16_t instr) {
-  const uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void CMP(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t val1 = memread(aget(S(instr), l), l);
@@ -236,8 +235,7 @@ static void CMP(const uint16_t instr) {
   }
 }
 
-static void BIT(const uint16_t instr) {
-  const uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void BIT(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t val1 = memread(SA(instr), l);
   const uint16_t da = DA(instr);
@@ -250,8 +248,7 @@ static void BIT(const uint16_t instr) {
   }
 }
 
-static void BIC(const uint16_t instr) {
-  const uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void BIC(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t max = l == 2 ? 0xFFFF : 0xff;
   const uint16_t val1 = memread(SA(instr), l);
@@ -266,8 +263,7 @@ static void BIC(const uint16_t instr) {
   memwrite(da, l, uval);
 }
 
-static void BIS(const uint16_t instr) {
-  const uint8_t l = 2 - (instr >> 15);
+template<uint8_t l> void BIS(const uint16_t instr) {
   const uint16_t msb = l == 2 ? 0x8000 : 0x80;
   const uint16_t val1 = memread(SA(instr), l);
   const uint16_t da = DA(instr);
@@ -855,25 +851,35 @@ void step() {
     printstate();
 
   switch (instr) {
-  case 0010000 ... 0017777: // MOVB
-  case 0110000 ... 0117777: // MOV
-    MOV(instr);
+  case 0010000 ... 0017777: // MOV
+    MOV<2>(instr);
+    return;
+  case 0110000 ... 0117777: // MOVB
+    MOV<1>(instr);
     return;
   case 0020000 ... 0027777: // CMP
-  case 0120000 ... 0127777: // CMP
-    CMP(instr);
+    CMP<2>(instr);
+    return;
+  case 0120000 ... 0127777: // CMPB
+    CMP<1>(instr);
     return;
   case 0030000 ... 0037777: // BIT
-  case 0130000 ... 0137777: // BIT
-    BIT(instr);
+    BIT<2>(instr);
+    return;
+  case 0130000 ... 0137777: // BITB
+    BIT<1>(instr);
     return;
   case 0040000 ... 0047777: // BIC
-  case 0140000 ... 0147777: // BIC
-    BIC(instr);
+    BIC<2>(instr);
+    return;
+  case 0140000 ... 0147777: // BICB
+    BIC<1>(instr);
     return;
   case 0050000 ... 0057777: // BIS
-  case 0150000 ... 0157777: // BIS
-    BIS(instr);
+    BIS<2>(instr);
+    return;
+  case 0150000 ... 0157777: // BISB
+    BIS<1>(instr);
     return;
   case 0060000 ... 0067777: // ADD
     ADD(instr);
