@@ -118,6 +118,17 @@ void handleinterrupt();
 
 namespace mmu {
 
+	class page {
+		public:
+			  uint16_t par, pdr;
+
+			    uint16_t addr();
+			      uint8_t len();
+			        bool read();
+				  bool write();
+				    bool ed();
+	};
+
     extern uint16_t SR0;
     extern uint16_t SR2;
 
