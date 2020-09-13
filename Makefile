@@ -29,6 +29,10 @@ $(BUILD_DIR)/%.o: %.cc | $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $@
 
+fmt:
+	clang-format -i *.cc *.h
+.PHONY: fmt
+
 clean:
 	rm -rf $(BUILD_DIR)
 
