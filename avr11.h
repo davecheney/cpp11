@@ -75,8 +75,6 @@ struct intr {
 
 #define ITABN 8
 
-extern pdp11::intr itab[ITABN];
-
 enum { FLAGN = 8, FLAGZ = 4, FLAGV = 2, FLAGC = 1 };
 
 

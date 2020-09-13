@@ -22,9 +22,11 @@ class KB11 {
     void trapat(uint16_t vec);
     void interrupt(uint8_t vec, uint8_t pri);
     void handleinterrupt();
-        void switchmode(const bool newm);
+    void switchmode(const bool newm);
 
     uint16_t R[8];
+
+    pdp11::intr itab[ITABN];
 
   private:
     bool N();
@@ -38,7 +40,7 @@ class KB11 {
     uint16_t pop();
     uint16_t aget(uint8_t v, uint8_t l);
     void branch(int16_t o);
-
+    void popirq();
 
     template <bool wr> inline uint16_t access(uint16_t addr, uint16_t v = 0) {
         return unibus::access<wr>(mmu::decode(addr, wr, curuser), v);
@@ -388,18 +390,17 @@ class KB11 {
         }
     }
 
-
-template <uint8_t l> void SWAB(const uint16_t instr) {
-    uint16_t da = DA(instr);
-    uint16_t uval = memread<l>(da);
-    uval = ((uval >> 8) | (uval << 8)) & 0xFFFF;
-    PS &= 0xFFF0;
-    setZ(uval & 0xFF);
-    if (uval & 0x80) {
-        PS |= FLAGN;
+    template <uint8_t l> void SWAB(const uint16_t instr) {
+        uint16_t da = DA(instr);
+        uint16_t uval = memread<l>(da);
+        uval = ((uval >> 8) | (uval << 8)) & 0xFFFF;
+        PS &= 0xFFF0;
+        setZ(uval & 0xFF);
+        if (uval & 0x80) {
+            PS |= FLAGN;
+        }
+        memwrite<l>(da, uval);
     }
-    memwrite<l>(da, uval);
-}
 
     void ADD(const uint16_t instr);
     void SUB(const uint16_t instr);

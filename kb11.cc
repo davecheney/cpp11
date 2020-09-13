@@ -11,7 +11,6 @@
 
 extern jmp_buf trapbuf;
 extern DL11 cons;
-pdp11::intr itab[ITABN];
 
 void KB11::reset() {
     LKS = 1 << 7;
@@ -771,7 +770,7 @@ void KB11::interrupt(uint8_t vec, uint8_t pri) {
 }
 
 // pop the top interrupt off the itab.
-static void popirq() {
+void KB11::popirq() {
     uint8_t i;
     for (i = 0; i < ITABN - 1; i++) {
         itab[i] = itab[i + 1];
