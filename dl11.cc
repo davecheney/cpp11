@@ -6,6 +6,9 @@
 
 #include "dl11.h"
 #include "avr11.h"
+#include "kb11.h"
+
+extern KB11 cpu;
 
 void DL11::addchar(char c) {
   switch (c) {
@@ -23,7 +26,7 @@ void DL11::addchar(char c) {
   }
   tks |= 0x80;
   if (tks & (1 << 6)) {
-    cpu::interrupt(INTTTYIN, 4);
+    cpu.interrupt(INTTTYIN, 4);
   }
 }
 
@@ -58,7 +61,7 @@ void DL11::poll() {
       fputc(tpb & 0x7f, stderr);
       tps |= 0x80;
       if (tps & (1 << 6)) {
-        cpu::interrupt(INTTTYOUT, 4);
+        cpu.interrupt(INTTTYOUT, 4);
       }
     }
   }

@@ -3,6 +3,9 @@
 #include <cstdlib>
 
 #include "avr11.h"
+#include "kb11.h"
+
+extern KB11 cpu;
 
 namespace rk11 {
 
@@ -110,7 +113,7 @@ again:
     if (RKWC == 0) {
         rkready();
         if (RKCS & (1 << 6)) {
-            cpu::interrupt(INTRK, 5);
+            cpu.interrupt(INTRK, 5);
         }
     } else {
         goto again;

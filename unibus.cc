@@ -4,8 +4,10 @@
 
 #include "dl11.h"
 #include "avr11.h"
+#include "kb11.h"
 
 extern DL11 cons;
+extern KB11 cpu;
 
 namespace unibus {
 
@@ -46,10 +48,10 @@ void write16(uint32_t a, uint16_t v) {
     case 0777776:
         switch (v >> 14) {
         case 0:
-            cpu::switchmode(false);
+            cpu.switchmode(false);
             break;
         case 3:
-            cpu::switchmode(true);
+            cpu.switchmode(true);
             break;
         default:
             printf("invalid mode\n");
@@ -57,19 +59,19 @@ void write16(uint32_t a, uint16_t v) {
         }
         switch ((v >> 12) & 3) {
         case 0:
-            cpu::prevuser = false;
+            cpu.prevuser = false;
             break;
         case 3:
-            cpu::prevuser = true;
+            cpu.prevuser = true;
             break;
         default:
             printf("invalid mode\n");
             std::abort();
         }
-        cpu::PS = v;
+        cpu.PS = v;
         return;
     case 0777546:
-        cpu::LKS = v;
+        cpu.LKS = v;
         return;
     case 0777572:
         mmu::SR0 = v;
@@ -101,7 +103,7 @@ uint16_t read16(uint32_t a) {
     }
 
     if (a == 0777546) {
-        return cpu::LKS;
+        return cpu.LKS;
     }
 
     if (a == 0777570) {
@@ -117,7 +119,7 @@ uint16_t read16(uint32_t a) {
     }
 
     if (a == 0777776) {
-        return cpu::PS;
+        return cpu.PS;
     }
 
     if ((a & 0777770) == 0777560) {

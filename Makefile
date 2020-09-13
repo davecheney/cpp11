@@ -3,7 +3,7 @@ BUILD_DIR           ?= build
 APP_BIN             = $(BUILD_DIR)/$(PROJECT)
 APP_SOURCES         = avr11.cc \
                       dl11.cc \
-					  cpu.cc \
+					  kb11.cc \
 					  disasm.cc \
 					  mmu.cc \
 					  rk11.cc \
