@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <sys/select.h>
 #include <unistd.h>
+#include <cstdlib>
 
 #include "avr11.h"
 
@@ -89,8 +90,7 @@ uint16_t read16(uint32_t a) {
     return 0;
   default:
     printf("consread16: read from invalid address %06o\n", a);
-    panic();
-    return 0;
+    std::abort();
   }
 }
 
@@ -117,7 +117,7 @@ void write16(uint32_t a, uint16_t v) {
     break;
   default:
     printf("conswrite16: write to invalid address %06o\n", a);
-    panic();
+    std::abort();
   }
 }
 };

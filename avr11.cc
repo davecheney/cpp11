@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <cstdlib>
 
 #include "avr11.h"
 
@@ -24,7 +25,7 @@ void setup() {
   // apply our new settings
   if (tcsetattr(0, TCSANOW, &new_terminal_settings) < 0)
     perror("tcsetattr ICANON");
-  rk11::rkdata = fopen("rk0", "r+");
+  rk11::rkdata = fopen("rk3.dsk", "r+");
 
   printf("Reset\n");
   cpu::reset();
@@ -84,5 +85,5 @@ int main() {
 
 void panic() {
   printstate();
-  abort();
+  std::abort();
 }

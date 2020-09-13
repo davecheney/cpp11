@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <cstdlib>
 
 #include "avr11.h"
 
@@ -49,7 +50,7 @@ void write16(uint32_t a, uint16_t v) {
       break;
     default:
       printf("invalid mode\n");
-      panic();
+      std::abort();
     }
     switch ((v >> 12) & 3) {
     case 0:
@@ -60,7 +61,7 @@ void write16(uint32_t a, uint16_t v) {
       break;
     default:
       printf("invalid mode\n");
-      panic();
+      std::abort();
     }
     cpu::PS = v;
     return;

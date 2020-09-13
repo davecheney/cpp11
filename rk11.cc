@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <cstdlib>
 
 #include "avr11.h"
 
@@ -26,8 +27,7 @@ uint16_t read16(uint32_t a) {
     return (sector) | (surface << 4) | (cylinder << 5) | (drive << 13);
   default:
     printf("rk11::read16 invalid read\n");
-    panic();
-    return 0; // not reached
+    std::abort();
   }
 }
 
@@ -57,8 +57,7 @@ again:
     break;
   default:
     printf("unimplemented RK05 operation %06o\n", ((RKCS & 017) >> 1));
-    panic();
-    return; // unreached
+    std::abort();
   }
 
   if (DEBUG_RK05) {
@@ -80,7 +79,7 @@ again:
   uint32_t pos = (cylinder * 24 + surface * 12 + sector) * 512;
   if (fseek(rkdata, pos, SEEK_SET)) {
     printf("rkstep: failed to seek\n");
-    panic();
+    std::abort();
   }
 
   uint16_t i;
@@ -141,8 +140,8 @@ void write16(uint32_t a, uint16_t v) {
         step();
         break;
       default:
-        printf("unimplemented RK05 operation %06o", ((RKCS & 017) >> 1));
-        panic();
+        printf("unimplemented RK05 operation %06o\n", ((RKCS & 017) >> 1));
+        std::abort();
       }
     }
     break;
@@ -160,7 +159,7 @@ void write16(uint32_t a, uint16_t v) {
     break;
   default:
     printf("rkwrite16: invalid write");
-    panic();
+    std::abort();
   }
 }
 

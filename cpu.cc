@@ -2,6 +2,7 @@
 #include <setjmp.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <cstdlib>
 
 #include "avr11.h"
 #include "bootrom.h"
@@ -288,7 +289,7 @@ static void JSR(const uint16_t instr) {
   const uint16_t uval = DA(instr);
   if (isReg(uval)) {
     printf("JSR called on registeri\n");
-    panic();
+    std::abort();
   }
   push(R[S(instr) & 7]);
   R[S(instr) & 7] = R[7];
@@ -672,7 +673,7 @@ static void JMP(const uint16_t instr) {
   const uint16_t uval = aget(D(instr), 2);
   if (isReg(uval)) {
     printf("JMP called with register dest\n");
-    panic();
+    std::abort();
   }
   R[7] = uval;
 }
@@ -711,8 +712,7 @@ static void MFPI(const uint16_t instr) {
     }
   } else if (isReg(da)) {
     printf("invalid MFPI instruction\n");
-    panic();
-    return; // unreached
+    std::abort();
   } else {
     uval = unibus::read16(mmu::decode((uint16_t)da, false, prevuser));
   }
@@ -740,7 +740,7 @@ static void MTPI(const uint16_t instr) {
     }
   } else if (isReg(da)) {
     printf("invalid MTPI instrution\n");
-    panic();
+    std::abort();
   } else {
     unibus::write16(mmu::decode((uint16_t)da, true, prevuser), uval);
   }
@@ -1052,8 +1052,7 @@ void step() {
       break;
     }
     printf("HALT\n");
-    panic();
-    break; // not reached
+    std::abort();
   case 01: // WAIT
     if (curuser) {
       break;
@@ -1080,7 +1079,7 @@ void step() {
 void trapat(uint16_t vec) { // , msg string) {
   if (vec & 1) {
     printf("Thou darst calling trapat() with an odd vector number?\n");
-    panic();
+    std::abort();
   }
   printf("trap: %x\n", vec);
 
@@ -1115,7 +1114,7 @@ void trapat(uint16_t vec) { // , msg string) {
 void interrupt(uint8_t vec, uint8_t pri) {
   if (vec & 1) {
     printf("Thou darst calling interrupt() with an odd vector number?\n");
-    panic();
+    std::abort();
   }
   // fast path
   if (itab[0].vec == 0) {
@@ -1136,7 +1135,7 @@ void interrupt(uint8_t vec, uint8_t pri) {
   }
   if (i >= ITABN) {
     printf("interrupt table full\n");
-    panic();
+    std::abort();
   }
   uint8_t j;
   for (j = i + 1; j < ITABN; j++) {
