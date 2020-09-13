@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <cstdlib>
 
+#include "dl11.h"
 #include "avr11.h"
+
+extern DL11 cons;
 
 namespace unibus {
 
@@ -73,7 +76,7 @@ void write16(uint32_t a, uint16_t v) {
     return;
   }
   if ((a & 0777770) == 0777560) {
-    cons::write16(a, v);
+    cons.write16(a, v);
     return;
   }
   if ((a & 0777700) == 0777400) {
@@ -118,7 +121,7 @@ uint16_t read16(uint32_t a) {
   }
 
   if ((a & 0777770) == 0777560) {
-    return cons::read16(a);
+    return cons.read16(a);
   }
 
   if ((a & 0777760) == 0777400) {

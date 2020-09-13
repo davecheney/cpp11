@@ -4,10 +4,12 @@
 #include <stdio.h>
 #include <cstdlib>
 
+#include "dl11.h"
 #include "avr11.h"
 #include "bootrom.h"
 
 extern jmp_buf trapbuf;
+extern DL11 cons;
 
 pdp11::intr itab[ITABN];
 
@@ -28,7 +30,7 @@ void reset(void) {
     unibus::access<1>(02000 + (i * 2), bootrom[i]);
   }
   R[7] = 002002;
-  cons::clearterminal();
+  cons.clearterminal();
   rk11::reset();
 }
 
@@ -793,7 +795,7 @@ static void RESET() {
   if (curuser) {
     return;
   }
-  cons::clearterminal();
+  cons.clearterminal();
   rk11::reset();
 }
 

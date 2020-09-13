@@ -25,9 +25,7 @@ void disasm(uint32_t ia);
 
 uint16_t trap(uint16_t num);
 
-enum {
-	MEMSIZE = 1<<18
-};
+const uint32_t MEMSIZE = 1<<18;
 
 namespace unibus {
   
@@ -65,15 +63,6 @@ namespace unibus {
 	    } 
 	    return write8(addr, v);
     }
-
-};
-
-namespace cons {
-
-    void write16(uint32_t a, uint16_t v);
-    uint16_t read16(uint32_t a);
-    void clearterminal();
-    void poll();
 
 };
 

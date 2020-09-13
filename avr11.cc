@@ -6,7 +6,10 @@
 #include <termios.h>
 #include <cstdlib>
 
+#include "dl11.h"
 #include "avr11.h"
+
+DL11 cons;
 
 void setup() {
   struct termios old_terminal_settings, new_terminal_settings;
@@ -25,7 +28,7 @@ void setup() {
   // apply our new settings
   if (tcsetattr(0, TCSANOW, &new_terminal_settings) < 0)
     perror("tcsetattr ICANON");
-  rk11::rkdata = fopen("rk3.dsk", "r+");
+  rk11::rkdata = fopen("rk0", "r+");
 
   printf("Reset\n");
   cpu::reset();
@@ -73,7 +76,7 @@ void loop0() {
         cpu::interrupt(INTCLOCK, 6);
       }
     }
-    cons::poll();
+    cons.poll();
   }
 }
 
