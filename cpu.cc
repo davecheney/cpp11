@@ -874,7 +874,7 @@ static void EMTX(uint16_t instr) {
   }
 }
 
-static void _RTT(uint16_t instr) {
+static void _RTT() {
   R[7] = pop();
   uint16_t uval = pop();
   if (curuser) {
@@ -884,7 +884,7 @@ static void _RTT(uint16_t instr) {
   unibus::write16(0777776, uval);
 }
 
-static void RESET(uint16_t instr) {
+static void RESET() {
   if (curuser) {
     return;
   }
@@ -1106,6 +1106,7 @@ void step() {
     }
     printf("HALT\n");
     panic();
+    break; // not reached
   case 01: // WAIT
     if (curuser) {
       break;
@@ -1114,10 +1115,10 @@ void step() {
   case 02: // RTI
 
   case 06: // RTT
-    _RTT(instr);
+    _RTT();
     return;
   case 05: // RESET
-    RESET(instr);
+    RESET();
     return;
   }
   if (instr ==

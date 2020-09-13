@@ -41,7 +41,10 @@ void rkready() {
   RKCS |= 1 << 7;
 }
 
-void rkerror(uint16_t e) {}
+void rkerror(int16_t e) {
+	printf("rkerror: %d\n", e);
+	panic();
+}
 
 void step() {
 again:

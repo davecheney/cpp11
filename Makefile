@@ -1,27 +1,35 @@
-SOURCES=$(wildcard *.cc)
-OBJECTS=$(SOURCES:.cc=.o)
+PROJECT             = avr11
+BUILD_DIR           ?= build
+APP_BIN             = $(BUILD_DIR)/$(PROJECT)
+APP_SOURCES         = avr11.cc \
+                      cons.cc \
+					  cpu.cc \
+					  disasm.cc \
+					  mmu.cc \
+					  rk11.cc \
+					  unibus.cc 
+APP_OBJS            = $(patsubst %.cc,$(BUILD_DIR)/%.o,$(APP_SOURCES))                      
+COMMON_CFLAGS       = -O3 -Wall -MMD -Werror -Wextra
+CFLAGS              += $(COMMON_CFLAGS)
+CXXFLAGS            += $(COMMON_CFLAGS) -std=c++17
+DEPS                = $(APP_OBJS:.o=.d)
+# MAKEFLAGS           += -j
 
-CSTD=gnu99
-COPT=-O2 -fdata-sections -ffunction-sections
-CFLAGS=-std=$(CSTD) $(COPT) -Wall
-CFLAGS+=$(addprefix -I,$(INCLUDES))
-CFLAGS+=-include "$(SETTINGS)"
+all: $(APP_BIN)
+.PHONY: all
 
-CXXSTD=gnu++98
-CXXOPT=$(COPT) -fno-exceptions -g
-CXXFLAGS=-std=$(CXXSTD) $(CXXOPT) -Wall -Werror -Wno-write-strings -Wno-format-security
-CXXFLAGS+=$(addprefix -I,$(INCLUDES))
+-include $(DEPS)
 
-#LDFLAGS=-lc -t
-LD=clang
-CXX=clang
+$(APP_BIN): $(APP_OBJS)
+	$(CXX) -o $@ $(APP_OBJS)
 
-avr11:	$(OBJECTS)
-	$(LD) $(LDFLAGS) -o $@ $^ 
+$(BUILD_DIR)/%.o: %.cc | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-%.o: %.cc avr11.h
-	$(CXX) $(CXXFLAGS) $<   -c -o $@
+$(BUILD_DIR):
+	mkdir -p $@
 
 clean:
-	rm -rf avr11 $(OBJECTS)
+	rm -rf $(BUILD_DIR)
 
+.PHONY: clean

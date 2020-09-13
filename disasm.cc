@@ -3,19 +3,19 @@
 
 #include "avr11.h"
 
-char *rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
+const char *rs[] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
 
 typedef struct {
   uint16_t inst;
   uint16_t arg;
-  char *msg;
+  const char *msg;
   uint8_t flag;
   bool b;
 } D;
 
 enum { DD = 1 << 1, S = 1 << 2, RR = 1 << 3, O = 1 << 4, N = 1 << 5 };
 
-D disamtable[] = { { 0077700, 0005000, "CLR", DD, true },
+const D disamtable[] = { { 0077700, 0005000, "CLR", DD, true },
                    { 0077700, 0005100, "COM", DD, true },
                    { 0077700, 0005200, "INC", DD, true },
                    { 0077700, 0005300, "DEC", DD, true },
@@ -151,6 +151,7 @@ void disasm(uint32_t a) {
     printf(" ");
     disasmaddr(s, a);
     printf(",");
+    [[fallthrough]];
   case DD:
     printf(" ");
     disasmaddr(d, a);
@@ -158,6 +159,7 @@ void disasm(uint32_t a) {
   case RR | O:
     printf(" %s,", rs[(ins & 0700) >> 6]);
     o &= 077;
+    [[fallthrough]];
   case O:
     if (o & 0x80) {
       printf(" -%03o", (2 * ((0xFF ^ o) + 1)));
@@ -168,6 +170,7 @@ void disasm(uint32_t a) {
   case RR | DD:
     printf(" %s, ", rs[(ins & 0700) >> 6]);
     disasmaddr(d, a);
+    [[fallthrough]];
   case RR:
     printf(" %s", rs[ins & 7]);
   }
