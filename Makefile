@@ -5,6 +5,7 @@ APP_SOURCES         = avr11.cc \
                       dl11.cc \
 					  kb11.cc \
 					  kt11.cc \
+					  ms11.cc \
 					  disasm.cc \
 					  rk11.cc \
 					  unibus.cc 

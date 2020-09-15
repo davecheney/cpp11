@@ -7,6 +7,7 @@
 #include "kb11.h"
 #include "rk11.h"
 #include "kt11.h"
+#include "ms11.h"
 
 extern DL11 cons;
 extern KB11 cpu;
@@ -15,10 +16,7 @@ extern KT11 mmu;
 
 namespace unibus {
 
-// memory as words
-uint16_t intptr[MEMSIZE >> 1];
-// memory as bytes
-char *charptr = reinterpret_cast<char *>(&intptr);
+MS11 core;
 
 uint16_t read8(const uint32_t a) {
     if (a & 1) {
@@ -29,7 +27,7 @@ uint16_t read8(const uint32_t a) {
 
 void write8(const uint32_t a, const uint16_t v) {
     if (a < 0760000) {
-        charptr[a] = v & 0xff;
+        core.charptr[a] = v & 0xff;
         return;
     }
     if (a & 1) {
@@ -45,7 +43,7 @@ void write16(uint32_t a, uint16_t v) {
         trap(INTBUS);
     }
     if (a < 0760000) {
-        unibus::intptr[a >> 1] = v;
+        core.intptr[a >> 1] = v;
         return;
     }
     switch (a) {
@@ -103,7 +101,7 @@ uint16_t read16(uint32_t a) {
         trap(INTBUS);
     }
     if (a < 0760000) {
-        return unibus::intptr[a >> 1];
+        return core.intptr[a >> 1];
     }
 
     if (a == 0777546) {
