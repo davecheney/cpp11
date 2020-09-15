@@ -1,3 +1,5 @@
+#pragma once
+
 // interrupts
 enum {
     INTBUS = 0004,
@@ -25,7 +27,6 @@ void disasm(uint32_t ia);
 
 uint16_t trap(uint16_t num);
 
-
 namespace pdp11 {
 struct intr {
     uint8_t vec;
@@ -35,4 +36,4 @@ struct intr {
 
 #define ITABN 8
 
-enum { FLAGN = 8, FLAGZ = 4, FLAGV = 2, FLAGC = 1 };
+

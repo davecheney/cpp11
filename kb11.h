@@ -1,7 +1,10 @@
 #pragma once
 #include <stdint.h>
+#include "avr11.h"
 #include "kt11.h"
 #include "unibus.h"
+
+enum { FLAGN = 8, FLAGZ = 4, FLAGV = 2, FLAGC = 1 };
 
 #define D(x) (x & 077)
 #define S(x) ((x & 07700) >> 6)

@@ -1,18 +1,18 @@
+#include <cstdlib>
 #include <setjmp.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
-#include <cstdlib>
 
-#include "dl11.h"
 #include "avr11.h"
+#include "dl11.h"
 #include "kb11.h"
 #include "rk11.h"
 
-DL11 cons;
 KB11 cpu;
+DL11 cons(cpu);
 RK11 rk11(cpu);
 UNIBUS unibus;
 
