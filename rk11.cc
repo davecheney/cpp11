@@ -6,8 +6,6 @@
 #include "kb11.h"
 #include "rk11.h"
 
-extern KB11 cpu;
-
 enum {
     RKOVR = (1 << 14),
     RKNXD = (1 << 7),

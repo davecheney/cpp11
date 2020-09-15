@@ -13,7 +13,7 @@
 
 DL11 cons;
 KB11 cpu;
-RK11 rk11;
+RK11 rk11(cpu);
 
 void setup() {
     struct termios old_terminal_settings, new_terminal_settings;

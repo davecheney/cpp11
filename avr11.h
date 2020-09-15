@@ -25,15 +25,9 @@ void disasm(uint32_t ia);
 
 uint16_t trap(uint16_t num);
 
-const uint32_t MEMSIZE = 1<<18;
 
 namespace unibus {
 
-// operations on uint32_t types are insanely expensive
-union addr {
-    uint8_t bytes[4];
-    uint32_t value;
-};
 void init();
 
 uint16_t read8(uint32_t addr);

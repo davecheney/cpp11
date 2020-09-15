@@ -1,5 +1,5 @@
+#pragma once
 #include <stdint.h>
-
 #include "kt11.h"
 
 #define D(x) (x & 077)
