@@ -26,40 +26,6 @@ void disasm(uint32_t ia);
 uint16_t trap(uint16_t num);
 
 
-namespace unibus {
-
-void init();
-
-uint16_t read8(uint32_t addr);
-void write8(uint32_t a, uint16_t v);
-
-uint16_t read16(uint32_t addr);
-void write16(uint32_t addr, uint16_t v);
-
-template <bool wr> inline uint16_t access(uint32_t addr, uint16_t v = 0) {
-    if (wr) {
-        write16(addr, v);
-        return 0;
-    }
-    return read16(addr);
-}
-
-template <uint8_t l> inline uint16_t read(const uint32_t a) {
-    if (l == 2) {
-        return read16(a);
-    }
-    return read8(a);
-}
-
-template <uint8_t l> inline void write(const uint32_t addr, uint16_t v) {
-    if (l == 2) {
-        return write16(addr, v);
-    }
-    return write8(addr, v);
-}
-
-}; // namespace unibus
-
 namespace pdp11 {
 struct intr {
     uint8_t vec;

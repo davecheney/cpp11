@@ -5,7 +5,7 @@
 #include "kb11.h"
 
 extern KB11 cpu;
-
+extern    UNIBUS unibus;
 
 uint16_t KT11::page::addr() { return par & 07777; }
 uint8_t KT11::page::len() { return (pdr >> 8) & 0x7f; }

@@ -8,23 +8,20 @@
 #include "rk11.h"
 #include "kt11.h"
 #include "ms11.h"
+#include "unibus.h"
 
 extern DL11 cons;
 extern KB11 cpu;
 extern RK11 rk11;
 
-namespace unibus {
-
-MS11 core;
-
-uint16_t read8(const uint32_t a) {
+uint16_t UNIBUS::read8(const uint32_t a) {
     if (a & 1) {
         return read16(a & ~1) >> 8;
     }
     return read16(a & ~1) & 0xFF;
 }
 
-void write8(const uint32_t a, const uint16_t v) {
+void UNIBUS::write8(const uint32_t a, const uint16_t v) {
     if (a < 0760000) {
         core.charptr[a] = v & 0xff;
         return;
@@ -36,7 +33,7 @@ void write8(const uint32_t a, const uint16_t v) {
     }
 }
 
-void write16(uint32_t a, uint16_t v) {
+void UNIBUS::write16(uint32_t a, uint16_t v) {
     if (a % 1) {
         printf("unibus: write16 to odd address %06o\n", a);
         trap(INTBUS);
@@ -94,7 +91,7 @@ void write16(uint32_t a, uint16_t v) {
     trap(INTBUS);
 }
 
-uint16_t read16(uint32_t a) {
+uint16_t UNIBUS::read16(uint32_t a) {
     if (a & 1) {
         printf("unibus: read16 from odd address %06o\n", a);
         trap(INTBUS);
@@ -138,4 +135,3 @@ uint16_t read16(uint32_t a) {
     printf("unibus: read from invalid address %06o\n", a);
     return trap(INTBUS);
 }
-}; // namespace unibus

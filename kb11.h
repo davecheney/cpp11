@@ -1,12 +1,15 @@
 #pragma once
 #include <stdint.h>
 #include "kt11.h"
+#include "unibus.h"
 
 #define D(x) (x & 077)
 #define S(x) ((x & 07700) >> 6)
 #define L(x) (2 - (x >> 15))
 #define SA(x) (aget(S(x), L(x)))
 #define DA(x) (aget(D(x), L(x)))
+
+extern UNIBUS unibus;
 
 class KB11 {
   public:
@@ -47,7 +50,7 @@ class KB11 {
     void popirq();
 
     template <bool wr> inline uint16_t access(uint16_t addr, uint16_t v = 0) {
-        return unibus::access<wr>(mmu.decode(addr, wr, curuser), v);
+        return unibus.access<wr>(mmu.decode(addr, wr, curuser), v);
     }
 
     inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
@@ -60,7 +63,7 @@ class KB11 {
                 return R[a & 7] & 0xFF;
             }
         }
-        return unibus::read<l>(mmu.decode(a, false, curuser));
+        return unibus.read<l>(mmu.decode(a, false, curuser));
     }
 
     template <uint8_t l> void memwrite(uint16_t a, uint16_t v) {
@@ -74,7 +77,7 @@ class KB11 {
             }
             return;
         }
-        unibus::write<l>(mmu.decode(a, true, curuser), v);
+        unibus.write<l>(mmu.decode(a, true, curuser), v);
     }
 
     template <uint8_t l> void MOV(const uint16_t instr) {

@@ -3,8 +3,10 @@
 
 #include "avr11.h"
 #include "kb11.h"
+#include "unibus.h"
 
 extern KB11 cpu;
+extern UNIBUS unibus;
 
 const char *rs[] = {"R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC"};
 
@@ -84,18 +86,18 @@ void disasmaddr(uint16_t m, uint32_t a) {
         switch (m) {
         case 027:
             a += 2;
-            printf("$%06o", unibus::read16(a));
+            printf("$%06o", unibus.read16(a));
             return;
         case 037:
             a += 2;
-            printf("*%06o", unibus::read16(a));
+            printf("*%06o", unibus.read16(a));
             return;
         case 067:
             a += 2;
-            printf("*%06o", (a + 2 + (unibus::read16(a))) & 0xFFFF);
+            printf("*%06o", (a + 2 + (unibus.read16(a))) & 0xFFFF);
             return;
         case 077:
-            printf("**%06o", (a + 2 + (unibus::read16(a))) & 0xFFFF);
+            printf("**%06o", (a + 2 + (unibus.read16(a))) & 0xFFFF);
             return;
         }
     }
@@ -121,18 +123,17 @@ void disasmaddr(uint16_t m, uint32_t a) {
         break;
     case 060:
         a += 2;
-        printf("%06o (%s)", unibus::read16(a), rs[m & 7]);
+        printf("%06o (%s)", unibus.read16(a), rs[m & 7]);
         break;
     case 070:
         a += 2;
-        printf("*%06o (%s)", unibus::read16(a), rs[m & 7]);
+        printf("*%06o (%s)", unibus.read16(a), rs[m & 7]);
         break;
     }
 }
 
 void disasm(uint32_t a) {
-    uint16_t ins;
-    ins = unibus::read16(a);
+    auto ins = unibus.read16(a);
 
     D l = disamtable[(sizeof(disamtable) / sizeof(disamtable[0])) - 1];
     uint8_t i;
@@ -193,7 +194,7 @@ void printstate() {
            cpu.PS & FLAGN ? "N" : " ", cpu.PS & FLAGZ ? "Z" : " ",
            cpu.PS & FLAGV ? "V" : " ", cpu.PS & FLAGC ? "C" : " ");
     printf("]  instr %06o: %06o\t ", cpu.PC,
-           unibus::read16(cpu.mmu.decode(cpu.PC, false, cpu.curuser)));
+           unibus.read16(cpu.mmu.decode(cpu.PC, false, cpu.curuser)));
     disasm(cpu.mmu.decode(cpu.PC, false, cpu.curuser));
     printf("\n");
 }

@@ -1,3 +1,4 @@
+#pragma once
 #include <stdint.h>
 
 const uint32_t IOBASE_18BIT = 0760000;

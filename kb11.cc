@@ -13,12 +13,13 @@
 extern jmp_buf trapbuf;
 extern DL11 cons;
 extern RK11 rk11;
+extern    UNIBUS unibus;
 
 void KB11::reset() {
     LKS = 1 << 7;
     uint16_t i;
     for (i = 0; i < 29; i++) {
-        unibus::access<1>(02000 + (i * 2), bootrom[i]);
+        unibus.access<1>(02000 + (i * 2), bootrom[i]);
     }
     R[7] = 002002;
     cons.clearterminal();
@@ -340,7 +341,7 @@ void KB11::MFPI(const uint16_t instr) {
         printf("invalid MFPI instruction\n");
         std::abort();
     } else {
-        uval = unibus::read16(mmu.decode((uint16_t)da, false, prevuser));
+        uval = unibus.read16(mmu.decode((uint16_t)da, false, prevuser));
     }
     push(uval);
     PS &= 0xFFF0;
@@ -368,7 +369,7 @@ void KB11::MTPI(const uint16_t instr) {
         printf("invalid MTPI instrution\n");
         std::abort();
     } else {
-        unibus::write16(mmu.decode((uint16_t)da, true, prevuser), uval);
+        unibus.write16(mmu.decode((uint16_t)da, true, prevuser), uval);
     }
     PS &= 0xFFF0;
     PS |= FLAGC;
@@ -398,8 +399,8 @@ void KB11::EMTX(const uint16_t instr) {
     switchmode(false);
     push(prev);
     push(R[7]);
-    R[7] = unibus::read16(uval);
-    PS = unibus::read16(uval + 2);
+    R[7] = unibus.read16(uval);
+    PS = unibus.read16(uval + 2);
     if (prevuser) {
         PS |= (1 << 13) | (1 << 12);
     }
@@ -412,7 +413,7 @@ void KB11::_RTT() {
         uval &= 047;
         uval |= PS & 0177730;
     }
-    unibus::write16(0777776, uval);
+    unibus.write16(0777776, uval);
 }
 
 void KB11::RESET() {
@@ -730,8 +731,8 @@ void KB11::trapat(uint16_t vec) { // , msg string) {
     push(prev);
     push(R[7]);
 
-    R[7] = unibus::read16(vec);
-    PS = unibus::read16(vec + 2);
+    R[7] = unibus.read16(vec);
+    PS = unibus.read16(vec + 2);
     if (prevuser) {
         PS |= (1 << 13) | (1 << 12);
     }
@@ -796,8 +797,8 @@ void KB11::handleinterrupt() {
         trapat(vv);
     }
 
-    R[7] = unibus::read16(vec);
-    PS = unibus::read16(vec + 2);
+    R[7] = unibus.read16(vec);
+    PS = unibus.read16(vec + 2);
     if (prevuser) {
         PS |= (1 << 13) | (1 << 12);
     }

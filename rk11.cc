@@ -5,6 +5,9 @@
 #include "avr11.h"
 #include "kb11.h"
 #include "rk11.h"
+#include "unibus.h"
+
+extern UNIBUS unibus;
 
 enum {
     RKOVR = (1 << 14),
@@ -88,11 +91,11 @@ again:
     uint16_t val;
     for (i = 0; i < 256 && RKWC != 0; i++) {
         if (w) {
-            val = unibus::read16(RKBA);
+            val = unibus.read16(RKBA);
             fputc(val & 0xFF, rkdata);
             fputc((val >> 8) & 0xFF, rkdata);
         } else {
-            unibus::write16(RKBA, fgetc(rkdata) | (fgetc(rkdata) << 8));
+            unibus.write16(RKBA, fgetc(rkdata) | (fgetc(rkdata) << 8));
         }
         RKBA += 2;
         RKWC = (RKWC + 1) & 0xFFFF;

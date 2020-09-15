@@ -14,6 +14,7 @@
 DL11 cons;
 KB11 cpu;
 RK11 rk11(cpu);
+UNIBUS unibus;
 
 void setup() {
     struct termios old_terminal_settings, new_terminal_settings;
