@@ -1,30 +1,19 @@
 #include <stdint.h>
 #include <stdio.h>
-
 #include "avr11.h"
+#include "kt11.h"
 #include "kb11.h"
 
 extern KB11 cpu;
 
-namespace mmu {
 
-uint16_t page::addr() { return par & 07777; }
-uint8_t page::len() { return (pdr >> 8) & 0x7f; }
-bool page::read() { return pdr & 2; }
-bool page::write() { return pdr & 6; };
-bool page::ed() { return pdr & 8; }
+uint16_t KT11::page::addr() { return par & 07777; }
+uint8_t KT11::page::len() { return (pdr >> 8) & 0x7f; }
+bool KT11::page::read() { return pdr & 2; }
+bool KT11::page::write() { return pdr & 6; };
+bool KT11::page::ed() { return pdr & 8; }
 
-page pages[16];
-uint16_t SR0, SR2;
-
-void dumppages() {
-    uint8_t i;
-    for (i = 0; i < 16; i++) {
-        printf("%0x: %06o %06o\r\n", i, pages[i].par, pages[i].pdr);
-    }
-}
-
-uint32_t decode(uint16_t a, uint8_t w, uint8_t user) {
+uint32_t KT11::decode(uint16_t a, uint8_t w, uint8_t user) {
     if ((SR0 & 1) == 0) {
         return a > 0167777 ? ((uint32_t)a) + 0600000 : a;
     }
@@ -81,7 +70,7 @@ uint32_t decode(uint16_t a, uint8_t w, uint8_t user) {
     return aa;
 }
 
-uint16_t read16(uint32_t a) {
+uint16_t KT11::read16(uint32_t a) {
     if ((a >= 0772300) && (a < 0772320)) {
         return pages[((a & 017) >> 1)].pdr;
     }
@@ -98,7 +87,7 @@ uint16_t read16(uint32_t a) {
     return trap(INTBUS);
 }
 
-void write16(uint32_t a, uint16_t v) {
+void KT11::write16(uint32_t a, uint16_t v) {
     uint8_t i = ((a & 017) >> 1);
     if ((a >= 0772300) && (a < 0772320)) {
         pages[i].pdr = v;
@@ -119,4 +108,10 @@ void write16(uint32_t a, uint16_t v) {
     printf("mmu::write16 write to invalid address %06o\n", a);
     trap(INTBUS);
 }
-}; // namespace mmu
+
+void KT11::dumppages() {
+    uint8_t i;
+    for (i = 0; i < 16; i++) {
+        printf("%0x: %06o %06o\r\n", i, pages[i].par, pages[i].pdr);
+    }
+}

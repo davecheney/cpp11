@@ -4,8 +4,8 @@ APP_BIN             = $(BUILD_DIR)/$(PROJECT)
 APP_SOURCES         = avr11.cc \
                       dl11.cc \
 					  kb11.cc \
+					  kt11.cc \
 					  disasm.cc \
-					  mmu.cc \
 					  rk11.cc \
 					  unibus.cc 
 APP_OBJS            = $(patsubst %.cc,$(BUILD_DIR)/%.o,$(APP_SOURCES))                      

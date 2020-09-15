@@ -76,29 +76,3 @@ struct intr {
 #define ITABN 8
 
 enum { FLAGN = 8, FLAGZ = 4, FLAGV = 2, FLAGC = 1 };
-
-
-namespace mmu {
-
-class page {
-  public:
-    uint16_t par, pdr;
-
-    uint16_t addr();
-    uint8_t len();
-    bool read();
-    bool write();
-    bool ed();
-};
-
-extern uint16_t SR0;
-extern uint16_t SR2;
-
-uint32_t decode(uint16_t a, uint8_t w, uint8_t user);
-uint16_t read16(uint32_t a);
-void write16(uint32_t a, uint16_t v);
-
-}; // namespace mmu
-
-
-

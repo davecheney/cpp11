@@ -10,10 +10,12 @@
 #include "avr11.h"
 #include "kb11.h"
 #include "rk11.h"
+#include "kt11.h"
 
 DL11 cons;
 KB11 cpu;
 RK11 rk11;
+KT11 mmu;
 
 void setup() {
     struct termios old_terminal_settings, new_terminal_settings;

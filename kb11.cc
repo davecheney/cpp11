@@ -340,7 +340,7 @@ void KB11::MFPI(const uint16_t instr) {
         printf("invalid MFPI instruction\n");
         std::abort();
     } else {
-        uval = unibus::read16(mmu::decode((uint16_t)da, false, prevuser));
+        uval = unibus::read16(mmu.decode((uint16_t)da, false, prevuser));
     }
     push(uval);
     PS &= 0xFFF0;
@@ -368,7 +368,7 @@ void KB11::MTPI(const uint16_t instr) {
         printf("invalid MTPI instrution\n");
         std::abort();
     } else {
-        unibus::write16(mmu::decode((uint16_t)da, true, prevuser), uval);
+        unibus::write16(mmu.decode((uint16_t)da, true, prevuser), uval);
     }
     PS &= 0xFFF0;
     PS |= FLAGC;
