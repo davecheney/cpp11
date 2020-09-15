@@ -12,7 +12,6 @@
 extern DL11 cons;
 extern KB11 cpu;
 extern RK11 rk11;
-extern KT11 mmu;
 
 namespace unibus {
 
@@ -76,7 +75,7 @@ void write16(uint32_t a, uint16_t v) {
         cpu.LKS = v;
         return;
     case 0777572:
-        mmu.SR0 = v;
+        cpu.mmu.SR0 = v;
         return;
     }
     if ((a & 0777770) == 0777560) {
@@ -88,7 +87,7 @@ void write16(uint32_t a, uint16_t v) {
         return;
     }
     if (((a & 0777600) == 0772200) || ((a & 0777600) == 0777600)) {
-        mmu.write16(a, v);
+        cpu.mmu.write16(a, v);
         return;
     }
     printf("unibus: write to invalid address %06o\n", a);
@@ -113,11 +112,11 @@ uint16_t read16(uint32_t a) {
     }
 
     if (a == 0777572) {
-        return mmu.SR0;
+        return cpu.mmu.SR0;
     }
 
     if (a == 0777576) {
-        return mmu.SR2;
+        return cpu.mmu.SR2;
     }
 
     if (a == 0777776) {
@@ -133,7 +132,7 @@ uint16_t read16(uint32_t a) {
     }
 
     if (((a & 0777600) == 0772200) || ((a & 0777600) == 0777600)) {
-        return mmu.read16(a);
+        return cpu.mmu.read16(a);
     }
 
     printf("unibus: read from invalid address %06o\n", a);

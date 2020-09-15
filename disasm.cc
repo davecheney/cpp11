@@ -3,9 +3,8 @@
 
 #include "avr11.h"
 #include "kb11.h"
-#include "kt11.h"
 
-extern KT11 mmu;
+extern KB11 cpu;
 
 const char *rs[] = {"R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC"};
 
@@ -194,7 +193,7 @@ void printstate() {
            cpu.PS & FLAGN ? "N" : " ", cpu.PS & FLAGZ ? "Z" : " ",
            cpu.PS & FLAGV ? "V" : " ", cpu.PS & FLAGC ? "C" : " ");
     printf("]  instr %06o: %06o\t ", cpu.PC,
-           unibus::read16(mmu.decode(cpu.PC, false, cpu.curuser)));
-    disasm(mmu.decode(cpu.PC, false, cpu.curuser));
+           unibus::read16(cpu.mmu.decode(cpu.PC, false, cpu.curuser)));
+    disasm(cpu.mmu.decode(cpu.PC, false, cpu.curuser));
     printf("\n");
 }

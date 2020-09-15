@@ -2,8 +2,6 @@
 
 #include "kt11.h"
 
-extern KT11 mmu;
-
 #define D(x) (x & 077)
 #define S(x) ((x & 07700) >> 6)
 #define L(x) (2 - (x >> 15))
@@ -31,6 +29,8 @@ class KB11 {
     uint16_t R[8];
 
     pdp11::intr itab[ITABN];
+
+    KT11 mmu;
 
   private:
     bool N();
