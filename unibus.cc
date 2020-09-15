@@ -5,9 +5,11 @@
 #include "dl11.h"
 #include "avr11.h"
 #include "kb11.h"
+#include "rk11.h"
 
 extern DL11 cons;
 extern KB11 cpu;
+extern RK11 rk11;
 
 namespace unibus {
 
@@ -82,7 +84,7 @@ void write16(uint32_t a, uint16_t v) {
         return;
     }
     if ((a & 0777700) == 0777400) {
-        rk11::write16(a, v);
+        rk11.write16(a, v);
         return;
     }
     if (((a & 0777600) == 0772200) || ((a & 0777600) == 0777600)) {
@@ -127,7 +129,7 @@ uint16_t read16(uint32_t a) {
     }
 
     if ((a & 0777760) == 0777400) {
-        return rk11::read16(a);
+        return rk11.read16(a);
     }
 
     if (((a & 0777600) == 0772200) || ((a & 0777600) == 0777600)) {

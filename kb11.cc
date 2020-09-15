@@ -7,10 +7,12 @@
 #include "avr11.h"
 #include "dl11.h"
 #include "kb11.h"
+#include "rk11.h"
 #include "bootrom.h"
 
 extern jmp_buf trapbuf;
 extern DL11 cons;
+extern RK11 rk11;
 
 void KB11::reset() {
     LKS = 1 << 7;
@@ -20,7 +22,7 @@ void KB11::reset() {
     }
     R[7] = 002002;
     cons.clearterminal();
-    rk11::reset();
+    rk11.reset();
 }
 
 bool KB11::N() { return PS & FLAGN; }
@@ -418,7 +420,7 @@ void KB11::RESET() {
         return;
     }
     cons.clearterminal();
-    rk11::reset();
+    rk11.reset();
 }
 
 void KB11::step() {

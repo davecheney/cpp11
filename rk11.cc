@@ -4,17 +4,18 @@
 
 #include "avr11.h"
 #include "kb11.h"
+#include "rk11.h"
 
 extern KB11 cpu;
 
-namespace rk11 {
+enum {
+    RKOVR = (1 << 14),
+    RKNXD = (1 << 7),
+    RKNXC = (1 << 6),
+    RKNXS = (1 << 5)
+};
 
-FILE *rkdata;
-
-uint32_t RKBA, RKDS, RKER, RKCS, RKWC;
-uint32_t drive, sector, surface, cylinder;
-
-uint16_t read16(uint32_t a) {
+uint16_t RK11::read16(uint32_t a) {
     switch (a) {
     case 0777400:
         return RKDS;
@@ -34,19 +35,19 @@ uint16_t read16(uint32_t a) {
     }
 }
 
-void rknotready() {
+void RK11::rknotready() {
     RKDS &= ~(1 << 6);
     RKCS &= ~(1 << 7);
 }
 
-void rkready() {
+void RK11::rkready() {
     RKDS |= 1 << 6;
     RKCS |= 1 << 7;
 }
 
-void rkerror(uint16_t e) { printf("rk11: error %06o\n", e); }
+void RK11::rkerror(uint16_t e) { printf("rk11: error %06o\n", e); }
 
-void step() {
+void RK11::step() {
 again:
     bool w;
     switch ((RKCS & 017) >> 1) {
@@ -120,7 +121,7 @@ again:
     }
 }
 
-void write16(uint32_t a, uint16_t v) {
+void RK11::write16(uint32_t a, uint16_t v) {
     // printf("rkwrite: %06o\n",a);
     switch (a) {
     case 0777400:
@@ -167,11 +168,10 @@ void write16(uint32_t a, uint16_t v) {
     }
 }
 
-void reset() {
+void RK11::reset() {
     RKDS = (1 << 11) | (1 << 7) | (1 << 6);
     RKER = 0;
     RKCS = 1 << 7;
     RKWC = 0;
     RKBA = 0;
 }
-}; // namespace rk11
