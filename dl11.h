@@ -1,6 +1,4 @@
-#pragma once
 #include <stdint.h>
-#include "kb11.h"
 
 class DL11 {
 
@@ -9,10 +7,6 @@ class DL11 {
     void poll();
     uint16_t read16(uint32_t a);
     void write16(uint32_t a, uint16_t v);
-
-    KB11 &cpu;
-
-    DL11(KB11 &kb11) : cpu(kb11){};
 
   private:
     uint16_t tks;

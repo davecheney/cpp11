@@ -5,6 +5,9 @@
 #include <unistd.h>
 
 #include "dl11.h"
+#include "kb11.h"
+
+extern KB11 cpu;
 
 void DL11::addchar(char c) {
     switch (c) {

@@ -6,6 +6,19 @@
 
 enum { FLAGN = 8, FLAGZ = 4, FLAGV = 2, FLAGC = 1 };
 
+// interrupts
+enum {
+    INTBUS = 0004,
+    INTINVAL = 0010,
+    INTDEBUG = 0014,
+    INTIOT = 0020,
+    INTTTYIN = 0060,
+    INTTTYOUT = 0064,
+    INTFAULT = 0250,
+    INTCLOCK = 0100,
+    INTRK = 0220
+};
+
 #define D(x) (x & 077)
 #define S(x) ((x & 07700) >> 6)
 #define L(x) (2 - (x >> 15))
@@ -37,6 +50,7 @@ class KB11 {
     pdp11::intr itab[ITABN];
 
     KT11 mmu;
+    UNIBUS unibus;
 
   private:
     bool N();

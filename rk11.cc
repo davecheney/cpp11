@@ -3,11 +3,10 @@
 #include <cstdlib>
 
 #include "avr11.h"
-#include "kb11.h"
 #include "rk11.h"
-#include "unibus.h"
+#include "kb11.h"
 
-extern UNIBUS unibus;
+extern KB11 cpu;
 
 enum {
     RKOVR = (1 << 14),
@@ -91,11 +90,11 @@ again:
     uint16_t val;
     for (i = 0; i < 256 && RKWC != 0; i++) {
         if (w) {
-            val = unibus.read16(RKBA);
+            val = cpu.unibus.read16(RKBA);
             fputc(val & 0xFF, rkdata);
             fputc((val >> 8) & 0xFF, rkdata);
         } else {
-            unibus.write16(RKBA, fgetc(rkdata) | (fgetc(rkdata) << 8));
+            cpu.unibus.write16(RKBA, fgetc(rkdata) | (fgetc(rkdata) << 8));
         }
         RKBA += 2;
         RKWC = (RKWC + 1) & 0xFFFF;

@@ -12,9 +12,8 @@
 #include "rk11.h"
 
 KB11 cpu;
-DL11 cons(cpu);
-RK11 rk11(cpu);
-UNIBUS unibus;
+DL11 cons;
+RK11 rk11;
 
 void setup() {
     struct termios old_terminal_settings, new_terminal_settings;
