@@ -5,15 +5,13 @@
 #include <stdio.h>
 
 #include "avr11.h"
-#include "dl11.h"
+#include "bootrom.h"
 #include "kb11.h"
 #include "rk11.h"
-#include "bootrom.h"
 
 extern jmp_buf trapbuf;
-extern DL11 cons;
 extern RK11 rk11;
-extern    UNIBUS unibus;
+extern UNIBUS unibus;
 
 void KB11::reset() {
     LKS = 1 << 7;
@@ -22,7 +20,7 @@ void KB11::reset() {
         unibus.access<1>(02000 + (i * 2), bootrom[i]);
     }
     R[7] = 002002;
-    cons.clearterminal();
+    unibus.cons.clearterminal();
     rk11.reset();
 }
 
@@ -30,7 +28,6 @@ bool KB11::N() { return PS & FLAGN; }
 bool KB11::Z() { return PS & FLAGZ; }
 bool KB11::V() { return PS & FLAGV; }
 bool KB11::C() { return PS & FLAGC; }
-
 
 inline uint16_t KB11::fetch16() {
     const uint16_t val = access<0>(R[7]);
@@ -316,7 +313,6 @@ void KB11::JMP(const uint16_t instr) {
     R[7] = uval;
 }
 
-
 void KB11::MARK(const uint16_t instr) {
     R[6] = R[7] + ((instr & 077) << 1);
     R[7] = R[5];
@@ -420,7 +416,7 @@ void KB11::RESET() {
     if (curuser) {
         return;
     }
-    cons.clearterminal();
+    unibus.cons.clearterminal();
     rk11.reset();
 }
 

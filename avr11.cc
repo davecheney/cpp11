@@ -7,12 +7,10 @@
 #include <termios.h>
 
 #include "avr11.h"
-#include "dl11.h"
 #include "kb11.h"
 #include "rk11.h"
 
 KB11 cpu;
-DL11 cons;
 RK11 rk11;
 
 void setup() {
@@ -80,7 +78,7 @@ void loop0() {
                 cpu.interrupt(INTCLOCK, 6);
             }
         }
-        cons.poll();
+        cpu.unibus.cons.poll();
     }
 }
 

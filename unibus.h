@@ -1,11 +1,13 @@
 #pragma once
 #include "ms11.h"
+#include "dl11.h"
 #include <stdint.h>
 
 class UNIBUS {
 
   public:
     MS11 core;
+    DL11 cons;
 
     uint16_t read8(const uint32_t a);
     void write8(const uint32_t a, const uint16_t v);

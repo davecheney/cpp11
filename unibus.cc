@@ -10,7 +10,6 @@
 #include "rk11.h"
 #include "unibus.h"
 
-extern DL11 cons;
 extern KB11 cpu;
 extern RK11 rk11;
 
