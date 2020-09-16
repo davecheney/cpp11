@@ -7,10 +7,9 @@
 #include "avr11.h"
 #include "bootrom.h"
 #include "kb11.h"
-#include "rk11.h"
 
 extern jmp_buf trapbuf;
-extern RK11 rk11;
+
 extern UNIBUS unibus;
 
 void KB11::reset() {
@@ -20,8 +19,7 @@ void KB11::reset() {
         unibus.access<1>(02000 + (i * 2), bootrom[i]);
     }
     R[7] = 002002;
-    unibus.cons.clearterminal();
-    rk11.reset();
+    unibus.reset();
 }
 
 bool KB11::N() { return PS & FLAGN; }
@@ -416,8 +414,7 @@ void KB11::RESET() {
     if (curuser) {
         return;
     }
-    unibus.cons.clearterminal();
-    rk11.reset();
+    unibus.reset();
 }
 
 void KB11::step() {

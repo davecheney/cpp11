@@ -3,15 +3,10 @@
 #include <stdio.h>
 
 #include "avr11.h"
-#include "dl11.h"
 #include "kb11.h"
-#include "kt11.h"
-#include "ms11.h"
-#include "rk11.h"
 #include "unibus.h"
 
 extern KB11 cpu;
-extern RK11 rk11;
 
 uint16_t UNIBUS::read8(const uint32_t a) {
     if (a & 1) {
@@ -133,4 +128,9 @@ uint16_t UNIBUS::read16(uint32_t a) {
 
     printf("unibus: read from invalid address %06o\n", a);
     return trap(INTBUS);
+}
+
+void UNIBUS::reset() {
+    cons.clearterminal();
+    rk11.reset();
 }

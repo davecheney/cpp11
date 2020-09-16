@@ -1,6 +1,7 @@
 #pragma once
 #include "ms11.h"
 #include "dl11.h"
+#include "rk11.h"
 #include <stdint.h>
 
 class UNIBUS {
@@ -8,11 +9,14 @@ class UNIBUS {
   public:
     MS11 core;
     DL11 cons;
+    RK11 rk11;
 
     uint16_t read8(const uint32_t a);
     void write8(const uint32_t a, const uint16_t v);
     void write16(uint32_t a, uint16_t v);
     uint16_t read16(uint32_t a);
+
+    void reset();
 
     template <bool wr> inline uint16_t access(uint32_t addr, uint16_t v = 0) {
         if (wr) {
