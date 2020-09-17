@@ -29,8 +29,6 @@ void DL11::addchar(char c) {
     }
 }
 
-uint8_t count;
-
 int is_key_pressed(void) {
     struct timeval tv;
     fd_set fds;
