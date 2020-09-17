@@ -5,7 +5,6 @@
 #include "kb11.h"
 
 extern KB11 cpu;
-extern    UNIBUS unibus;
 
 uint16_t KT11::page::addr() { return par & 07777; }
 uint8_t KT11::page::len() { return (pdr >> 8) & 0x7f; }
@@ -88,7 +87,7 @@ uint16_t KT11::read16(uint32_t a) {
 }
 
 void KT11::write16(uint32_t a, uint16_t v) {
-    uint8_t i = ((a & 017) >> 1);
+    auto i = (a & 017) >> 1;
     if ((a >= 0772300) && (a < 0772320)) {
         pages[i].pdr = v;
         return;
@@ -111,7 +110,7 @@ void KT11::write16(uint32_t a, uint16_t v) {
 
 void KT11::dumppages() {
     uint8_t i;
-    for (i = 0; i < 16; i++) {
+    for (i = 0; i < pages.size(); i++) {
         printf("%0x: %06o %06o\r\n", i, pages[i].par, pages[i].pdr);
     }
 }

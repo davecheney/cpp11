@@ -16,18 +16,18 @@ enum {
 };
 
 uint16_t RK11::read16(uint32_t a) {
-    switch (a) {
-    case 0777400:
+    switch (a & 0x17) {
+    case 000:
         return RKDS;
-    case 0777402:
+    case 002:
         return RKER;
-    case 0777404:
+    case 004:
         return RKCS | (RKBA & 0x30000) >> 12;
-    case 0777406:
+    case 006:
         return RKWC;
-    case 0777410:
+    case 010:
         return RKBA & 0xFFFF;
-    case 0777412:
+    case 012:
         return (sector) | (surface << 4) | (cylinder << 5) | (drive << 13);
     default:
         printf("rk11::read16 invalid read\n");
@@ -123,12 +123,12 @@ again:
 
 void RK11::write16(uint32_t a, uint16_t v) {
     // printf("rkwrite: %06o\n",a);
-    switch (a) {
-    case 0777400:
+    switch (a &017) {
+    case 000:
         break;
-    case 0777402:
+    case 002:
         break;
-    case 0777404:
+    case 004:
         RKBA = (RKBA & 0xFFFF) | ((v & 060) << 12);
         v &= 017517; // writable bits
         RKCS &= ~017517;
@@ -150,13 +150,13 @@ void RK11::write16(uint32_t a, uint16_t v) {
             }
         }
         break;
-    case 0777406:
+    case 006:
         RKWC = v;
         break;
-    case 0777410:
+    case 010:
         RKBA = (RKBA & 0x30000) | (v);
         break;
-    case 0777412:
+    case 012:
         drive = v >> 13;
         cylinder = (v >> 5) & 0377;
         surface = (v >> 4) & 1;

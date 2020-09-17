@@ -88,28 +88,6 @@ void KB11::branch(int16_t o) {
     R[7] += o;
 }
 
-void KB11::switchmode(const bool newm) {
-    prevuser = curuser;
-    curuser = newm;
-    if (prevuser) {
-        USP = R[6];
-    } else {
-        KSP = R[6];
-    }
-    if (curuser) {
-        R[6] = USP;
-    } else {
-        R[6] = KSP;
-    }
-    PS &= 0007777;
-    if (curuser) {
-        PS |= (1 << 15) | (1 << 14);
-    }
-    if (prevuser) {
-        PS |= (1 << 13) | (1 << 12);
-    }
-}
-
 void KB11::setZ(const bool b) {
     if (b)
         PS |= FLAGZ;
@@ -389,7 +367,7 @@ void KB11::EMTX(const uint16_t instr) {
         uval = 020;
     }
     uint16_t prev = PS;
-    switchmode(false);
+    switchmode<false>();
     push(prev);
     push(R[7]);
     R[7] = unibus.read16(uval);
@@ -719,7 +697,7 @@ void KB11::trapat(uint16_t vec) { // , msg string) {
                   }
      */
     auto prev = PS;
-    switchmode(false);
+    switchmode<false>();
     push(prev);
     push(R[7]);
 
@@ -782,7 +760,7 @@ void KB11::handleinterrupt() {
     uint16_t vv = setjmp(trapbuf);
     if (vv == 0) {
         uint16_t prev = PS;
-        switchmode(false);
+        switchmode<false>();
         push(prev);
         push(R[7]);
     } else {

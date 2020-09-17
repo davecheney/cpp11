@@ -1,8 +1,8 @@
 #pragma once
 #include "avr11.h"
 #include "kt11.h"
-#include <array>
 #include "unibus.h"
+#include <array>
 #include <stdint.h>
 
 enum { FLAGN = 8, FLAGZ = 4, FLAGV = 2, FLAGC = 1 };
@@ -43,7 +43,27 @@ class KB11 {
     void trapat(uint16_t vec);
     void interrupt(uint8_t vec, uint8_t pri);
     void handleinterrupt();
-    void switchmode(const bool newm);
+    template <bool newm> void switchmode() {
+        prevuser = curuser;
+        curuser = newm;
+        if (prevuser) {
+            USP = R[6];
+        } else {
+            KSP = R[6];
+        }
+        if (curuser) {
+            R[6] = USP;
+        } else {
+            R[6] = KSP;
+        }
+        PS &= 0007777;
+        if (curuser) {
+            PS |= (1 << 15) | (1 << 14);
+        }
+        if (prevuser) {
+            PS |= (1 << 13) | (1 << 12);
+        }
+    }
 
     uint16_t R[8];
 

@@ -40,10 +40,10 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
     case 0777776:
         switch (v >> 14) {
         case 0:
-            cpu.switchmode(false);
+            cpu.switchmode<false>();
             break;
         case 3:
-            cpu.switchmode(true);
+            cpu.switchmode<true>();
             break;
         default:
             printf("invalid mode\n");
