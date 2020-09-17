@@ -71,8 +71,8 @@ void loop0() {
         cpu.step();
         if (++clkcounter > 39999) {
             clkcounter = 0;
-            cpu.LKS |= (1 << 7);
-            if (cpu.LKS & (1 << 6)) {
+            cpu.unibus.kw11.csr |= (1 << 7);
+            if (cpu.unibus.kw11.csr & (1 << 6)) {
                 cpu.interrupt(INTCLOCK, 6);
             }
         }

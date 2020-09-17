@@ -2,6 +2,7 @@
 #include "ms11.h"
 #include "dl11.h"
 #include "rk11.h"
+#include "kw11.h"
 #include <stdint.h>
 
 class UNIBUS {
@@ -10,6 +11,7 @@ class UNIBUS {
     MS11 core;
     DL11 cons;
     RK11 rk11;
+    KW11 kw11;
 
     uint16_t read8(const uint32_t a);
     void write8(const uint32_t a, const uint16_t v);

@@ -63,7 +63,7 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
         cpu.PS = v;
         return;
     case 0777546:
-        cpu.LKS = v;
+        kw11.csr = v;
         return;
     case 0777572:
         cpu.mmu.SR0 = v;
@@ -95,7 +95,7 @@ uint16_t UNIBUS::read16(uint32_t a) {
     }
 
     if (a == 0777546) {
-        return cpu.LKS;
+        return kw11.csr;
     }
 
     if (a == 0777570) {
@@ -133,4 +133,5 @@ uint16_t UNIBUS::read16(uint32_t a) {
 void UNIBUS::reset() {
     cons.clearterminal();
     rk11.reset();
+    kw11.csr = 0x80;
 }

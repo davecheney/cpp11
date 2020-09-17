@@ -13,7 +13,6 @@ extern jmp_buf trapbuf;
 extern UNIBUS unibus;
 
 void KB11::reset() {
-    LKS = 1 << 7;
     uint16_t i;
     for (i = 0; i < 29; i++) {
         unibus.access<1>(02000 + (i * 2), bootrom[i]);

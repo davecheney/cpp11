@@ -33,7 +33,6 @@ class KB11 {
     uint16_t PS;
     uint16_t USP;
     uint16_t KSP;
-    uint16_t LKS;
     bool curuser;
     bool prevuser;
 
