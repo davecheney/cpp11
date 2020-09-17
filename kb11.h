@@ -1,8 +1,8 @@
 #pragma once
-#include <stdint.h>
 #include "avr11.h"
 #include "kt11.h"
 #include "unibus.h"
+#include <stdint.h>
 
 enum { FLAGN = 8, FLAGZ = 4, FLAGV = 2, FLAGC = 1 };
 
@@ -46,7 +46,13 @@ class KB11 {
 
     uint16_t R[8];
 
-    pdp11::intr itab[ITABN];
+    struct intr {
+        uint8_t vec;
+        uint8_t pri;
+    };
+
+    intr itab[ITABN];
+
 
     KT11 mmu;
     UNIBUS unibus;
