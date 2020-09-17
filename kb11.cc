@@ -742,22 +742,22 @@ void KB11::interrupt(uint8_t vec, uint8_t pri) {
         return;
     }
     uint8_t i;
-    for (i = 0; i < ITABN; i++) {
+    for (i = 0; i < itab.size(); i++) {
         if ((itab[i].vec == 0) || (itab[i].pri < pri)) {
             break;
         }
     }
-    for (; i < ITABN; i++) {
+    for (; i < itab.size(); i++) {
         if ((itab[i].vec == 0) || (itab[i].vec >= vec)) {
             break;
         }
     }
-    if (i >= ITABN) {
+    if (i >= itab.size()) {
         printf("interrupt table full\n");
         std::abort();
     }
     uint8_t j;
-    for (j = i + 1; j < ITABN; j++) {
+    for (j = i + 1; j < itab.size(); j++) {
         itab[j] = itab[j - 1];
     }
     itab[i].vec = vec;
@@ -767,11 +767,11 @@ void KB11::interrupt(uint8_t vec, uint8_t pri) {
 // pop the top interrupt off the itab.
 void KB11::popirq() {
     uint8_t i;
-    for (i = 0; i < ITABN - 1; i++) {
+    for (i = 0; i < itab.size() - 1; i++) {
         itab[i] = itab[i + 1];
     }
-    itab[ITABN - 1].vec = 0;
-    itab[ITABN - 1].pri = 0;
+    itab[itab.size() - 1].vec = 0;
+    itab[itab.size() - 1].pri = 0;
 }
 
 void KB11::handleinterrupt() {

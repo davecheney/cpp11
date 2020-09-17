@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <stdint.h>
 
 class KT11 {
@@ -22,6 +23,6 @@ class KT11 {
     void write16(uint32_t a, uint16_t v);
 
   private:
-    page pages[16];
+    std::array<page, 16> pages;
     void dumppages();
 };

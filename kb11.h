@@ -1,6 +1,7 @@
 #pragma once
 #include "avr11.h"
 #include "kt11.h"
+#include <array>
 #include "unibus.h"
 #include <stdint.h>
 
@@ -51,8 +52,7 @@ class KB11 {
         uint8_t pri;
     };
 
-    intr itab[ITABN];
-
+    std::array<intr, 8> itab;
 
     KT11 mmu;
     UNIBUS unibus;

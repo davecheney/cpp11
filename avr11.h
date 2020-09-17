@@ -15,6 +15,4 @@ void disasm(uint32_t ia);
 uint16_t trap(uint16_t num);
 
 
-#define ITABN 8
-
 

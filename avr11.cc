@@ -60,11 +60,11 @@ void loop0() {
         if ((cpu.itab[0].vec > 0) && (cpu.itab[0].pri >= ((cpu.PS >> 5) & 7))) {
             cpu.handleinterrupt();
             uint8_t i;
-            for (i = 0; i < ITABN - 1; i++) {
+            for (i = 0; i < cpu.itab.size() - 1; i++) {
                 cpu.itab[i] = cpu.itab[i + 1];
             }
-            cpu.itab[ITABN - 1].vec = 0;
-            cpu.itab[ITABN - 1].pri = 0;
+            cpu.itab[cpu.itab.size() - 1].vec = 0;
+            cpu.itab[cpu.itab.size() - 1].pri = 0;
             return; // exit from loop to reset trapbuf
         }
         cpu.step();
