@@ -718,7 +718,7 @@ void KB11::trapat(uint16_t vec) { // , msg string) {
                           panic(t)
                   }
      */
-    uint16_t prev = PS;
+    auto prev = PS;
     switchmode(false);
     push(prev);
     push(R[7]);

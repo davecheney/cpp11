@@ -35,7 +35,6 @@ void setup() {
     printf("Ready\n");
 }
 
-uint16_t clkcounter;
 uint16_t instcounter;
 
 jmp_buf trapbuf;
@@ -48,7 +47,7 @@ uint16_t trap(uint16_t vec) {
 }
 
 void loop() {
-    uint16_t vec = setjmp(trapbuf);
+    auto vec = setjmp(trapbuf);
     if (vec == 0) {
         loop0();
     } else {
@@ -69,13 +68,7 @@ void loop0() {
             return; // exit from loop to reset trapbuf
         }
         cpu.step();
-        if (++clkcounter > 39999) {
-            clkcounter = 0;
-            cpu.unibus.kw11.csr |= (1 << 7);
-            if (cpu.unibus.kw11.csr & (1 << 6)) {
-                cpu.interrupt(INTCLOCK, 6);
-            }
-        }
+        cpu.unibus.kw11.tick();
         cpu.unibus.cons.poll();
     }
 }
