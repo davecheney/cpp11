@@ -1,10 +1,10 @@
+#include <cstdlib>
 #include <stdint.h>
 #include <stdio.h>
-#include <cstdlib>
 
 #include "avr11.h"
-#include "rk11.h"
 #include "kb11.h"
+#include "rk11.h"
 
 extern KB11 cpu;
 
@@ -123,7 +123,7 @@ again:
 
 void RK11::write16(uint32_t a, uint16_t v) {
     // printf("rkwrite: %06o\n",a);
-    switch (a &017) {
+    switch (a & 017) {
     case 000:
         break;
     case 002:
@@ -143,9 +143,15 @@ void RK11::write16(uint32_t a, uint16_t v) {
                 rknotready();
                 step();
                 break;
+                case 5:
+                // read check, not implemented
+            case 7:
+                // write lock, not implemented
+                break;
             default:
-                printf("unimplemented RK05 operation %06o",
+                printf("unimplemented RK05 operation %06o\n",
                        ((RKCS & 017) >> 1));
+                cpu.printstate();
                 std::abort();
             }
         }
@@ -169,9 +175,9 @@ void RK11::write16(uint32_t a, uint16_t v) {
 }
 
 void RK11::reset() {
-    RKDS = (1 << 11) | (1 << 7) | (1 << 6);
+    RKDS = 04700; // Set bits 6, 7, 8, 11
     RKER = 0;
-    RKCS = 1 << 7;
+    RKCS = 0200;
     RKWC = 0;
     RKBA = 0;
 }

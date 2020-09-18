@@ -26,6 +26,10 @@ bool KB11::Z() { return PS & FLAGZ; }
 bool KB11::V() { return PS & FLAGV; }
 bool KB11::C() { return PS & FLAGC; }
 
+template <bool wr> uint16_t KB11::access(uint16_t addr, uint16_t v) {
+    return unibus.access<wr>(mmu.decode<wr>(addr, curuser), v);
+}
+
 inline uint16_t KB11::fetch16() {
     const uint16_t val = access<0>(R[7]);
     R[7] += 2;

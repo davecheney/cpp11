@@ -5,7 +5,7 @@
 class RK11 {
 
     public:
-    uint32_t RKBA, RKDS, RKER, RKCS, RKWC;
+    
     FILE* rkdata;
 
     uint16_t read16(uint32_t a);
@@ -14,6 +14,7 @@ class RK11 {
     void step();
 
     private:
+    uint16_t RKBA, RKDS, RKER, RKCS, RKWC;
     uint32_t drive, sector, surface, cylinder;
     
     void rknotready();

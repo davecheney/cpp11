@@ -29,8 +29,6 @@ void setup(char * disk) {
     if (tcsetattr(0, TCSANOW, &new_terminal_settings) < 0)
         perror("tcsetattr ICANON");
     cpu.unibus.rk11.rkdata = fopen(disk, "r+");
-
-    printf("Reset\n");
     cpu.reset();
     printf("Ready\n");
 }
