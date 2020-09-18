@@ -193,7 +193,7 @@ void printstate() {
            cpu.PS & FLAGN ? "N" : " ", cpu.PS & FLAGZ ? "Z" : " ",
            cpu.PS & FLAGV ? "V" : " ", cpu.PS & FLAGC ? "C" : " ");
     printf("]  instr %06o: %06o\t ", cpu.PC,
-           cpu.unibus.read16(cpu.mmu.decode(cpu.PC, false, cpu.curuser)));
-    disasm(cpu.mmu.decode(cpu.PC, false, cpu.curuser));
+           cpu.unibus.read16(cpu.mmu.decode<false>(cpu.PC, cpu.curuser)));
+    disasm(cpu.mmu.decode<false>(cpu.PC, cpu.curuser));
     printf("\n");
 }

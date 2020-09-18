@@ -12,12 +12,12 @@ bool KT11::page::read() { return pdr & 2; }
 bool KT11::page::write() { return pdr & 6; };
 bool KT11::page::ed() { return pdr & 8; }
 
-uint32_t KT11::decode(uint16_t a, uint8_t w, uint8_t user) {
+template <bool wr> uint32_t KT11::decode(uint16_t a, uint8_t user) {
     if ((SR0 & 1) == 0) {
         return a > 0167777 ? ((uint32_t)a) + 0600000 : a;
     }
     uint8_t i = user ? ((a >> 13) + 8) : (a >> 13);
-    if (w && !pages[i].write()) {
+    if (wr && !pages[i].write()) {
         SR0 = (1 << 13) | 1;
         SR0 |= (a >> 12) & ~1;
         if (user) {
@@ -54,7 +54,7 @@ uint32_t KT11::decode(uint16_t a, uint8_t w, uint8_t user) {
             a, block, pages[i].len());
         trap(INTFAULT);
     }
-    if (w) {
+    if (wr) {
         pages[i].pdr |= 1 << 6;
     }
     // danger, this can be cast to a uint16_t if you aren't careful
@@ -68,6 +68,9 @@ uint32_t KT11::decode(uint16_t a, uint8_t w, uint8_t user) {
 
     return aa;
 }
+
+template uint32_t KT11::decode<true>(uint16_t a, uint8_t user);
+template uint32_t KT11::decode<false>(uint16_t a, uint8_t user);
 
 uint16_t KT11::read16(uint32_t a) {
     if ((a >= 0772300) && (a < 0772320)) {
