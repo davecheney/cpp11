@@ -9,13 +9,13 @@ extern KB11 cpu;
 
 const char *rs[] = {"R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC"};
 
-typedef struct {
+struct D {
     uint16_t inst;
     uint16_t arg;
     const char *msg;
     uint8_t flag;
     bool b;
-} D;
+};
 
 enum { DD = 1 << 1, S = 1 << 2, RR = 1 << 3, O = 1 << 4, N = 1 << 5 };
 
@@ -183,17 +183,4 @@ void disasm(uint32_t a) {
     }
 }
 
-void printstate() {
-    printf(
-        "R0 %06o R1 %06o R2 %06o R3 %06o R4 %06o R5 %06o R6 %06o R7 %06o\r\n",
-        uint16_t(cpu.R[0]), uint16_t(cpu.R[1]), uint16_t(cpu.R[2]),
-        uint16_t(cpu.R[3]), uint16_t(cpu.R[4]), uint16_t(cpu.R[5]),
-        uint16_t(cpu.R[6]), uint16_t(cpu.R[7]));
-    printf("[%s%s%s%s%s%s", cpu.prevuser ? "u" : "k", cpu.curuser ? "U" : "K",
-           cpu.PS & FLAGN ? "N" : " ", cpu.PS & FLAGZ ? "Z" : " ",
-           cpu.PS & FLAGV ? "V" : " ", cpu.PS & FLAGC ? "C" : " ");
-    printf("]  instr %06o: %06o\t ", cpu.PC,
-           cpu.unibus.read16(cpu.mmu.decode<false>(cpu.PC, cpu.curuser)));
-    disasm(cpu.mmu.decode<false>(cpu.PC, cpu.curuser));
-    printf("\n");
-}
+

@@ -43,6 +43,8 @@ class KB11 {
     void trapat(uint16_t vec);
     void interrupt(uint8_t vec, uint8_t pri);
     void handleinterrupt();
+    void printstate();
+
     template <bool newm> void switchmode() {
         prevuser = curuser;
         curuser = newm;
@@ -64,9 +66,7 @@ class KB11 {
             PS |= (1 << 13) | (1 << 12);
         }
     }
-
-    uint16_t R[8];
-
+    
     struct intr {
         uint8_t vec;
         uint8_t pri;
@@ -78,6 +78,8 @@ class KB11 {
     UNIBUS unibus;
 
   private:
+    std::array<uint16_t,8> R; // R0-R8
+    
     bool N();
     bool Z();
     void setZ(const bool b);

@@ -774,3 +774,16 @@ void KB11::handleinterrupt() {
     }
     popirq();
 }
+
+void KB11::printstate() {
+    printf(
+        "R0 %06o R1 %06o R2 %06o R3 %06o R4 %06o R5 %06o R6 %06o R7 %06o\r\n",
+        R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]);
+    printf("[%s%s%s%s%s%s", prevuser ? "u" : "k", curuser ? "U" : "K",
+           PS & FLAGN ? "N" : " ", PS & FLAGZ ? "Z" : " ",
+           PS & FLAGV ? "V" : " ", PS & FLAGC ? "C" : " ");
+    printf("]  instr %06o: %06o\t ", PC,
+           unibus.read16(mmu.decode<false>(PC, curuser)));
+    disasm(mmu.decode<false>(PC, curuser));
+    printf("\n");
+}

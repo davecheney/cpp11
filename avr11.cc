@@ -80,6 +80,6 @@ int main() {
 }
 
 void panic() {
-    printstate();
+    cpu.printstate();
     std::abort();
 }
