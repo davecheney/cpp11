@@ -11,7 +11,7 @@
 
 KB11 cpu;
 
-void setup() {
+void setup(char * disk) {
     struct termios old_terminal_settings, new_terminal_settings;
 
     // Get the current terminal settings
@@ -28,7 +28,7 @@ void setup() {
     // apply our new settings
     if (tcsetattr(0, TCSANOW, &new_terminal_settings) < 0)
         perror("tcsetattr ICANON");
-    cpu.unibus.rk11.rkdata = fopen("rk0", "r+");
+    cpu.unibus.rk11.rkdata = fopen(disk, "r+");
 
     printf("Reset\n");
     cpu.reset();
@@ -73,8 +73,9 @@ void loop0() {
     }
 }
 
-int main() {
-    setup();
+int main(int argc, char* argv[]) {
+    assert(argc > 1);
+    setup(argv[1]);
     while (1)
         loop();
 }
