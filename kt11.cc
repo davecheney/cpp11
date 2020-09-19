@@ -23,7 +23,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint8_t user) {
         if (user) {
             SR0 |= (1 << 5) | (1 << 6);
         }
-        SR2 = cpu.PC;
+        // SR2 = cpu.PC;
 
         printf("mmu::decode write to read-only page %06o\n", a);
         trap(INTFAULT);
@@ -34,7 +34,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint8_t user) {
         if (user) {
             SR0 |= (1 << 5) | (1 << 6);
         }
-        SR2 = cpu.PC;
+        // SR2 = cpu.PC;
         printf("mmu::decode read from no-access page %06o\n", a);
         trap(INTFAULT);
     }
@@ -47,7 +47,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint8_t user) {
         if (user) {
             SR0 |= (1 << 5) | (1 << 6);
         }
-        SR2 = cpu.PC;
+        // SR2 = cpu.PC;
         printf(
             "page length exceeded, address %06o (block %03o) is beyond length "
             "%03o\r\n",

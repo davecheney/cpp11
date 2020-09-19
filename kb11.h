@@ -28,8 +28,9 @@ enum {
 
 class KB11 {
   public:
-    uint16_t PC;
+    
     uint16_t PS;
+    uint16_t stacklimit, switchregister;
     
     bool curuser;
     bool prevuser;
@@ -76,6 +77,7 @@ class KB11 {
 
   private:
     std::array<uint16_t, 8> R; // R0-R7
+    uint16_t PC; // holds R[7] during instruction execution
     uint16_t USP;
     uint16_t KSP;
 
@@ -204,6 +206,12 @@ class KB11 {
 
     template <uint8_t l> void CLR(const uint16_t instr) {
         PS &= 0xFFF0;
+        PS |= FLAGZ;
+        const uint16_t da = DA(instr);
+        memwrite<l>(da, 0);
+    }
+
+    template <uint8_t l> void SET(const uint16_t instr) {
         PS |= FLAGZ;
         const uint16_t da = DA(instr);
         memwrite<l>(da, 0);

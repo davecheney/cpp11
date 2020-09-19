@@ -62,6 +62,9 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
         }
         cpu.PS = v;
         return;
+    case 0777774:
+        cpu.stacklimit = v;
+        return;
     case 0777546:
         kw11.csr = v;
         return;
@@ -99,7 +102,7 @@ uint16_t UNIBUS::read16(uint32_t a) {
     }
 
     if (a == 0777570) {
-        return 0173030;
+        return cpu.switchregister;
     }
 
     if (a == 0777572) {
@@ -108,6 +111,10 @@ uint16_t UNIBUS::read16(uint32_t a) {
 
     if (a == 0777576) {
         return cpu.mmu.SR2;
+    }
+
+    if (a == 0777774) {
+        return cpu.stacklimit;
     }
 
     if (a == 0777776) {

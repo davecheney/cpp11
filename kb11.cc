@@ -16,6 +16,8 @@ void KB11::reset() {
         unibus.access<1>(02000 + (i * 2), bootrom[i]);
     }
     R[7] = 002002;
+    stacklimit = 0xff;
+    switchregister = 0x0; // 0173030;
     unibus.reset();
 }
 
@@ -29,7 +31,7 @@ template <bool wr> uint16_t KB11::access(uint16_t addr, uint16_t v) {
 }
 
 inline uint16_t KB11::fetch16() {
-    const uint16_t val = access<0>(R[7]);
+    auto val = access<0>(R[7]);
     R[7] += 2;
     return val;
 }
@@ -403,283 +405,344 @@ void KB11::step() {
     if (PRINTSTATE)
         printstate();
 
-    switch (instr) {
-    case 0010000 ... 0017777: // MOV
+    switch (instr >> 12) {    // xxSSDD Mostly double operand instructions
+    case 0:                   // 00xxxx mixed group
+        switch (instr >> 8) { // 00xxxx 8 bit instructions first (branch & JSR)
+        case 0:               // 000xXX Misc zero group
+            switch (instr >> 6) { // 000xDD group (4 case full decode)
+            case 0:               // 0000xx group
+                switch (instr) {
+                case 0: // HALT 000000
+                    printf("HALT\n");
+                    printstate();
+                    std::abort();
+                case 1: // WAIT 000001
+                    sched_yield();
+                    return;
+                case 3:             // BPT  000003
+                    trap(INTDEBUG); // Trap 14 - BPT
+                    return;
+                case 4: // IOT  000004
+                    EMTX(instr);
+                    return;
+                case 5: // RESET 000005
+                    RESET();
+                    return;
+                case 2: // RTI 000002
+                case 6: // RTT 000006
+                    _RTT();
+                    return;
+                case 7:  // MFPI
+                default: // We don't know this 0000xx instruction
+                    printf("unknown 0000xx instruction\n");
+                    printstate();
+                    trap(INTINVAL);
+                    return;
+                }
+            case 1: // JMP 0001DD
+                JMP(instr);
+                return;
+            case 2:                         // 00002xR single register group
+                switch ((instr >> 3) & 7) { // 00002xR register or CC
+                case 0:                     // RTS 00020R
+                    RTS(instr);
+                    return;
+                case 3: // SPL 00023N
+                    PS = (PS & 0xf81f) | ((instr & 7) << 5);
+                    return;
+                case 4: // CLR CC 00024C Part 1 without N
+                case 5: // CLR CC 00025C Part 2 with N
+                    PS &= ~instr & 017;
+                    return;
+                case 6: // SET CC 00026C Part 1 without N
+                case 7: // SET CC 00027C Part 2 with N
+                    PS |= instr & 017;
+                    return;
+                default: // We don't know this 00002xR instruction
+                    printf("unknown 0002xR instruction\n");
+                    printstate();
+                    trap(INTINVAL);
+                    return;
+                }
+            case 3: // SWAB 0003DD
+                SWAB<2>(instr);
+                return;
+            default:
+                printf("unknown 000xDD instruction\n");
+                printstate();
+                trap(INTINVAL);
+                return;
+            }
+        case 1: // BR 0004 offset
+            branch(instr & 0xff);
+            return;
+        case 2: // BNE 0010 offset
+            if (!Z()) {
+                branch(instr & 0xff);
+            }
+            return;
+        case 3: // BEQ 0014 offset
+            if (Z()) {
+                branch(instr & 0xff);
+            }
+            return;
+        case 4: // BGE 0020 offset
+            if (!(N() xor V())) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 5: // BLT 0024 offset
+            if (N() xor V()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 6: // BGT 0030 offset
+            if ((!(N() xor V())) && (!Z())) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 7: // BLE 0034 offset
+            if ((N() xor V()) || Z()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 8: // JSR 004RDD In two parts
+        case 9: // JSR 004RDD continued (9 bit instruction so use 2 x 8 bit
+            JSR(instr);
+            return;
+        default: // Remaining 0o00xxxx instructions where xxxx >= 05000
+            switch (instr >> 6) { // 00xxDD
+            case 050:             // CLR 0050DD
+                CLR<2>(instr);
+                return;
+            case 051: // COM 0051DD
+                COM<2>(instr);
+                return;
+            case 052: // INC 0052DD
+                INC<2>(instr);
+                return;
+            case 053: // DEC 0053DD
+                _DEC<2>(instr);
+                return;
+            case 054: // NEG 0054DD
+                NEG<2>(instr);
+                return;
+            case 055: // ADC 0055DD
+                _ADC<2>(instr);
+                return;
+            case 056: // SBC 0056DD
+                SBC<2>(instr);
+                return;
+            case 057: // TST 0057DD
+                TST<2>(instr);
+                return;
+            case 060: // ROR 0060DD
+                ROR<2>(instr);
+                return;
+            case 061: // ROL 0061DD
+                ROL<2>(instr);
+                return;
+            case 062: // ASR 0062DD
+                ASR<2>(instr);
+                return;
+            case 063: // ASL 0063DD
+                ASL<2>(instr);
+                return;
+            case 064: // MARK 0064nn
+                MARK(instr);
+                return;
+            case 065: // MFPI 0065SS
+                MFPI(instr);
+                return;
+            case 066: // MTPI 0066DD
+                MTPI(instr);
+                return;
+            case 067: // SXT 0067DD
+                SXT<2>(instr);
+                return;
+            default: // We don't know this 0o00xxDD instruction
+                printf("unknown 00xxDD instruction\n");
+                printstate();
+                trap(INTINVAL);
+            }
+        }
+    case 1: // MOV  01SSDD
         MOV<2>(instr);
         return;
-    case 0110000 ... 0117777: // MOVB
-        MOV<1>(instr);
-        return;
-    case 0020000 ... 0027777: // CMP
+    case 2: // CMP 02SSDD
         CMP<2>(instr);
         return;
-    case 0120000 ... 0127777: // CMPB
-        CMP<1>(instr);
-        return;
-    case 0030000 ... 0037777: // BIT
+    case 3: // BIT 03SSDD
         BIT<2>(instr);
         return;
-    case 0130000 ... 0137777: // BITB
-        BIT<1>(instr);
-        return;
-    case 0040000 ... 0047777: // BIC
+    case 4: // BIC 04SSDD
         BIC<2>(instr);
         return;
-    case 0140000 ... 0147777: // BICB
-        BIC<1>(instr);
-        return;
-    case 0050000 ... 0057777: // BIS
+    case 5: // BIS 05SSDD
         BIS<2>(instr);
         return;
-    case 0150000 ... 0157777: // BISB
-        BIS<1>(instr);
-        return;
-    case 0060000 ... 0067777: // ADD
+    case 6: // ADD 06SSDD
         ADD(instr);
         return;
-    case 0160000 ... 0167777: // SUB
+    case 7:                         // 07xRSS instructions
+        switch ((instr >> 9) & 7) { // 07xRSS
+        case 0:                     // MUL 070RSS
+            MUL(instr);
+            return;
+        case 1: // DIV 071RSS
+            DIV(instr);
+            return;
+        case 2: // ASH 072RSS
+            ASH(instr);
+            return;
+        case 3: // ASHC 073RSS
+            ASHC(instr);
+            return;
+        case 4: // XOR 074RSS
+            XOR(instr);
+            return;
+        case 7: // SOB 077Rnn
+            SOB(instr);
+            return;
+        default: // We don't know this 07xRSS instruction
+            printf("unknown 07xRSS instruction\n");
+            printstate();
+            trap(INTINVAL);
+            return;
+        }
+    case 8:                           // 10xxxx instructions
+        switch ((instr >> 8) & 0xf) { // 10xxxx 8 bit instructions first
+        case 0:                       // BPL 1000 offset
+            if (!N()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 1: // BMI 1004 offset
+            if (N()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 2: // BHI 1010 offset
+            if ((!C()) && (!Z())) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 3: // BLOS 1014 offset
+            if (C() || Z()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 4: // BVC 1020 offset
+            if (!V()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 5: // BVS 1024 offset
+            if (V()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 6: // BCC 1030 offset
+            if (!C()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 7: // BCS 1034 offset
+            if (C()) {
+                branch(instr & 0xFF);
+            }
+            return;
+        case 8:        // EMT 1040 operand
+            trap(030); // Trap 30 - EMT instruction
+            return;
+        case 9:        // TRAP 1044 operand
+            trap(034); // Trap 34 - TRAP instruction
+            return;
+        default: // Remaining 10xxxx instructions where xxxx >= 05000
+            switch ((instr >> 6) & 077) { // 10xxDD group
+            case 050:                     // CLRB 1050DD
+                CLR<1>(instr);
+                return;
+            case 051: // COMB 1051DD
+                COM<1>(instr);
+                return;
+            case 052: // INCB 1052DD
+                INC<1>(instr);
+                return;
+            case 053: // DECB 1053DD
+                _DEC<1>(instr);
+                return;
+            case 054: // NEGB 1054DD
+                NEG<1>(instr);
+                return;
+            case 055: // ADCB 01055DD
+                _ADC<1>(instr);
+                return;
+            case 056: // SBCB 01056DD
+                SBC<1>(instr);
+                return;
+            case 057: // TSTB 1057DD
+                TST<1>(instr);
+                return;
+            case 060: // RORB 1060DD
+                ROR<1>(instr);
+                return;
+            case 061: // ROLB 1061DD
+                ROL<1>(instr);
+                return;
+            case 062: // ASRB 1062DD
+                ASR<1>(instr);
+                return;
+            case 063: // ASLB 1063DD
+                ASL<1>(instr);
+                return;
+            // case 0o64: // MTPS 1064SS
+            // case 0o65: // MFPD 1065DD
+            // case 0o66: // MTPD 1066DD
+            // case 0o67: // MTFS 1064SS
+            default: // We don't know this 0o10xxDD instruction
+                printf("unknown 0o10xxDD instruction\n");
+                printstate();
+                trap(INTINVAL);
+                return;
+            }
+        }
+    case 9: // MOVB 11SSDD
+        MOV<1>(instr);
+        return;
+    case 10: // CMPB 12SSDD
+        CMP<1>(instr);
+        return;
+    case 11: // BITB 13SSDD
+        BIT<1>(instr);
+        return;
+    case 12: // BICB 14SSDD
+        BIC<1>(instr);
+        return;
+    case 13: // BISB 15SSDD
+        BIS<1>(instr);
+        return;
+    case 14: // SUB 16SSDD
         SUB(instr);
         return;
-    case 0004000 ... 0004777: // JSR
-        JSR(instr);
-        return;
-    case 0070000 ... 0070777: // MUL
-        MUL(instr);
-        return;
-    case 0071000 ... 0071777: // DIV
-        DIV(instr);
-        return;
-    case 0072000 ... 0072777: // ASH
-        ASH(instr);
-        return;
-    case 0073000 ... 0073777: // ASHC
-        ASHC(instr);
-        return;
-    case 0074000 ... 0074777: // XOR
-        XOR(instr);
-        return;
-    case 0077000 ... 0077777: // SOB
-        SOB(instr);
-        return;
-    case 0005000 ... 0005077: // CLR
-        CLR<2>(instr);
-        return;
-    case 0105000 ... 0105077: // CLRB
-        CLR<1>(instr);
-        return;
-    case 0005100 ... 0005177: // COM
-        COM<2>(instr);
-        return;
-    case 0105100 ... 0105177: // COMB
-        COM<1>(instr);
-        return;
-    case 0005200 ... 0005277: // INC
-        INC<2>(instr);
-        return;
-    case 0105200 ... 0105277: // INCB
-        INC<1>(instr);
-        return;
-    case 0005300 ... 0005377: // DEC
-        _DEC<2>(instr);
-        return;
-    case 0105300 ... 0105377: // DECB
-        _DEC<1>(instr);
-        return;
-    case 0005400 ... 0005477: // NEG
-        NEG<2>(instr);
-        return;
-    case 0105400 ... 0105477: // NEGB
-        NEG<1>(instr);
-        return;
-    case 0005500 ... 0005577: // ADC
-        _ADC<2>(instr);
-        return;
-    case 0105500 ... 0105577: // ADCB
-        _ADC<1>(instr);
-        return;
-    case 0005600 ... 0005677: // SBC
-        SBC<2>(instr);
-        return;
-    case 0105600 ... 0105677: // SBCB
-        SBC<1>(instr);
-        return;
-    case 0005700 ... 0005777: // TST
-        TST<2>(instr);
-        return;
-    case 0105700 ... 0105777: // TSTB
-        TST<1>(instr);
-        return;
-    case 0006000 ... 0006077: // ROR
-        ROR<2>(instr);
-        return;
-    case 0106000 ... 0106077: // RORB
-        ROR<1>(instr);
-        return;
-    case 0006100 ... 0006177: // ROL
-        ROL<2>(instr);
-        return;
-    case 0106100 ... 0106177: // ROLB
-        ROL<1>(instr);
-        return;
-    case 0006200 ... 0006277: // ASR
-        ASR<2>(instr);
-        return;
-    case 0106200 ... 0106277: // ASRB
-        ASR<1>(instr);
-        return;
-    case 0006300 ... 0006377: // ASL
-        ASL<2>(instr);
-        return;
-    case 0106300 ... 0106377: // ASLB
-        ASL<1>(instr);
-        return;
-    case 0006700 ... 0006777: // SXT
-        SXT<2>(instr);
-        return;
-    case 0000100 ... 0000177: // JMP
-        JMP(instr);
-        return;
-    case 0000300 ... 0000377: // SWAB
-        SWAB<2>(instr);
-        return;
-    case 0006400 ... 0006477: // MARK
-        MARK(instr);
-        break;
-    case 0006500 ... 0006577: // MFPI
-        MFPI(instr);
-        return;
-    case 0006600 ... 0006677: // MTPI
-        MTPI(instr);
-        return;
-    case 0000200 ... 0000207: // RTS
-        RTS(instr);
-        return;
+    case 15:
+        if (instr == 0170011) {
+            // SETD ; not needed by UNIX, but used; therefore ignored
+            return;
+        }
+    default: // 15  17xxxx FPP instructions
+        printf("invalid 17xxxx FPP instruction\n");
+        printstate();
+        trap(INTINVAL);
     }
-
-    switch (instr & 0177400) {
-    case 0000400:
-        branch(instr & 0xFF);
-        return;
-    case 0001000:
-        if (!Z()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0001400:
-        if (Z()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0002000:
-        if (!(N() xor V())) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0002400:
-        if (N() xor V()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0003000:
-        if ((!(N() xor V())) && (!Z())) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0003400:
-        if ((N() xor V()) || Z()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0100000:
-        if (!N()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0100400:
-        if (N()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0101000:
-        if ((!C()) && (!Z())) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0101400:
-        if (C() || Z()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0102000:
-        if (!V()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0102400:
-        if (V()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0103000:
-        if (!C()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    case 0103400:
-        if (C()) {
-            branch(instr & 0xFF);
-        }
-        return;
-    }
-    if (((instr & 0177000) == 0104000) || (instr == 3) ||
-        (instr == 4)) { // EMT TRAP IOT BPT
-        EMTX(instr);
-        return;
-    }
-    if ((instr & 0177740) == 0240) { // CL?, SE?
-        if (instr & 020) {
-            PS |= instr & 017;
-        } else {
-            PS &= ~instr & 017;
-        }
-        return;
-    }
-    switch (instr & 7) {
-    case 00: // HALT
-        if (curuser) {
-            break;
-        }
-        printf("HALT\n");
-        std::abort();
-    case 01: // WAIT
-        if (curuser) {
-            break;
-        }
-        sched_yield();
-        return;
-    case 02: // RTI
-
-    case 06: // RTT
-        _RTT();
-        return;
-    case 05: // RESET
-        RESET();
-        return;
-    }
-    if (instr == 0170011) {
-        // SETD ; not needed by UNIX, but used; therefore ignored
-        return;
-    }
-    printf("invalid instruction\n");
-    trap(INTINVAL);
 }
 
-void KB11::trapat(uint16_t vec) { // , msg string) {
+void KB11::trapat(uint16_t vec) {
     if (vec & 1) {
         printf("Thou darst calling trapat() with an odd vector number?\n");
         std::abort();
     }
-    printf("trap: %x\n", vec);
+    // printf("trap: %03o\n", vec);
 
     /*var prev uint16
           defer func() {
@@ -776,9 +839,9 @@ void KB11::handleinterrupt() {
 }
 
 void KB11::printstate() {
-    printf(
-        "R0 %06o R1 %06o R2 %06o R3 %06o R4 %06o R5 %06o R6 %06o R7 %06o\r\n",
-        R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]);
+    printf("R0 %06o R1 %06o R2 %06o R3 %06o R4 %06o R5 %06o R6 %06o R7 "
+           "%06o\r\n",
+           R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]);
     printf("[%s%s%s%s%s%s", prevuser ? "u" : "k", curuser ? "U" : "K",
            PS & FLAGN ? "N" : " ", PS & FLAGZ ? "Z" : " ",
            PS & FLAGV ? "V" : " ", PS & FLAGC ? "C" : " ");
