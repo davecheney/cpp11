@@ -398,8 +398,7 @@ void KB11::RESET() {
 
 void KB11::step() {
     PC = R[7];
-    uint16_t instr = access<0>(PC);
-    R[7] += 2;
+    auto instr = fetch16();
 
     if (PRINTSTATE)
         printstate();

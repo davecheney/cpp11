@@ -30,8 +30,7 @@ class KB11 {
   public:
     uint16_t PC;
     uint16_t PS;
-    uint16_t USP;
-    uint16_t KSP;
+    
     bool curuser;
     bool prevuser;
 
@@ -76,7 +75,9 @@ class KB11 {
     UNIBUS unibus;
 
   private:
-    std::array<uint16_t, 8> R; // R0-R8
+    std::array<uint16_t, 8> R; // R0-R7
+    uint16_t USP;
+    uint16_t KSP;
 
     bool N();
     bool Z();
