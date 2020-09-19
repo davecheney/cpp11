@@ -4,12 +4,12 @@
 #include <sys/select.h>
 #include <unistd.h>
 
-#include "dl11.h"
+#include "kl11.h"
 #include "kb11.h"
 
 extern KB11 cpu;
 
-void DL11::addchar(char c) {
+void KL11::addchar(char c) {
     switch (c) {
     case 42:
         tkb = 4;
@@ -42,14 +42,14 @@ int is_key_pressed(void) {
     return FD_ISSET(STDIN_FILENO, &fds);
 }
 
-void DL11::clearterminal() {
+void KL11::clearterminal() {
     tks = 0;
     tps = 1 << 7;
     tkb = 0;
     tpb = 0;
 }
 
-void DL11::poll() {
+void KL11::poll() {
     if (is_key_pressed())
         addchar(fgetc(stdin));
 
@@ -64,7 +64,7 @@ void DL11::poll() {
     }
 }
 
-uint16_t DL11::read16(uint32_t a) {
+uint16_t KL11::read16(uint32_t a) {
     switch (a &06) {
     case 00:
         return tks;
@@ -84,7 +84,7 @@ uint16_t DL11::read16(uint32_t a) {
     }
 }
 
-void DL11::write16(uint32_t a, uint16_t v) {
+void KL11::write16(uint32_t a, uint16_t v) {
     switch (a & 06) {
     case 00: 
         if (v & (1 << 6)) {

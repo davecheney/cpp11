@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-class DL11 {
+class KL11 {
 
   public:
     void clearterminal();
