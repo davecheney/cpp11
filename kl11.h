@@ -10,10 +10,10 @@ class KL11 {
     void write16(uint32_t a, uint16_t v);
 
   private:
-    uint16_t tks;
-    uint16_t tkb;
-    uint16_t tps;
-    uint16_t tpb;
+    uint16_t rcsr;
+    uint16_t rbuf;
+    uint16_t xcsr;
+    uint16_t xbuf;
     uint8_t count;
 
     void addchar(char c);

@@ -4,28 +4,19 @@
 #include <sys/select.h>
 #include <unistd.h>
 
-#include "kl11.h"
 #include "kb11.h"
+#include "kl11.h"
 
 extern KB11 cpu;
 
 void KL11::addchar(char c) {
-    switch (c) {
-    case 42:
-        tkb = 4;
-        break;
-    case 19:
-        tkb = 034;
-        break;
-    // case 46:
-    //	TKB = 127;
-    default:
-        tkb = c;
-        break;
-    }
-    tks |= 0x80;
-    if (tks & (1 << 6)) {
-        cpu.interrupt(INTTTYIN, 4);
+    if (!(rcsr & 0x80)) {
+        // unit not busy
+        rbuf = c;
+        rcsr |= 0x80;
+        if (rcsr & 0x40) {
+            cpu.interrupt(INTTTYIN, 4);
+        }
     }
 }
 
@@ -43,21 +34,21 @@ int is_key_pressed(void) {
 }
 
 void KL11::clearterminal() {
-    tks = 0;
-    tps = 1 << 7;
-    tkb = 0;
-    tpb = 0;
+    rcsr = 0;
+    xcsr = 0x80;
+    rbuf = 0;
+    xbuf = 0;
 }
 
 void KL11::poll() {
     if (is_key_pressed())
         addchar(fgetc(stdin));
 
-    if ((tps & 0x80) == 0) {
+    if ((xcsr & 0x80) == 0) {
         if (++count > 32) {
-            fputc(tpb & 0x7f, stderr);
-            tps |= 0x80;
-            if (tps & (1 << 6)) {
+            fputc(xbuf & 0x7f, stderr);
+            xcsr |= 0x80;
+            if (xcsr & (1 << 6)) {
                 cpu.interrupt(INTTTYOUT, 4);
             }
         }
@@ -65,17 +56,17 @@ void KL11::poll() {
 }
 
 uint16_t KL11::read16(uint32_t a) {
-    switch (a &06) {
+    switch (a & 06) {
     case 00:
-        return tks;
+        return rcsr;
     case 02:
-        if (tks & 0x80) {
-            tks &= 0xff7e;
-            return tkb;
+        if (rcsr & 0x80) {
+            rcsr &= 0xff7e;
+            return rbuf;
         }
         return 0;
     case 04:
-        return tps;
+        return xcsr;
     case 06:
         return 0;
     default:
@@ -86,23 +77,23 @@ uint16_t KL11::read16(uint32_t a) {
 
 void KL11::write16(uint32_t a, uint16_t v) {
     switch (a & 06) {
-    case 00: 
+    case 00:
         if (v & (1 << 6)) {
-            tks |= 1 << 6;
+            rcsr |= 1 << 6;
         } else {
-            tks &= ~(1 << 6);
+            rcsr &= ~(1 << 6);
         }
         break;
     case 04:
         if (v & (1 << 6)) {
-            tps |= 1 << 6;
+            xcsr |= 1 << 6;
         } else {
-            tps &= ~(1 << 6);
+            xcsr &= ~(1 << 6);
         }
         break;
     case 06:
-        tpb = v & 0xff;
-        tps &= 0xff7f;
+        xbuf = v & 0x7f;
+        xcsr &= 0xff7f;
         count = 0;
         break;
     default:
