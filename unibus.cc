@@ -127,7 +127,8 @@ uint16_t UNIBUS::read16(uint32_t a) {
     }
 
     printf("unibus: read from invalid address %06o\n", a);
-    return trap(INTBUS);
+    trap(INTBUS);
+    std::abort(); // not reached
 }
 
 void UNIBUS::reset() {

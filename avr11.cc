@@ -33,8 +33,6 @@ void setup(char * disk) {
     printf("Ready\n");
 }
 
-uint16_t instcounter;
-
 jmp_buf trapbuf;
 
 void loop0();

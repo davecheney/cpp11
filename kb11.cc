@@ -748,8 +748,7 @@ void KB11::interrupt(uint8_t vec, uint8_t pri) {
 
 // pop the top interrupt off the itab.
 void KB11::popirq() {
-    uint8_t i;
-    for (i = 0; i < itab.size() - 1; i++) {
+    for (uint8_t i = 0; i < itab.size() - 1; i++) {
         itab[i] = itab[i + 1];
     }
     itab[itab.size() - 1].vec = 0;

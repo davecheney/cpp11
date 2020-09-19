@@ -26,8 +26,6 @@ enum {
 #define SA(x) (aget(S(x), L(x)))
 #define DA(x) (aget(D(x), L(x)))
 
-extern UNIBUS unibus;
-
 class KB11 {
   public:
     uint16_t PC;
@@ -66,7 +64,7 @@ class KB11 {
             PS |= (1 << 13) | (1 << 12);
         }
     }
-    
+
     struct intr {
         uint8_t vec;
         uint8_t pri;
@@ -78,8 +76,8 @@ class KB11 {
     UNIBUS unibus;
 
   private:
-    std::array<uint16_t,8> R; // R0-R8
-    
+    std::array<uint16_t, 8> R; // R0-R8
+
     bool N();
     bool Z();
     void setZ(const bool b);

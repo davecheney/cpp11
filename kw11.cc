@@ -13,11 +13,16 @@ void kw11alarm(int) {
 
 KW11::KW11() {
     signal(SIGALRM, kw11alarm);
-    struct itimerval itv;
-    itv.it_interval.tv_sec = 0;
-    itv.it_interval.tv_usec = 20000;
-    itv.it_value.tv_sec = 0;
-    itv.it_value.tv_usec = 20000;
+    struct itimerval itv = {
+        .it_interval = {
+            .tv_sec = 0,
+            .tv_usec = 20000,
+        },
+        .it_value = {
+            .tv_sec = 0,
+            .tv_usec = 20000,
+        },
+    };
     setitimer(ITIMER_REAL, &itv, NULL);
 }
 
