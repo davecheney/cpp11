@@ -143,7 +143,7 @@ void RK11::write16(uint32_t a, uint16_t v) {
                 rknotready();
                 step();
                 break;
-                case 5:
+            case 5:
                 // read check, not implemented
             case 7:
                 // write lock, not implemented

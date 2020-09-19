@@ -65,18 +65,18 @@ void DL11::poll() {
 }
 
 uint16_t DL11::read16(uint32_t a) {
-    switch (a) {
-    case 0777560:
+    switch (a &06) {
+    case 00:
         return tks;
-    case 0777562:
+    case 02:
         if (tks & 0x80) {
             tks &= 0xff7e;
             return tkb;
         }
         return 0;
-    case 0777564:
+    case 04:
         return tps;
-    case 0777566:
+    case 06:
         return 0;
     default:
         printf("consread16: read from invalid address %06o\n", a);
@@ -85,22 +85,22 @@ uint16_t DL11::read16(uint32_t a) {
 }
 
 void DL11::write16(uint32_t a, uint16_t v) {
-    switch (a) {
-    case 0777560:
+    switch (a & 06) {
+    case 00: 
         if (v & (1 << 6)) {
             tks |= 1 << 6;
         } else {
             tks &= ~(1 << 6);
         }
         break;
-    case 0777564:
+    case 04:
         if (v & (1 << 6)) {
             tps |= 1 << 6;
         } else {
             tps &= ~(1 << 6);
         }
         break;
-    case 0777566:
+    case 06:
         tpb = v & 0xff;
         tps &= 0xff7f;
         count = 0;
