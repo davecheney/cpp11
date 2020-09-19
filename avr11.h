@@ -12,7 +12,7 @@ enum {
 void printstate();
 void disasm(uint32_t ia);
 
-uint16_t trap(uint16_t num);
+void trap(uint16_t num);
 
 
 

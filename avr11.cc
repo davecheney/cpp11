@@ -39,9 +39,8 @@ jmp_buf trapbuf;
 
 void loop0();
 
-uint16_t trap(uint16_t vec) {
-    longjmp(trapbuf, INTBUS);
-    return vec; // not reached
+void trap(uint16_t vec) {
+    longjmp(trapbuf, vec);
 }
 
 void loop() {
@@ -66,7 +65,6 @@ void loop0() {
             return; // exit from loop to reset trapbuf
         }
         cpu.step();
-        cpu.unibus.kw11.tick();
         cpu.unibus.cons.poll();
     }
 }

@@ -4,8 +4,7 @@
 class KW11 {
     public:
     uint16_t csr;
-    void tick();
 
-    private:
-    uint16_t clkcounter;
+    KW11();
+    void tick();
 };

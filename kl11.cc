@@ -12,7 +12,7 @@ extern KB11 cpu;
 void KL11::addchar(char c) {
     if (!(rcsr & 0x80)) {
         // unit not busy
-        rbuf = c;
+        rbuf = c;   
         rcsr |= 0x80;
         if (rcsr & 0x40) {
             cpu.interrupt(INTTTYIN, 4);
