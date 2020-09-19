@@ -4,9 +4,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "avr11.h"
 #include "bootrom.h"
 #include "kb11.h"
+
+void disasm(uint32_t ia);
 
 extern jmp_buf trapbuf;
 
@@ -17,7 +18,7 @@ void KB11::reset() {
     }
     R[7] = 002002;
     stacklimit = 0xff;
-    switchregister = 0x0; // 0173030;
+    switchregister = 0x0; //  0173030;
     unibus.reset();
 }
 
@@ -402,8 +403,7 @@ void KB11::step() {
     PC = R[7];
     auto instr = fetch16();
 
-    if (PRINTSTATE)
-        printstate();
+    // printstate();
 
     switch (instr >> 12) {    // xxSSDD Mostly double operand instructions
     case 0:                   // 00xxxx mixed group
@@ -420,7 +420,7 @@ void KB11::step() {
                     sched_yield();
                     return;
                 case 3:             // BPT  000003
-                    trap(INTDEBUG); // Trap 14 - BPT
+                    trapat(014); // Trap 14 - BPT
                     return;
                 case 4: // IOT  000004
                     EMTX(instr);
@@ -436,7 +436,7 @@ void KB11::step() {
                 default: // We don't know this 0000xx instruction
                     printf("unknown 0000xx instruction\n");
                     printstate();
-                    trap(INTINVAL);
+                    trapat(INTINVAL);
                     return;
                 }
             case 1: // JMP 0001DD
@@ -461,7 +461,7 @@ void KB11::step() {
                 default: // We don't know this 00002xR instruction
                     printf("unknown 0002xR instruction\n");
                     printstate();
-                    trap(INTINVAL);
+                    trapat(INTINVAL);
                     return;
                 }
             case 3: // SWAB 0003DD
@@ -470,7 +470,7 @@ void KB11::step() {
             default:
                 printf("unknown 000xDD instruction\n");
                 printstate();
-                trap(INTINVAL);
+                trapat(INTINVAL);
                 return;
             }
         case 1: // BR 0004 offset
@@ -563,7 +563,7 @@ void KB11::step() {
             default: // We don't know this 0o00xxDD instruction
                 printf("unknown 00xxDD instruction\n");
                 printstate();
-                trap(INTINVAL);
+                trapat(INTINVAL);
             }
         }
     case 1: // MOV  01SSDD
@@ -607,7 +607,7 @@ void KB11::step() {
         default: // We don't know this 07xRSS instruction
             printf("unknown 07xRSS instruction\n");
             printstate();
-            trap(INTINVAL);
+            trapat(INTINVAL);
             return;
         }
     case 8:                           // 10xxxx instructions
@@ -653,10 +653,10 @@ void KB11::step() {
             }
             return;
         case 8:        // EMT 1040 operand
-            trap(030); // Trap 30 - EMT instruction
+            trapat(030); // Trap 30 - EMT instruction
             return;
         case 9:        // TRAP 1044 operand
-            trap(034); // Trap 34 - TRAP instruction
+            trapat(034); // Trap 34 - TRAP instruction
             return;
         default: // Remaining 10xxxx instructions where xxxx >= 05000
             switch ((instr >> 6) & 077) { // 10xxDD group
@@ -703,7 +703,7 @@ void KB11::step() {
             default: // We don't know this 0o10xxDD instruction
                 printf("unknown 0o10xxDD instruction\n");
                 printstate();
-                trap(INTINVAL);
+                trapat(INTINVAL);
                 return;
             }
         }
@@ -733,7 +733,7 @@ void KB11::step() {
     default: // 15  17xxxx FPP instructions
         printf("invalid 17xxxx FPP instruction\n");
         printstate();
-        trap(INTINVAL);
+        trapat(INTINVAL);
     }
 }
 
@@ -816,10 +816,9 @@ void KB11::popirq() {
 }
 
 void KB11::handleinterrupt() {
-    uint8_t vec = itab[0].vec;
-    if (DEBUG_INTER) {
-        printf("IRQ: %x\n", vec);
-    }
+    auto vec = itab[0].vec;
+    // printf("IRQ: %x\n", vec);
+    
     uint16_t vv = setjmp(trapbuf);
     if (vv == 0) {
         uint16_t prev = PS;

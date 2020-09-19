@@ -8,8 +8,6 @@ enum {
 
 };
 
-void disasm(uint32_t ia);
-
 void trap(uint16_t num);
 
 

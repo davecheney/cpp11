@@ -109,6 +109,10 @@ uint16_t UNIBUS::read16(uint32_t a) {
         return cpu.mmu.SR0;
     }
 
+    if (a == 0777574) {
+        return cpu.mmu.SR1;
+    }
+
     if (a == 0777576) {
         return cpu.mmu.SR2;
     }
@@ -119,6 +123,10 @@ uint16_t UNIBUS::read16(uint32_t a) {
 
     if (a == 0777776) {
         return cpu.PS;
+    }
+
+    if ((a & 0777770) == 0777550) {
+        return ptr.read16(a);
     }
 
     if ((a & 0777770) == 0777560) {

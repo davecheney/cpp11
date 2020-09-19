@@ -16,7 +16,7 @@ class KT11 {
         bool ed();
     };
 
-    uint16_t SR0, SR2;
+    uint16_t SR0, SR1, SR2;
 
     template <bool wr> uint32_t decode(uint16_t a, uint8_t user);
     uint16_t read16(uint32_t a);
