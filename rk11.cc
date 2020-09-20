@@ -69,6 +69,7 @@ void RK11::step() {
             rker |= 0x8020; // NXS
             break;
         }
+        rknotready();
         seek();
         readwrite();
         return;
