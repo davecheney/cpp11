@@ -47,7 +47,7 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
         cpu.stacklimit = v;
         return;
     case 0777546:
-        kw11.csr = v;
+        kw11.write16(a, v);
         return;
     case 0777572:
         cpu.mmu.SR0 = v;
@@ -79,7 +79,7 @@ uint16_t UNIBUS::read16(uint32_t a) {
     }
 
     if (a == 0777546) {
-        return kw11.csr;
+        return kw11.read16(a);
     }
 
     if (a == 0777570) {
@@ -129,5 +129,5 @@ uint16_t UNIBUS::read16(uint32_t a) {
 void UNIBUS::reset() {
     cons.clearterminal();
     rk11.reset();
-    kw11.csr = 0x80;
+    kw11.write16(0777546, 0x00); // disable line clock INTR
 }

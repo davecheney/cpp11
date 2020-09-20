@@ -474,6 +474,6 @@ class KB11 {
     void MTPI(const uint16_t instr);
     void RTS(const uint16_t instr);
     void EMTX(const uint16_t instr);
-    void _RTT();
+    void RTT();
     void RESET();
 };

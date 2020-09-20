@@ -18,7 +18,7 @@ void KB11::reset() {
     }
     R[7] = 002002;
     stacklimit = 0xff;
-    switchregister = 0x0; // 0173030;
+    switchregister = 0173030;
     unibus.reset();
 }
 
@@ -66,7 +66,7 @@ inline void KB11::push(const uint16_t v) {
 }
 
 inline uint16_t KB11::pop() {
-    auto val = unibus.read16(mmu.decode<false>(R[6], curuser));
+    auto val = read16(R[6]);
     R[6] += 2;
     return val;
 }
@@ -160,14 +160,15 @@ void KB11::SUB(const uint16_t instr) {
 }
 
 void KB11::JSR(const uint16_t instr) {
-    const uint16_t uval = DA(instr);
-    if (isReg(uval)) {
-        printf("JSR called on registeri\n");
+    auto dst = DA(instr);
+    if (isReg(dst)) {
+        printf("JSR called on register\n");
         std::abort();
     }
-    push(R[S(instr) & 7]);
-    R[S(instr) & 7] = R[7];
-    R[7] = uval;
+    auto reg = (instr >> 6) & 7;
+    push(R[reg]);
+    R[reg] = R[7];
+    R[7] = dst;
 }
 
 void KB11::MUL(const uint16_t instr) {
@@ -380,8 +381,9 @@ void KB11::MTPI(const uint16_t instr) {
 }
 
 void KB11::RTS(const uint16_t instr) {
-    R[7] = R[D(instr) & 7];
-    R[D(instr) & 7] = pop();
+    auto reg = instr & 7;
+    R[7] = R[reg];
+    R[reg] = pop();
 }
 
 void KB11::EMTX(const uint16_t instr) {
@@ -406,7 +408,7 @@ void KB11::EMTX(const uint16_t instr) {
     }
 }
 
-void KB11::_RTT() {
+void KB11::RTT() {
     R[7] = pop();
     uint16_t uval = pop();
     if (curuser) {
@@ -454,7 +456,7 @@ void KB11::step() {
                     return;
                 case 2: // RTI 000002
                 case 6: // RTT 000006
-                    _RTT();
+                    RTT();
                     return;
                 case 7:  // MFPI
                 default: // We don't know this 0000xx instruction

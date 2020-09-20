@@ -54,8 +54,7 @@ void loop0() {
     while (true) {
         if ((cpu.itab[0].vec > 0) && (cpu.itab[0].pri >= ((cpu.PSW >> 5) & 7))) {
             cpu.handleinterrupt();
-            uint8_t i;
-            for (i = 0; i < cpu.itab.size() - 1; i++) {
+            for (uint8_t i = 0; i < (cpu.itab.size() - 1); i++) {
                 cpu.itab[i] = cpu.itab[i + 1];
             }
             cpu.itab[cpu.itab.size() - 1].vec = 0;
