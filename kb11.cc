@@ -18,7 +18,7 @@ void KB11::reset() {
     }
     R[7] = 002002;
     stacklimit = 0xff;
-    switchregister = 00; // 0173030;
+    switchregister =  0173030;
     unibus.reset();
 }
 
@@ -843,7 +843,7 @@ void KB11::popirq() {
 
 void KB11::handleinterrupt() {
     auto vec = itab[0].vec;
-    // printf("IRQ: %x\n", vec);
+   if (0) printf("IRQ: %03o\n", vec);
 
     uint16_t vv = setjmp(trapbuf);
     if (vv == 0) {

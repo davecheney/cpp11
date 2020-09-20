@@ -62,6 +62,7 @@ void loop0() {
             return; // exit from loop to reset trapbuf
         }
         cpu.step();
+        cpu.unibus.rk11.step();
         cpu.unibus.cons.poll();
     }
 }
