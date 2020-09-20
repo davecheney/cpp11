@@ -27,10 +27,9 @@ enum {
 
 class KB11 {
   public:
-    
     uint16_t PS;
     uint16_t stacklimit, switchregister;
-    
+
     bool curuser;
     bool prevuser;
 
@@ -76,7 +75,7 @@ class KB11 {
 
   private:
     std::array<uint16_t, 8> R; // R0-R7
-    uint16_t PC; // holds R[7] during instruction execution
+    uint16_t PC;               // holds R[7] during instruction execution
     uint16_t USP;
     uint16_t KSP;
 
@@ -95,6 +94,31 @@ class KB11 {
 
     inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
+    template <uint8_t l> inline uint16_t read(const uint16_t va) {
+        auto a = mmu.decode<false>(va, curuser);
+        if (l == 2) {
+            return unibus.read16(a);
+        }
+        if (a & 1) {
+            return unibus.read16(a & ~1) >> 8;
+        }
+        return unibus.read16(a & ~1) & 0xFF;
+    }
+
+    template <uint8_t l> inline void write(const uint16_t va, uint16_t v) {
+        auto a = mmu.decode<true>(va, curuser);
+        if (l == 2) {
+            unibus.write16(a, v);
+        } else {
+            if (a & 1) {
+                unibus.write16(a & ~1, (unibus.read16(a & ~1) & 0xFF) |
+                                           (v & 0xFF) << 8);
+            } else {
+                unibus.write16(a, (unibus.read16(a) & 0xFF00) | (v & 0xFF));
+            }
+        }
+    }
+
     template <uint8_t l> uint16_t memread(uint16_t a) {
         if (isReg(a)) {
             if (l == 2) {
@@ -103,7 +127,7 @@ class KB11 {
                 return R[a & 7] & 0xFF;
             }
         }
-        return unibus.read<l>(mmu.decode<false>(a, curuser));
+        return read<l>(a);
     }
 
     template <uint8_t l> void memwrite(uint16_t a, uint16_t v) {
@@ -117,7 +141,7 @@ class KB11 {
             }
             return;
         }
-        unibus.write<l>(mmu.decode<true>(a, curuser), v);
+        write<l>(a, v);
     }
 
     template <uint8_t l> void MOV(const uint16_t instr) {

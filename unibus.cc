@@ -8,21 +8,6 @@
 
 extern KB11 cpu;
 
-uint16_t UNIBUS::read8(const uint32_t a) {
-    if (a & 1) {
-        return read16(a & ~1) >> 8;
-    }
-    return read16(a & ~1) & 0xFF;
-}
-
-void UNIBUS::write8(const uint32_t a, const uint16_t v) {
-    if (a & 1) {
-        write16(a & ~1, (read16(a & ~1) & 0xFF) | (v & 0xFF) << 8);
-    } else {
-        write16(a, (read16(a) & 0xFF00) | (v & 0xFF));
-    }
-}
-
 void UNIBUS::write16(uint32_t a, uint16_t v) {
     if (a & 1) {
         printf("unibus: write16 to odd address %06o\n", a);
