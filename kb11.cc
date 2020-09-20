@@ -18,24 +18,29 @@ void KB11::reset() {
     }
     R[7] = 002002;
     stacklimit = 0xff;
-    switchregister = 0173030;
+    switchregister = 0x0; // 0173030;
     unibus.reset();
 }
 
-bool KB11::N() { return PS & FLAGN; }
-bool KB11::Z() { return PS & FLAGZ; }
-bool KB11::V() { return PS & FLAGV; }
-bool KB11::C() { return PS & FLAGC; }
+inline uint16_t KB11::read16(uint16_t va) {
+    auto a = mmu.decode<false>(va, curuser);
+    return unibus.read16(a);
+}
 
 inline uint16_t KB11::fetch16() {
-    auto val = unibus.read16(mmu.decode<false>(R[7], curuser));
+    auto val = read16(R[7]);
     R[7] += 2;
     return val;
 }
 
+inline void KB11::write16(uint16_t va, uint16_t v) {
+    auto a = mmu.decode<true>(va, curuser);
+    unibus.write16(a, v);
+}
+
 inline void KB11::push(const uint16_t v) {
     R[6] -= 2;
-    unibus.write16(mmu.decode<true>(R[6], curuser), v);
+    write16(R[6], v);
 }
 
 inline uint16_t KB11::pop() {
@@ -76,7 +81,7 @@ uint16_t KB11::aget(uint8_t v, uint8_t l) {
         break;
     }
     if (v & 010) {
-        addr = unibus.read16(mmu.decode<false>(addr, curuser));
+        addr = read16(addr);
     }
     return addr;
 }

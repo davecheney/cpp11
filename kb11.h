@@ -79,13 +79,15 @@ class KB11 {
     uint16_t USP;
     uint16_t KSP;
 
-    bool N();
-    bool Z();
+    inline bool N() { return PS & FLAGN; }
+    inline bool Z() { return PS & FLAGZ; }
+    inline bool V() { return PS & FLAGV; }
+    inline bool C() { return PS & FLAGC; }
     void setZ(const bool b);
-    bool V();
-    bool C();
 
-    uint16_t fetch16();
+    inline uint16_t fetch16();
+    inline uint16_t read16(uint16_t va);
+    inline void write16(uint16_t va, uint16_t v);
     void push(const uint16_t v);
     uint16_t pop();
     uint16_t aget(uint8_t v, uint8_t l);
@@ -95,10 +97,10 @@ class KB11 {
     inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
     template <uint8_t l> inline uint16_t read(const uint16_t va) {
-        auto a = mmu.decode<false>(va, curuser);
         if (l == 2) {
-            return unibus.read16(a);
+            return read16(va);
         }
+        auto a = mmu.decode<false>(va, curuser);
         if (a & 1) {
             return unibus.read16(a & ~1) >> 8;
         }
@@ -106,16 +108,15 @@ class KB11 {
     }
 
     template <uint8_t l> inline void write(const uint16_t va, uint16_t v) {
-        auto a = mmu.decode<true>(va, curuser);
         if (l == 2) {
-            unibus.write16(a, v);
+            write16(va, v);
+            return;
+        }
+        auto a = mmu.decode<true>(va, curuser);
+        if (a & 1) {
+            unibus.write16(a & ~1, (unibus.read16(a & ~1) & 0xFF) | (v & 0xFF) << 8);
         } else {
-            if (a & 1) {
-                unibus.write16(a & ~1, (unibus.read16(a & ~1) & 0xFF) |
-                                           (v & 0xFF) << 8);
-            } else {
-                unibus.write16(a, (unibus.read16(a) & 0xFF00) | (v & 0xFF));
-            }
+            unibus.write16(a, (unibus.read16(a) & 0xFF00) | (v & 0xFF));
         }
     }
 
