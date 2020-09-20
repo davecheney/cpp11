@@ -26,6 +26,9 @@ uint16_t RK11::read16(uint32_t a) {
     case 004:
         // 777404 Control Status
         return rkcs & 0xfffe; // go bit is read only
+    case 006:
+        // 777406 Word Count
+        return rkwc;
     default:
         printf("rk11::read16 invalid read %06o\n", a);
         std::abort();
