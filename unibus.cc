@@ -21,10 +21,10 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
     case 0777776:
         switch (v >> 14) {
         case 0:
-            cpu.switchmode<false>();
+            cpu.switchmode(false);
             break;
         case 3:
-            cpu.switchmode<true>();
+            cpu.switchmode(true);
             break;
         default:
             printf("invalid mode\n");
@@ -124,7 +124,6 @@ uint16_t UNIBUS::read16(uint32_t a) {
 
     printf("unibus: read from invalid address %06o\n", a);
     trap(INTBUS);
-    std::abort(); // not reached
 }
 
 void UNIBUS::reset() {

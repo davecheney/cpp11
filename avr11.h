@@ -8,7 +8,7 @@ enum {
 
 };
 
-void trap(uint16_t num);
+[[ noreturn ]] void trap(uint16_t num);
 
 
 

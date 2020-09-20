@@ -37,7 +37,7 @@ jmp_buf trapbuf;
 
 void loop0();
 
-void trap(uint16_t vec) {
+[[ noreturn ]] void trap(uint16_t vec) {
     longjmp(trapbuf, vec);
 }
 

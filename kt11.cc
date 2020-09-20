@@ -87,7 +87,6 @@ uint16_t KT11::read16(uint32_t a) {
     }
     printf("mmu::read16 invalid read from %06o\n", a);
     trap(INTBUS);
-    std::abort(); // not reached
 }
 
 void KT11::write16(uint32_t a, uint16_t v) {
@@ -110,7 +109,6 @@ void KT11::write16(uint32_t a, uint16_t v) {
     }
     printf("mmu::write16 write to invalid address %06o\n", a);
     trap(INTBUS);
-    std::abort(); // not reached
 }
 
 void KT11::dumppages() {

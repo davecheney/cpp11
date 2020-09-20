@@ -40,28 +40,7 @@ class KB11 {
     void interrupt(uint8_t vec, uint8_t pri);
     void handleinterrupt();
     void printstate();
-
-    template <bool newm> void switchmode() {
-        prevuser = curuser;
-        curuser = newm;
-        if (prevuser) {
-            USP = R[6];
-        } else {
-            KSP = R[6];
-        }
-        if (curuser) {
-            R[6] = USP;
-        } else {
-            R[6] = KSP;
-        }
-        PS &= 0007777;
-        if (curuser) {
-            PS |= (1 << 15) | (1 << 14);
-        }
-        if (prevuser) {
-            PS |= (1 << 13) | (1 << 12);
-        }
-    }
+    void switchmode(bool newm);
 
     struct intr {
         uint8_t vec;

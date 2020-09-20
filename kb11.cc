@@ -22,6 +22,28 @@ void KB11::reset() {
     unibus.reset();
 }
 
+void KB11::switchmode(bool newm) {
+    prevuser = curuser;
+    curuser = newm;
+    if (prevuser) {
+        USP = R[6];
+    } else {
+        KSP = R[6];
+    }
+    if (curuser) {
+        R[6] = USP;
+    } else {
+        R[6] = KSP;
+    }
+    PS &= 0007777;
+    if (curuser) {
+        PS |= (1 << 15) | (1 << 14);
+    }
+    if (prevuser) {
+        PS |= (1 << 13) | (1 << 12);
+    }
+}
+
 inline uint16_t KB11::read16(uint16_t va) {
     auto a = mmu.decode<false>(va, curuser);
     return unibus.read16(a);
@@ -316,6 +338,7 @@ void KB11::MFPI(const uint16_t instr) {
         }
     } else if (isReg(da)) {
         printf("invalid MFPI instruction\n");
+        printstate();
         std::abort();
     } else {
         uval = unibus.read16(mmu.decode<false>((uint16_t)da, prevuser));
@@ -373,7 +396,7 @@ void KB11::EMTX(const uint16_t instr) {
         uval = 020;
     }
     uint16_t prev = PS;
-    switchmode<false>();
+    switchmode(false);
     push(prev);
     push(R[7]);
     R[7] = unibus.read16(uval);
@@ -420,7 +443,7 @@ void KB11::step() {
                 case 1: // WAIT 000001
                     sched_yield();
                     return;
-                case 3:             // BPT  000003
+                case 3:          // BPT  000003
                     trapat(014); // Trap 14 - BPT
                     return;
                 case 4: // IOT  000004
@@ -653,10 +676,10 @@ void KB11::step() {
                 branch(instr & 0xFF);
             }
             return;
-        case 8:        // EMT 1040 operand
+        case 8:          // EMT 1040 operand
             trapat(030); // Trap 30 - EMT instruction
             return;
-        case 9:        // TRAP 1044 operand
+        case 9:          // TRAP 1044 operand
             trapat(034); // Trap 34 - TRAP instruction
             return;
         default: // Remaining 10xxxx instructions where xxxx >= 05000
@@ -762,7 +785,7 @@ void KB11::trapat(uint16_t vec) {
                   }
      */
     auto prev = PS;
-    switchmode<false>();
+    switchmode(false);
     push(prev);
     push(R[7]);
 
@@ -819,11 +842,11 @@ void KB11::popirq() {
 void KB11::handleinterrupt() {
     auto vec = itab[0].vec;
     // printf("IRQ: %x\n", vec);
-    
+
     uint16_t vv = setjmp(trapbuf);
     if (vv == 0) {
         uint16_t prev = PS;
-        switchmode<false>();
+        switchmode(false);
         push(prev);
         push(R[7]);
     } else {

@@ -13,5 +13,4 @@ uint16_t PC11::read16(uint32_t a) {
     }
     printf("mmu::read16 invalid read from %06o\n", a);
     trap(004);
-    std::abort(); // not reached
 }
