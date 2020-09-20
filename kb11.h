@@ -437,10 +437,10 @@ class KB11 {
     }
 
     template <uint8_t l> void SXT(const uint16_t instr) {
-        const uint16_t max = l == 2 ? 0xFFFF : 0xff;
         const uint16_t da = DA(instr);
         if (PSW & FLAGN) {
-            memwrite<l>(da, max);
+           const uint16_t max = l == 2 ? 0xFFFF : 0xff;
+           memwrite<l>(da, max);
         } else {
             PSW |= FLAGZ;
             memwrite<l>(da, 0);

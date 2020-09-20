@@ -18,7 +18,7 @@ void KB11::reset() {
     }
     R[7] = 002002;
     stacklimit = 0xff;
-    switchregister = 0173030;
+    switchregister = 00; // 0173030;
     unibus.reset();
 }
 
@@ -429,7 +429,7 @@ void KB11::step() {
     PC = R[7];
     auto instr = fetch16();
 
-    // printstate();
+    if (0) printstate() ;
 
     switch (instr >> 12) {    // xxSSDD Mostly double operand instructions
     case 0:                   // 00xxxx mixed group

@@ -86,15 +86,15 @@ again:
         std::abort();
     }
 
-    uint16_t i;
-    uint16_t val;
-    for (i = 0; i < 256 && RKWC != 0; i++) {
+    for (uint16_t i = 0; i < 256 && RKWC != 0; i++) {
         if (w) {
-            val = cpu.unibus.read16(RKBA);
-            fputc(val & 0xFF, rkdata);
-            fputc((val >> 8) & 0xFF, rkdata);
+            auto val = cpu.unibus.read16(RKBA);
+            uint8_t buf[2] = { static_cast<uint8_t>(val &0xff), static_cast<uint8_t>(val >> 8) };
+            assert(fwrite(&buf, 1, 2, rkdata) == 2);
         } else {
-            cpu.unibus.write16(RKBA, fgetc(rkdata) | (fgetc(rkdata) << 8));
+            uint8_t buf[2];
+            assert(fread(&buf, 1, 2, rkdata) == 2);
+            cpu.unibus.write16(RKBA, static_cast<uint16_t>(buf[0]) | static_cast<uint16_t>(buf[1]) << 8);
         }
         RKBA += 2;
         RKWC = (RKWC + 1) & 0xFFFF;

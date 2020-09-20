@@ -30,7 +30,7 @@ KW11::KW11() {
 void KW11::write16(uint32_t a, uint16_t v) {
     switch (a) {
     case 0777546:
-        printf("kw11: csr write %06o\n", v);
+        // printf("kw11: csr write %06o\n", v);
         csr = v;
         return;
     default:
