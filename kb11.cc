@@ -35,12 +35,12 @@ void KB11::switchmode(bool newm) {
     } else {
         R[6] = KSP;
     }
-    PS &= 0007777;
+    PSW &= 0007777;
     if (curuser) {
-        PS |= (1 << 15) | (1 << 14);
+        PSW |= (1 << 15) | (1 << 14);
     }
     if (prevuser) {
-        PS |= (1 << 13) | (1 << 12);
+        PSW |= (1 << 13) | (1 << 12);
     }
 }
 
@@ -118,7 +118,7 @@ void KB11::branch(int16_t o) {
 
 void KB11::setZ(const bool b) {
     if (b)
-        PS |= FLAGZ;
+        PSW |= FLAGZ;
 }
 
 void KB11::ADD(const uint16_t instr) {
@@ -126,16 +126,16 @@ void KB11::ADD(const uint16_t instr) {
     const uint16_t da = aget(D(instr), 2);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = (val1 + val2) & 0xFFFF;
-    PS &= 0xFFF0;
+    PSW &= 0xFFF0;
     setZ(uval == 0);
     if (uval & 0x8000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
     if (!((val1 ^ val2) & 0x8000) && ((val2 ^ uval) & 0x8000)) {
-        PS |= FLAGV;
+        PSW |= FLAGV;
     }
     if ((val1 + val2) >= 0xFFFF) {
-        PS |= FLAGC;
+        PSW |= FLAGC;
     }
     memwrite<2>(da, uval);
 }
@@ -145,16 +145,16 @@ void KB11::SUB(const uint16_t instr) {
     const uint16_t da = aget(D(instr), 2);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = (val2 - val1) & 0xFFFF;
-    PS &= 0xFFF0;
+    PSW &= 0xFFF0;
     setZ(uval == 0);
     if (uval & 0x8000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
     if (((val1 ^ val2) & 0x8000) && (!((val2 ^ uval) & 0x8000))) {
-        PS |= FLAGV;
+        PSW |= FLAGV;
     }
     if (val1 > val2) {
-        PS |= FLAGC;
+        PSW |= FLAGC;
     }
     memwrite<2>(da, uval);
 }
@@ -183,13 +183,13 @@ void KB11::MUL(const uint16_t instr) {
     const int32_t sval = val1 * val2;
     R[S(instr) & 7] = sval >> 16;
     R[(S(instr) & 7) | 1] = sval & 0xFFFF;
-    PS &= 0xFFF0;
+    PSW &= 0xFFF0;
     if (sval & 0x80000000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
     setZ((sval & 0xFFFFFFFF) == 0);
     if ((sval < (1 << 15)) || (sval >= ((1L << 15) - 1))) {
-        PS |= FLAGC;
+        PSW |= FLAGC;
     }
 }
 
@@ -197,23 +197,23 @@ void KB11::DIV(const uint16_t instr) {
     const int32_t val1 = (R[S(instr) & 7] << 16) | (R[(S(instr) & 7) | 1]);
     const uint16_t da = DA(instr);
     const int32_t val2 = memread<2>(da);
-    PS &= 0xFFF0;
+    PSW &= 0xFFF0;
     if (val2 == 0) {
-        PS |= FLAGC;
+        PSW |= FLAGC;
         return;
     }
     if ((val1 / val2) >= 0x10000) {
-        PS |= FLAGV;
+        PSW |= FLAGV;
         return;
     }
     R[S(instr) & 7] = (val1 / val2) & 0xFFFF;
     R[(S(instr) & 7) | 1] = (val1 % val2) & 0xFFFF;
     setZ(R[S(instr) & 7] == 0);
     if (R[S(instr) & 7] & 0100000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
     if (val1 == 0) {
-        PS |= FLAGV;
+        PSW |= FLAGV;
     }
 }
 
@@ -221,7 +221,7 @@ void KB11::ASH(const uint16_t instr) {
     const uint16_t val1 = R[S(instr) & 7];
     const uint16_t da = aget(D(instr), 2);
     uint16_t val2 = memread<2>(da) & 077;
-    PS &= 0xFFF0;
+    PSW &= 0xFFF0;
     int32_t sval;
     if (val2 & 040) {
         val2 = (077 ^ val2) + 1;
@@ -232,21 +232,21 @@ void KB11::ASH(const uint16_t instr) {
             sval = val1 >> val2;
         }
         if (val1 & (1 << (val2 - 1))) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
     } else {
         sval = (val1 << val2) & 0xFFFF;
         if (val1 & (1 << (16 - val2))) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
     }
     R[S(instr) & 7] = sval;
     setZ(sval == 0);
     if (sval & 0100000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
     if ((sval & 0100000) xor (val1 & 0100000)) {
-        PS |= FLAGV;
+        PSW |= FLAGV;
     }
 }
 
@@ -254,7 +254,7 @@ void KB11::ASHC(const uint16_t instr) {
     const uint32_t val1 = R[S(instr) & 7] << 16 | R[(S(instr) & 7) | 1];
     const uint16_t da = aget(D(instr), 2);
     uint16_t val2 = memread<2>(da) & 077;
-    PS &= 0xFFF0;
+    PSW &= 0xFFF0;
     int32_t sval;
     if (val2 & 040) {
         val2 = (077 ^ val2) + 1;
@@ -265,22 +265,22 @@ void KB11::ASHC(const uint16_t instr) {
             sval = val1 >> val2;
         }
         if (val1 & (1 << (val2 - 1))) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
     } else {
         sval = (val1 << val2) & 0xFFFFFFFF;
         if (val1 & (1 << (32 - val2))) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
     }
     R[S(instr) & 7] = (sval >> 16) & 0xFFFF;
     R[(S(instr) & 7) | 1] = sval & 0xFFFF;
     setZ(sval == 0);
     if (sval & 0x80000000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
     if ((sval & 0x80000000) xor (val1 & 0x80000000)) {
-        PS |= FLAGV;
+        PSW |= FLAGV;
     }
 }
 
@@ -289,10 +289,10 @@ void KB11::XOR(const uint16_t instr) {
     const uint16_t da = aget(D(instr), 2);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = val1 ^ val2;
-    PS &= 0xFFF1;
+    PSW &= 0xFFF1;
     setZ(uval == 0);
     if (uval & 0x8000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
     memwrite<2>(da, uval);
 }
@@ -344,11 +344,11 @@ void KB11::MFPI(const uint16_t instr) {
         uval = unibus.read16(mmu.decode<false>((uint16_t)da, prevuser));
     }
     push(uval);
-    PS &= 0xFFF0;
-    PS |= FLAGC;
+    PSW &= 0xFFF0;
+    PSW |= FLAGC;
     setZ(uval == 0);
     if (uval & 0x8000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
 }
 
@@ -371,11 +371,11 @@ void KB11::MTPI(const uint16_t instr) {
     } else {
         unibus.write16(mmu.decode<true>((uint16_t)da, prevuser), uval);
     }
-    PS &= 0xFFF0;
-    PS |= FLAGC;
+    PSW &= 0xFFF0;
+    PSW |= FLAGC;
     setZ(uval == 0);
     if (uval & 0x8000) {
-        PS |= FLAGN;
+        PSW |= FLAGN;
     }
 }
 
@@ -395,14 +395,14 @@ void KB11::EMTX(const uint16_t instr) {
     } else {
         uval = 020;
     }
-    uint16_t prev = PS;
+    uint16_t prev = PSW;
     switchmode(false);
     push(prev);
     push(R[7]);
     R[7] = unibus.read16(uval);
-    PS = unibus.read16(uval + 2);
+    PSW = unibus.read16(uval + 2);
     if (prevuser) {
-        PS |= (1 << 13) | (1 << 12);
+        PSW |= (1 << 13) | (1 << 12);
     }
 }
 
@@ -411,7 +411,7 @@ void KB11::_RTT() {
     uint16_t uval = pop();
     if (curuser) {
         uval &= 047;
-        uval |= PS & 0177730;
+        uval |= PSW & 0177730;
     }
     unibus.write16(0777776, uval);
 }
@@ -472,15 +472,15 @@ void KB11::step() {
                     RTS(instr);
                     return;
                 case 3: // SPL 00023N
-                    PS = (PS & 0xf81f) | ((instr & 7) << 5);
+                    PSW = (PSW & 0xf81f) | ((instr & 7) << 5);
                     return;
                 case 4: // CLR CC 00024C Part 1 without N
                 case 5: // CLR CC 00025C Part 2 with N
-                    PS &= ~instr & 017;
+                    PSW &= ~instr & 017;
                     return;
                 case 6: // SET CC 00026C Part 1 without N
                 case 7: // SET CC 00027C Part 2 with N
-                    PS |= instr & 017;
+                    PSW |= instr & 017;
                     return;
                 default: // We don't know this 00002xR instruction
                     printf("unknown 0002xR instruction\n");
@@ -784,15 +784,15 @@ void KB11::trapat(uint16_t vec) {
                           panic(t)
                   }
      */
-    auto prev = PS;
+    auto prev = PSW;
     switchmode(false);
     push(prev);
     push(R[7]);
 
     R[7] = unibus.read16(vec);
-    PS = unibus.read16(vec + 2);
+    PSW = unibus.read16(vec + 2);
     if (prevuser) {
-        PS |= (1 << 13) | (1 << 12);
+        PSW |= (1 << 13) | (1 << 12);
     }
 }
 
@@ -845,7 +845,7 @@ void KB11::handleinterrupt() {
 
     uint16_t vv = setjmp(trapbuf);
     if (vv == 0) {
-        uint16_t prev = PS;
+        uint16_t prev = PSW;
         switchmode(false);
         push(prev);
         push(R[7]);
@@ -854,9 +854,9 @@ void KB11::handleinterrupt() {
     }
 
     R[7] = unibus.read16(vec);
-    PS = unibus.read16(vec + 2);
+    PSW = unibus.read16(vec + 2);
     if (prevuser) {
-        PS |= (1 << 13) | (1 << 12);
+        PSW |= (1 << 13) | (1 << 12);
     }
     popirq();
 }
@@ -866,8 +866,8 @@ void KB11::printstate() {
            "%06o\r\n",
            R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]);
     printf("[%s%s%s%s%s%s", prevuser ? "u" : "k", curuser ? "U" : "K",
-           PS & FLAGN ? "N" : " ", PS & FLAGZ ? "Z" : " ",
-           PS & FLAGV ? "V" : " ", PS & FLAGC ? "C" : " ");
+           PSW & FLAGN ? "N" : " ", PSW & FLAGZ ? "Z" : " ",
+           PSW & FLAGV ? "V" : " ", PSW & FLAGC ? "C" : " ");
     printf("]  instr %06o: %06o\t ", PC,
            unibus.read16(mmu.decode<false>(PC, curuser)));
     disasm(mmu.decode<false>(PC, curuser));

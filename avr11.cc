@@ -52,7 +52,7 @@ void loop() {
 
 void loop0() {
     while (true) {
-        if ((cpu.itab[0].vec > 0) && (cpu.itab[0].pri >= ((cpu.PS >> 5) & 7))) {
+        if ((cpu.itab[0].vec > 0) && (cpu.itab[0].pri >= ((cpu.PSW >> 5) & 7))) {
             cpu.handleinterrupt();
             uint8_t i;
             for (i = 0; i < cpu.itab.size() - 1; i++) {

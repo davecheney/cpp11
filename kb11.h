@@ -27,7 +27,7 @@ enum {
 
 class KB11 {
   public:
-    uint16_t PS;
+    uint16_t PSW;
     uint16_t stacklimit, switchregister;
 
     bool curuser;
@@ -58,10 +58,10 @@ class KB11 {
     uint16_t USP;
     uint16_t KSP;
 
-    inline bool N() { return PS & FLAGN; }
-    inline bool Z() { return PS & FLAGZ; }
-    inline bool V() { return PS & FLAGV; }
-    inline bool C() { return PS & FLAGC; }
+    inline bool N() { return PSW & FLAGN; }
+    inline bool Z() { return PSW & FLAGZ; }
+    inline bool V() { return PSW & FLAGV; }
+    inline bool C() { return PSW & FLAGC; }
     void setZ(const bool b);
 
     inline uint16_t fetch16();
@@ -128,9 +128,9 @@ class KB11 {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t uval = memread<l>(aget(S(instr), l));
         const uint16_t da = DA(instr);
-        PS &= 0xFFF1;
+        PSW &= 0xFFF1;
         if (uval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         setZ(uval == 0);
         if ((isReg(da)) && (l == 1)) {
@@ -150,16 +150,16 @@ class KB11 {
         const uint16_t da = DA(instr);
         const uint16_t val2 = memread<l>(da);
         const int32_t sval = (val1 - val2) & max;
-        PS &= 0xFFF0;
+        PSW &= 0xFFF0;
         setZ(sval == 0);
         if (sval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         if (((val1 ^ val2) & msb) && (!((val2 ^ sval) & msb))) {
-            PS |= FLAGV;
+            PSW |= FLAGV;
         }
         if (val1 < val2) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
     }
 
@@ -169,10 +169,10 @@ class KB11 {
         const uint16_t da = DA(instr);
         const uint16_t val2 = memread<l>(da);
         const uint16_t uval = val1 & val2;
-        PS &= 0xFFF1;
+        PSW &= 0xFFF1;
         setZ(uval == 0);
         if (uval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
     }
 
@@ -183,10 +183,10 @@ class KB11 {
         const uint16_t da = DA(instr);
         const uint16_t val2 = memread<l>(da);
         const uint16_t uval = (max ^ val1) & val2;
-        PS &= 0xFFF1;
+        PSW &= 0xFFF1;
         setZ(uval == 0);
         if (uval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         memwrite<l>(da, uval);
     }
@@ -197,23 +197,23 @@ class KB11 {
         const uint16_t da = DA(instr);
         const uint16_t val2 = memread<l>(da);
         const uint16_t uval = val1 | val2;
-        PS &= 0xFFF1;
+        PSW &= 0xFFF1;
         setZ(uval == 0);
         if (uval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         memwrite<l>(da, uval);
     }
 
     template <uint8_t l> void CLR(const uint16_t instr) {
-        PS &= 0xFFF0;
-        PS |= FLAGZ;
+        PSW &= 0xFFF0;
+        PSW |= FLAGZ;
         const uint16_t da = DA(instr);
         memwrite<l>(da, 0);
     }
 
     template <uint8_t l> void SET(const uint16_t instr) {
-        PS |= FLAGZ;
+        PSW |= FLAGZ;
         const uint16_t da = DA(instr);
         memwrite<l>(da, 0);
     }
@@ -223,10 +223,10 @@ class KB11 {
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
         uint16_t uval = memread<l>(da) ^ max;
-        PS &= 0xFFF0;
-        PS |= FLAGC;
+        PSW &= 0xFFF0;
+        PSW |= FLAGC;
         if (uval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         setZ(uval == 0);
         memwrite<l>(da, uval);
@@ -237,9 +237,9 @@ class KB11 {
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
         const uint16_t da = DA(instr);
         const uint16_t uval = (memread<l>(da) + 1) & max;
-        PS &= 0xFFF1;
+        PSW &= 0xFFF1;
         if (uval & msb) {
-            PS |= FLAGN | FLAGV;
+            PSW |= FLAGN | FLAGV;
         }
         setZ(uval == 0);
         memwrite<l>(da, uval);
@@ -251,12 +251,12 @@ class KB11 {
         uint16_t maxp = l == 2 ? 0x7FFF : 0x7f;
         uint16_t da = DA(instr);
         uint16_t uval = (memread<l>(da) - 1) & max;
-        PS &= 0xFFF1;
+        PSW &= 0xFFF1;
         if (uval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         if (uval == maxp) {
-            PS |= FLAGV;
+            PSW |= FLAGV;
         }
         setZ(uval == 0);
         memwrite<l>(da, uval);
@@ -267,17 +267,17 @@ class KB11 {
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
         int32_t sval = (-memread<l>(da)) & max;
-        PS &= 0xFFF0;
+        PSW &= 0xFFF0;
         if (sval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         if (sval == 0) {
-            PS |= FLAGZ;
+            PSW |= FLAGZ;
         } else {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
         if (sval == 0x8000) {
-            PS |= FLAGV;
+            PSW |= FLAGV;
         }
         memwrite<l>(da, sval);
     }
@@ -287,23 +287,23 @@ class KB11 {
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
         uint16_t uval = memread<l>(da);
-        if (PS & FLAGC) {
-            PS &= 0xFFF0;
+        if (PSW & FLAGC) {
+            PSW &= 0xFFF0;
             if ((uval + 1) & msb) {
-                PS |= FLAGN;
+                PSW |= FLAGN;
             }
             setZ(uval == max);
             if (uval == 0077777) {
-                PS |= FLAGV;
+                PSW |= FLAGV;
             }
             if (uval == 0177777) {
-                PS |= FLAGC;
+                PSW |= FLAGC;
             }
             memwrite<l>(da, (uval + 1) & max);
         } else {
-            PS &= 0xFFF0;
+            PSW &= 0xFFF0;
             if (uval & msb) {
-                PS |= FLAGN;
+                PSW |= FLAGN;
             }
             setZ(uval == 0);
         }
@@ -314,38 +314,38 @@ class KB11 {
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
         int32_t sval = memread<l>(da);
-        if (PS & FLAGC) {
-            PS &= 0xFFF0;
+        if (PSW & FLAGC) {
+            PSW &= 0xFFF0;
             if ((sval - 1) & msb) {
-                PS |= FLAGN;
+                PSW |= FLAGN;
             }
             setZ(sval == 1);
             if (sval) {
-                PS |= FLAGC;
+                PSW |= FLAGC;
             }
             if (sval == 0100000) {
-                PS |= FLAGV;
+                PSW |= FLAGV;
             }
             memwrite<l>(da, (sval - 1) & max);
         } else {
-            PS &= 0xFFF0;
+            PSW &= 0xFFF0;
             if (sval & msb) {
-                PS |= FLAGN;
+                PSW |= FLAGN;
             }
             setZ(sval == 0);
             if (sval == 0100000) {
-                PS |= FLAGV;
+                PSW |= FLAGV;
             }
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
     }
 
     template <uint8_t l> void TST(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t uval = memread<l>(aget(D(instr), l));
-        PS &= 0xFFF0;
+        PSW &= 0xFFF0;
         if (uval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         setZ(uval == 0);
     }
@@ -354,20 +354,20 @@ class KB11 {
         int32_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
         int32_t sval = memread<l>(da);
-        if (PS & FLAGC) {
+        if (PSW & FLAGC) {
             sval |= max + 1;
         }
-        PS &= 0xFFF0;
+        PSW &= 0xFFF0;
         if (sval & 1) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
         // watch out for integer wrap around
         if (sval & (max + 1)) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         setZ(!(sval & max));
         if ((sval & 1) xor (sval & (max + 1))) {
-            PS |= FLAGV;
+            PSW |= FLAGV;
         }
         sval >>= 1;
         memwrite<l>(da, sval);
@@ -378,19 +378,19 @@ class KB11 {
         int32_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
         int32_t sval = memread<l>(da) << 1;
-        if (PS & FLAGC) {
+        if (PSW & FLAGC) {
             sval |= 1;
         }
-        PS &= 0xFFF0;
+        PSW &= 0xFFF0;
         if (sval & (max + 1)) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
         if (sval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         setZ(!(sval & max));
         if ((sval ^ (sval >> 1)) & msb) {
-            PS |= FLAGV;
+            PSW |= FLAGV;
         }
         sval &= max;
         memwrite<l>(da, sval);
@@ -400,15 +400,15 @@ class KB11 {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t da = DA(instr);
         uint16_t uval = memread<l>(da);
-        PS &= 0xFFF0;
+        PSW &= 0xFFF0;
         if (uval & 1) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
         if (uval & msb) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         if ((uval & msb) xor (uval & 1)) {
-            PS |= FLAGV;
+            PSW |= FLAGV;
         }
         uval = (uval & msb) | (uval >> 1);
         setZ(uval == 0);
@@ -421,15 +421,15 @@ class KB11 {
         uint16_t da = DA(instr);
         // TODO(dfc) doesn't need to be an sval
         int32_t sval = memread<l>(da);
-        PS &= 0xFFF0;
+        PSW &= 0xFFF0;
         if (sval & msb) {
-            PS |= FLAGC;
+            PSW |= FLAGC;
         }
         if (sval & (msb >> 1)) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         if ((sval ^ (sval << 1)) & msb) {
-            PS |= FLAGV;
+            PSW |= FLAGV;
         }
         sval = (sval << 1) & max;
         setZ(sval == 0);
@@ -439,10 +439,10 @@ class KB11 {
     template <uint8_t l> void SXT(const uint16_t instr) {
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
         const uint16_t da = DA(instr);
-        if (PS & FLAGN) {
+        if (PSW & FLAGN) {
             memwrite<l>(da, max);
         } else {
-            PS |= FLAGZ;
+            PSW |= FLAGZ;
             memwrite<l>(da, 0);
         }
     }
@@ -451,10 +451,10 @@ class KB11 {
         uint16_t da = DA(instr);
         uint16_t uval = memread<l>(da);
         uval = ((uval >> 8) | (uval << 8)) & 0xFFFF;
-        PS &= 0xFFF0;
+        PSW &= 0xFFF0;
         setZ(uval & 0xFF);
         if (uval & 0x80) {
-            PS |= FLAGN;
+            PSW |= FLAGN;
         }
         memwrite<l>(da, uval);
     }

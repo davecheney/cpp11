@@ -41,7 +41,7 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
             printf("invalid mode\n");
             std::abort();
         }
-        cpu.PS = v;
+        cpu.PSW = v;
         return;
     case 0777774:
         cpu.stacklimit = v;
@@ -103,7 +103,7 @@ uint16_t UNIBUS::read16(uint32_t a) {
     }
 
     if (a == 0777776) {
-        return cpu.PS;
+        return cpu.PSW;
     }
 
     if ((a & 0777770) == 0777550) {
