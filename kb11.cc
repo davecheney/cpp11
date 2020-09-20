@@ -311,8 +311,9 @@ void KB11::SOB(const uint16_t instr) {
 void KB11::JMP(const uint16_t instr) {
     const uint16_t uval = aget(D(instr), 2);
     if (isReg(uval)) {
-        printf("JMP called with register dest\n");
-        std::abort();
+        // Registers don't have a virtual address so trap!
+        trapat(4);
+        return;
     }
     R[7] = uval;
 }
@@ -429,7 +430,7 @@ void KB11::step() {
     PC = R[7];
     auto instr = fetch16();
 
-    if (0)
+    if (1)
         printstate();
 
     switch (instr >> 12) {    // xxSSDD Mostly double operand instructions

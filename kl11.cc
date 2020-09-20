@@ -12,7 +12,7 @@ extern KB11 cpu;
 void KL11::addchar(char c) {
     if (!(rcsr & 0x80)) {
         // unit not busy
-        rbuf = c;   
+        rbuf = c;
         rcsr |= 0x80;
         if (rcsr & 0x40) {
             cpu.interrupt(INTTTYIN, 4);
@@ -21,10 +21,11 @@ void KL11::addchar(char c) {
 }
 
 int is_key_pressed(void) {
-    struct timeval tv;
+    timeval tv = {
+        .tv_sec = 0,
+        .tv_usec = 0,
+    };
     fd_set fds;
-    tv.tv_sec = 0;
-    tv.tv_usec = 0;
 
     FD_ZERO(&fds);
     FD_SET(STDIN_FILENO, &fds);
