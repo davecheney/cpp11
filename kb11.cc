@@ -14,11 +14,11 @@ extern jmp_buf trapbuf;
 void KB11::reset() {
     uint16_t i;
     for (i = 0; i < 29; i++) {
-        unibus.access<1>(02000 + (i * 2), bootrom[i]);
+        unibus.write16(02000 + (i * 2), bootrom[i]);
     }
     R[7] = 002002;
     stacklimit = 0xff;
-    switchregister = 0x0; //  0173030;
+    switchregister = 0173030;
     unibus.reset();
 }
 
@@ -27,23 +27,19 @@ bool KB11::Z() { return PS & FLAGZ; }
 bool KB11::V() { return PS & FLAGV; }
 bool KB11::C() { return PS & FLAGC; }
 
-template <bool wr> uint16_t KB11::access(uint16_t addr, uint16_t v) {
-    return unibus.access<wr>(mmu.decode<wr>(addr, curuser), v);
-}
-
 inline uint16_t KB11::fetch16() {
-    auto val = access<0>(R[7]);
+    auto val = unibus.read16(mmu.decode<false>(R[7], curuser));
     R[7] += 2;
     return val;
 }
 
 inline void KB11::push(const uint16_t v) {
     R[6] -= 2;
-    access<1>(R[6], v);
+    unibus.write16(mmu.decode<true>(R[6], curuser), v);
 }
 
 inline uint16_t KB11::pop() {
-    const uint16_t val = access<0>(R[6]);
+    auto val = unibus.read16(mmu.decode<false>(R[6], curuser));
     R[6] += 2;
     return val;
 }
@@ -80,7 +76,7 @@ uint16_t KB11::aget(uint8_t v, uint8_t l) {
         break;
     }
     if (v & 010) {
-        addr = access<0>(addr);
+        addr = unibus.read16(mmu.decode<false>(addr, curuser));
     }
     return addr;
 }

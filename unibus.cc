@@ -16,24 +16,20 @@ uint16_t UNIBUS::read8(const uint32_t a) {
 }
 
 void UNIBUS::write8(const uint32_t a, const uint16_t v) {
-    if (a < 0760000) {
-        core.charptr[a] = v & 0xff;
-        return;
-    }
     if (a & 1) {
-        write16(a & ~1, (read16(a) & 0xFF) | (v & 0xFF) << 8);
+        write16(a & ~1, (read16(a & ~1) & 0xFF) | (v & 0xFF) << 8);
     } else {
-        write16(a & ~1, (read16(a) & 0xFF00) | (v & 0xFF));
+        write16(a, (read16(a) & 0xFF00) | (v & 0xFF));
     }
 }
 
 void UNIBUS::write16(uint32_t a, uint16_t v) {
-    if (a % 1) {
+    if (a & 1) {
         printf("unibus: write16 to odd address %06o\n", a);
         trap(INTBUS);
     }
     if (a < 0760000) {
-        core.intptr[a >> 1] = v;
+        core.write16(a, v);
         return;
     }
     switch (a) {

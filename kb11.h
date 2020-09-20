@@ -93,8 +93,6 @@ class KB11 {
     void branch(int16_t o);
     void popirq();
 
-    template <bool wr> uint16_t access(uint16_t addr, uint16_t v = 0);
-
     inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
     template <uint8_t l> uint16_t memread(uint16_t a) {

@@ -22,14 +22,6 @@ class UNIBUS {
 
     void reset();
 
-    template <bool wr> inline uint16_t access(uint32_t addr, uint16_t v = 0) {
-        if (wr) {
-            write16(addr, v);
-            return 0;
-        }
-        return read16(addr);
-    }
-
     template <uint8_t l> inline uint16_t read(const uint32_t a) {
         if (l == 2) {
             return read16(a);
