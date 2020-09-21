@@ -83,10 +83,6 @@ uint16_t UNIBUS::read16(uint32_t a) {
         return cpu.stacklimit;
     }
 
-    if (a == 0777776) {
-        return cpu.PSW;
-    }
-
     if ((a & 0777770) == 0777550) {
         return ptr.read16(a);
     }

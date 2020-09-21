@@ -52,16 +52,11 @@ void loop() {
 
 void loop0() {
     while (true) {
-        if ((cpu.itab[0].vec > 0) && (cpu.itab[0].pri >= ((cpu.PSW >> 5) & 7))) {
+        cpu.step();
+        if ((cpu.itab[0].vec > 0) && (cpu.itab[0].pri >= cpu.priority())) {
             cpu.handleinterrupt();
-            for (uint8_t i = 0; i < (cpu.itab.size() - 1); i++) {
-                cpu.itab[i] = cpu.itab[i + 1];
-            }
-            cpu.itab[cpu.itab.size() - 1].vec = 0;
-            cpu.itab[cpu.itab.size() - 1].pri = 0;
             return; // exit from loop to reset trapbuf
         }
-        cpu.step();
         cpu.unibus.rk11.step();
         cpu.unibus.cons.poll();
     }

@@ -34,6 +34,8 @@ uint16_t KB11::previousmode() {
     return pm;
 }
 
+uint16_t KB11::priority() { return ((PSW >> 5) & 7); }
+
 void KB11::writePSW(uint16_t psw) {
     switch (psw >> 14) {
     case 0:
@@ -73,7 +75,12 @@ void KB11::switchmode(uint16_t newm) {
 
 inline uint16_t KB11::read16(uint16_t va) {
     auto a = mmu.decode<false>(va, currentmode());
-    return unibus.read16(a);
+    switch (a) {
+    case 0777776:
+        return PSW;
+    default:
+        return unibus.read16(a);
+    }
 }
 
 inline uint16_t KB11::fetch16() {
@@ -489,7 +496,7 @@ void KB11::step() {
                 case 6: // RTT 000006
                     RTT();
                     return;
-                case 7:  // MFPT
+                case 7: // MFPT
                     MFPT();
                     return;
                 default: // We don't know this 0000xx instruction

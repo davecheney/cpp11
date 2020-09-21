@@ -27,7 +27,6 @@ enum {
 
 class KB11 {
   public:
-    uint16_t PSW;
     uint16_t stacklimit, switchregister;
 
     void step();
@@ -43,6 +42,9 @@ class KB11 {
     uint16_t currentmode();
     uint16_t previousmode();
 
+    // returns the current CPU interrupt priority.
+    uint16_t priority();
+
     struct intr {
         uint8_t vec;
         uint8_t pri;
@@ -56,8 +58,10 @@ class KB11 {
   private:
     std::array<uint16_t, 8> R; // R0-R7
     uint16_t PC;               // holds R[7] during instruction execution
-    std::array<uint16_t, 4> stackpointer; // Alternate R6 (kernel, super, illegal, user)
-    
+    uint16_t PSW;              // processor status word
+    std::array<uint16_t, 4>
+        stackpointer; // Alternate R6 (kernel, super, illegal, user)
+
     bool curuser;
     bool prevuser;
 
