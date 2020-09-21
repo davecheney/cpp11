@@ -476,6 +476,7 @@ class KB11 {
     void JMP(const uint16_t instr);
     void MARK(const uint16_t instr);
     void MFPI(const uint16_t instr);
+    void MFPT();
     void MTPI(const uint16_t instr);
     void RTS(const uint16_t instr);
     void EMTX(const uint16_t instr);

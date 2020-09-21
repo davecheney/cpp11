@@ -414,6 +414,10 @@ void KB11::RTS(const uint16_t instr) {
     R[reg] = pop();
 }
 
+void KB11::MFPT() {
+    trapat(010); // not a PDP11/44
+}
+
 void KB11::EMTX(const uint16_t instr) {
     uint16_t uval;
     if ((instr & 0177400) == 0104000) {
@@ -485,7 +489,9 @@ void KB11::step() {
                 case 6: // RTT 000006
                     RTT();
                     return;
-                case 7:  // MFPI
+                case 7:  // MFPT
+                    MFPT();
+                    return;
                 default: // We don't know this 0000xx instruction
                     printf("unknown 0000xx instruction\n");
                     printstate();
