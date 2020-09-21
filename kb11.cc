@@ -59,18 +59,11 @@ void KB11::writePSW(uint16_t psw) {
 void KB11::switchmode(uint16_t newm) {
     prevuser = curuser;
     curuser = newm;
-    if (prevuser) {
-        USP = R[6];
-    } else {
-        KSP = R[6];
-    }
-    if (curuser) {
-        R[6] = USP;
-    } else {
-        R[6] = KSP;
-    }
+    stackpointer[PSW >> 14] = R[6];
+    R[6] = stackpointer[newm];
+
     PSW &= 0007777;
-    if (curuser) {
+    if (newm) {
         PSW |= (1 << 15) | (1 << 14);
     }
     if (prevuser) {
@@ -367,9 +360,9 @@ void KB11::MFPI(const uint16_t instr) {
             uval = R[6];
         } else {
             if (prevuser) {
-                uval = USP;
+                uval = stackpointer[3];
             } else {
-                uval = KSP;
+                uval = stackpointer[0];
             }
         }
     } else if (isReg(da)) {
@@ -396,9 +389,9 @@ void KB11::MTPI(const uint16_t instr) {
             R[6] = uval;
         } else {
             if (prevuser) {
-                USP = uval;
+                stackpointer[3] = uval;
             } else {
-                KSP = uval;
+                stackpointer[0] = uval;
             }
         }
     } else if (isReg(da)) {
@@ -433,14 +426,11 @@ void KB11::EMTX(const uint16_t instr) {
         uval = 020;
     }
     uint16_t prev = PSW;
-    switchmode(false);
+    writePSW(PSW & 0037777);
     push(prev);
     push(R[7]);
     R[7] = unibus.read16(uval);
-    PSW = unibus.read16(uval + 2);
-    if (prevuser) {
-        PSW |= (1 << 13) | (1 << 12);
-    }
+    writePSW(unibus.read16(uval + 2));
 }
 
 void KB11::RTT() {
@@ -511,15 +501,15 @@ void KB11::step() {
                     RTS(instr);
                     return;
                 case 3: // SPL 00023N
-                    PSW = (PSW & 0xf81f) | ((instr & 7) << 5);
+                    writePSW((PSW & 0xf81f) | ((instr & 7) << 5));
                     return;
                 case 4: // CLR CC 00024C Part 1 without N
                 case 5: // CLR CC 00025C Part 2 with N
-                    PSW &= ~instr & 017;
+                    writePSW(PSW & (~instr & 017));
                     return;
                 case 6: // SET CC 00026C Part 1 without N
                 case 7: // SET CC 00027C Part 2 with N
-                    PSW |= instr & 017;
+                    writePSW(PSW | (instr & 017));
                     return;
                 default: // We don't know this 00002xR instruction
                     printf("unknown 0002xR instruction\n");
@@ -894,10 +884,7 @@ void KB11::handleinterrupt() {
     }
 
     R[7] = unibus.read16(vec);
-    PSW = unibus.read16(vec + 2);
-    if (prevuser) {
-        PSW |= (1 << 13) | (1 << 12);
-    }
+    writePSW(unibus.read16(vec + 2));
     popirq();
 }
 
@@ -906,9 +893,8 @@ void KB11::printstate() {
            "%06o\r\n",
            R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]);
     printf("[%s%s%s%s%s%s", previousmode() ? "u" : "k",
-           currentmode() ? "U" : "K", PSW & FLAGN ? "N" : " ",
-           PSW & FLAGZ ? "Z" : " ", PSW & FLAGV ? "V" : " ",
-           PSW & FLAGC ? "C" : " ");
+           currentmode() ? "U" : "K", N() ? "N" : " ", Z() ? "Z" : " ",
+           V() ? "V" : " ", C() ? "C" : " ");
     printf("]  instr %06o: %06o\t ", PC, read16(PC));
     disasm(read16(PC));
     printf("\n");

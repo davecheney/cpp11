@@ -56,9 +56,8 @@ class KB11 {
   private:
     std::array<uint16_t, 8> R; // R0-R7
     uint16_t PC;               // holds R[7] during instruction execution
-    uint16_t USP;
-    uint16_t KSP;
-
+    std::array<uint16_t, 4> stackpointer; // Alternate R6 (kernel, super, illegal, user)
+    
     bool curuser;
     bool prevuser;
 
