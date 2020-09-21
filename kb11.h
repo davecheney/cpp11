@@ -34,7 +34,6 @@ class KB11 {
 
     // interrupt schedules an interrupt.
     void interrupt(uint8_t vec, uint8_t pri);
-    void handleinterrupt();
     void printstate();
 
     // mode returns the current cpu mode.
@@ -47,6 +46,9 @@ class KB11 {
 
     // returns the current CPU interrupt priority.
     uint16_t priority();
+
+    // pop the top interrupt off the itab.
+    void popirq();
 
     struct intr {
         uint8_t vec;
@@ -81,9 +83,6 @@ class KB11 {
     uint16_t pop();
     uint16_t aget(uint8_t v, uint8_t l);
     void branch(int16_t o);
-
-    // pop the top interrupt off the itab.
-    void popirq();
 
     // switchmode switches processor mode.
     void switchmode(uint16_t newm);

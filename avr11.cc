@@ -54,7 +54,8 @@ void loop0() {
     while (true) {
         cpu.step();
         if ((cpu.itab[0].vec > 0) && (cpu.itab[0].pri >= cpu.priority())) {
-            cpu.handleinterrupt();
+            cpu.trapat(cpu.itab[0].vec);
+            cpu.popirq();
             return; // exit from loop to reset trapbuf
         }
         cpu.unibus.rk11.step();

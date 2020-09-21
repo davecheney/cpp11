@@ -426,25 +426,6 @@ void KB11::MFPT() {
     trapat(010); // not a PDP11/44
 }
 
-void KB11::EMTX(const uint16_t instr) {
-    uint16_t uval;
-    if ((instr & 0177400) == 0104000) {
-        uval = 030;
-    } else if ((instr & 0177400) == 0104400) {
-        uval = 034;
-    } else if (instr == 3) {
-        uval = 014;
-    } else {
-        uval = 020;
-    }
-    uint16_t prev = PSW;
-    writePSW(PSW & 0037777);
-    push(prev);
-    push(R[7]);
-    R[7] = read16(uval);
-    writePSW(unibus.read16(uval + 2));
-}
-
 void KB11::RTT() {
     R[7] = pop();
     uint16_t uval = pop();
@@ -488,7 +469,7 @@ void KB11::step() {
                     trapat(014); // Trap 14 - BPT
                     return;
                 case 4: // IOT  000004
-                    EMTX(instr);
+                    trapat(020);
                     return;
                 case 5: // RESET 000005
                     RESET();
@@ -804,41 +785,6 @@ void KB11::step() {
     }
 }
 
-void KB11::trapat(uint16_t vec) {
-    if (vec & 1) {
-        printf("Thou darst calling trapat() with an odd vector number?\n");
-        std::abort();
-    }
-    // printf("trap: %03o\n", vec);
-
-    /*var prev uint16
-          defer func() {
-                  t = recover()
-                  switch t = t.(type) {
-                  case trap:
-                          writedebug("red stack trap!\n")
-                          memory[0] = uint16(k.R[7])
-                          memory[1] = prev
-                          vec = 4
-                          panic("fatal")
-                  case nil:
-                          break
-                  default:
-                          panic(t)
-                  }
-     */
-    auto prev = PSW;
-    switchmode(false);
-    push(prev);
-    push(R[7]);
-
-    R[7] = unibus.read16(vec);
-    PSW = unibus.read16(vec + 2);
-    if (prevuser) {
-        PSW |= (1 << 13) | (1 << 12);
-    }
-}
-
 void KB11::interrupt(uint8_t vec, uint8_t pri) {
     if (vec & 1) {
         printf("Thou darst calling interrupt() with an odd vector number?\n");
@@ -882,24 +828,26 @@ void KB11::popirq() {
     itab[itab.size() - 1].pri = 0;
 }
 
-void KB11::handleinterrupt() {
-    auto vec = itab[0].vec;
-    if (0)
-        printf("IRQ: %03o\n", vec);
-
-    uint16_t vv = setjmp(trapbuf);
-    if (vv == 0) {
-        uint16_t prev = PSW;
-        switchmode(false);
-        push(prev);
-        push(R[7]);
-    } else {
-        trapat(vv);
+void KB11::trapat(uint16_t vec) {
+    if (vec & 1) {
+        printf("Thou darst calling trapat() with an odd vector number?\n");
+        std::abort();
     }
+    if (0)
+        printf("trap: %03o\n", vec);
 
-    R[7] = unibus.read16(vec);
-    writePSW(unibus.read16(vec + 2));
-    popirq();
+    auto prev = PSW;
+    switchmode(false);
+    push(prev);
+    push(R[7]);
+
+    R[7] = read16(vec);
+
+    // writePSW calls switchmode which will corrupt prevuser
+    PSW = read16(vec + 2);
+    if (prevuser) {
+        PSW |= (1 << 13) | (1 << 12);
+    }
 }
 
 void KB11::printstate() {
