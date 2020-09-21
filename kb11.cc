@@ -362,22 +362,17 @@ void KB11::MFPI(const uint16_t instr) {
     uint16_t da = aget(D(instr), 2);
     uint16_t uval;
     if (da == 0170006) {
-        // val = (curuser == prevuser) ? R[6] : (prevuser ? k.USP : KSP);
-        if (curuser == prevuser) {
+        if ((currentmode() == 3) && (previousmode() == 3)) {
             uval = R[6];
         } else {
-            if (prevuser) {
-                uval = stackpointer[3];
-            } else {
-                uval = stackpointer[0];
-            }
+            uval = stackpointer[previousmode()];
         }
     } else if (isReg(da)) {
         printf("invalid MFPI instruction\n");
         printstate();
         std::abort();
     } else {
-        uval = unibus.read16(mmu.decode<false>((uint16_t)da, prevuser));
+        uval = unibus.read16(mmu.decode<false>(da, previousmode()));
     }
     push(uval);
     PSW &= 0xFFF0;
@@ -392,20 +387,17 @@ void KB11::MTPI(const uint16_t instr) {
     uint16_t da = aget(D(instr), 2);
     uint16_t uval = pop();
     if (da == 0170006) {
-        if (curuser == prevuser) {
+        if ((currentmode() == 3) && (previousmode() == 3)) {
             R[6] = uval;
         } else {
-            if (prevuser) {
-                stackpointer[3] = uval;
-            } else {
-                stackpointer[0] = uval;
-            }
+            stackpointer[previousmode()] = uval;
         }
     } else if (isReg(da)) {
         printf("invalid MTPI instrution\n");
+        printstate();
         std::abort();
     } else {
-        unibus.write16(mmu.decode<true>((uint16_t)da, prevuser), uval);
+        unibus.write16(mmu.decode<true>(da, previousmode()), uval);
     }
     PSW &= 0xFFF0;
     PSW |= FLAGC;
