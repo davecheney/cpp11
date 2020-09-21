@@ -24,48 +24,14 @@ void KB11::reset() {
 
 uint16_t KB11::currentmode() { return (PSW >> 14); }
 
-uint16_t KB11::previousmode() {
-    auto pm = ((PSW >> 12) & 3);
-    assert((pm == 3) == prevuser);
-    return pm;
-}
+uint16_t KB11::previousmode() { return ((PSW >> 12) & 3); }
 
 uint16_t KB11::priority() { return ((PSW >> 5) & 7); }
 
 void KB11::writePSW(uint16_t psw) {
-    switch (psw >> 14) {
-    case 0:
-    case 3:
-        switchmode(psw >> 14);
-        break;
-    default:
-        printf("invalid mode\n");
-        std::abort();
-    }
-    switch ((psw >> 12) & 3) {
-    case 0:
-    case 3:
-        prevuser = ((psw >> 12) & 3);
-        break;
-    default:
-        printf("invalid mode\n");
-        std::abort();
-    }
+    stackpointer[currentmode()] = R[6];
     PSW = psw;
-}
-
-void KB11::switchmode(uint16_t newm) {
-    prevuser = currentmode();
-    stackpointer[PSW >> 14] = R[6];
-    R[6] = stackpointer[newm];
-
-    PSW &= 0007777;
-    if (newm) {
-        PSW |= (1 << 15) | (1 << 14);
-    }
-    if (prevuser) {
-        PSW |= (1 << 13) | (1 << 12);
-    }
+    R[6] = stackpointer[currentmode()];
 }
 
 inline uint16_t KB11::read16(uint16_t va) {
@@ -830,6 +796,8 @@ void KB11::popirq() {
     itab[itab.size() - 1].pri = 0;
 }
 
+void KB11::kernelmode() { writePSW((PSW & 0007777) | (currentmode() << 12)); }
+
 void KB11::trapat(uint16_t vec) {
     if (vec & 1) {
         printf("Thou darst calling trapat() with an odd vector number?\n");
@@ -839,15 +807,14 @@ void KB11::trapat(uint16_t vec) {
         printf("trap: %03o\n", vec);
 
     auto prev = PSW;
-    switchmode(false);
+    kernelmode();
     push(prev);
     push(R[7]);
 
     R[7] = read16(vec);
-
-    // writePSW calls switchmode which will corrupt prevuser
+    prev = previousmode();
     PSW = read16(vec + 2);
-    if (prevuser) {
+    if (prev) {
         PSW |= (1 << 13) | (1 << 12);
     }
 }

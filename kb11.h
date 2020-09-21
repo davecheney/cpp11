@@ -68,8 +68,6 @@ class KB11 {
     std::array<uint16_t, 4>
         stackpointer; // Alternate R6 (kernel, super, illegal, user)
 
-    bool prevuser;
-
     inline bool N() { return PSW & FLAGN; }
     inline bool Z() { return PSW & FLAGZ; }
     inline bool V() { return PSW & FLAGV; }
@@ -84,8 +82,8 @@ class KB11 {
     uint16_t aget(uint8_t v, uint8_t l);
     void branch(int16_t o);
 
-    // switchmode switches processor mode.
-    void switchmode(uint16_t newm);
+    // kernelmode pushes the current processor mode and switchs to kernel.
+    void kernelmode();
     void writePSW(uint16_t psw);
 
     inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }

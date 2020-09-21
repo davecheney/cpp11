@@ -29,16 +29,19 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
         cons.write16(a, v);
         return;
     }
-    if ((a & 0777700) == 0777400) {
-        rk11.write16(a, v);
-        return;
-    }
-    if (((a & 0777600) == 0772200) || ((a & 0777600) == 0777600)) {
+
+    switch (a & ~077) {
+    case 0777600: // MMU user mode 3 Map
+    case 0772300: // MMU kernel mode 0 Map
         cpu.mmu.write16(a, v);
         return;
+    case 0777400:
+        rk11.write16(a, v);
+        return;
+    default:
+        printf("unibus: write to invalid address %06o\n", a);
+        trap(INTBUS);
     }
-    printf("unibus: write to invalid address %06o\n", a);
-    trap(INTBUS);
 }
 
 uint16_t UNIBUS::read16(uint32_t a) {
@@ -74,16 +77,16 @@ uint16_t UNIBUS::read16(uint32_t a) {
         return cons.read16(a);
     }
 
-    if ((a & 0777760) == 0777400) {
-        return rk11.read16(a);
-    }
-
-    if (((a & 0777600) == 0772200) || ((a & 0777600) == 0777600)) {
+    switch (a & ~077) {
+    case 0777600: // MMU user mode 3 Map
+    case 0772300: // MMU kernel mode 0 Map
         return cpu.mmu.read16(a);
+    case 0777400:
+        return rk11.read16(a);
+    default:
+        printf("unibus: read from invalid address %06o\n", a);
+        trap(INTBUS);
     }
-
-    printf("unibus: read from invalid address %06o\n", a);
-    trap(INTBUS);
 }
 
 void UNIBUS::reset() {
