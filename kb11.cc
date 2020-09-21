@@ -438,7 +438,7 @@ void KB11::RTT() {
         uval &= 047;
         uval |= PSW & 0177730;
     }
-    unibus.write16(0777776, uval);
+    writePSW(uval);
 }
 
 void KB11::RESET() {
