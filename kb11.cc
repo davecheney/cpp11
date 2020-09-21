@@ -68,17 +68,16 @@ void KB11::switchmode(uint16_t newm) {
     }
 }
 
-inline uint16_t KB11::read16(uint16_t va) {
-    auto a = mmu.decode<false>(va, currentmode());
+inline uint16_t KB11::read16(uint16_t a) {
     switch (a) {
-    case 0777776:
+    case 0177776:
         return PSW;
-    case 0777774:
+    case 0177774:
         return stacklimit;
-    case 0777570:
+    case 0177570:
         return switchregister;
     default:
-        return unibus.read16(a);
+        return unibus.read16(mmu.decode<false>(a, currentmode()));
     }
 }
 
@@ -88,20 +87,19 @@ inline uint16_t KB11::fetch16() {
     return val;
 }
 
-inline void KB11::write16(uint16_t va, uint16_t v) {
-    auto a = mmu.decode<true>(va, currentmode());
+inline void KB11::write16(uint16_t a, uint16_t v) {
     switch (a) {
-    case 0777776:
+    case 0177776:
         writePSW(v);
         break;
-    case 0777774:
+    case 0177774:
         stacklimit = v;
         break;
-    case 0777570:
+    case 0177570:
         switchregister = v;
         break;
     default:
-        unibus.write16(a, v);
+        unibus.write16(mmu.decode<true>(a, currentmode()), v);
     }
 }
 
