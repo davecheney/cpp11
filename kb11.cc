@@ -896,6 +896,6 @@ void KB11::printstate() {
            currentmode() ? "U" : "K", N() ? "N" : " ", Z() ? "Z" : " ",
            V() ? "V" : " ", C() ? "C" : " ");
     printf("]  instr %06o: %06o\t ", PC, read16(PC));
-    disasm(read16(PC));
+    disasm(PC);
     printf("\n");
 }
