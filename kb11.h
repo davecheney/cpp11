@@ -40,7 +40,10 @@ class KB11 {
     void interrupt(uint8_t vec, uint8_t pri);
     void handleinterrupt();
     void printstate();
-    void switchmode(bool newm);
+    void switchmode(uint16_t newm);
+
+    uint16_t currentmode();
+    uint16_t previousmode();
 
     struct intr {
         uint8_t vec;
@@ -79,7 +82,7 @@ class KB11 {
         if (l == 2) {
             return read16(va);
         }
-        auto a = mmu.decode<false>(va, curuser);
+        auto a = mmu.decode<false>(va, currentmode());
         if (a & 1) {
             return unibus.read16(a & ~1) >> 8;
         }
@@ -91,7 +94,7 @@ class KB11 {
             write16(va, v);
             return;
         }
-        auto a = mmu.decode<true>(va, curuser);
+        auto a = mmu.decode<true>(va, currentmode());
         if (a & 1) {
             unibus.write16(a & ~1, (unibus.read16(a & ~1) & 0xFF) | (v & 0xFF) << 8);
         } else {

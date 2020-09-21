@@ -12,15 +12,15 @@ bool KT11::page::read() { return pdr & 2; }
 bool KT11::page::write() { return pdr & 6; };
 bool KT11::page::ed() { return pdr & 8; }
 
-template <bool wr> uint32_t KT11::decode(uint16_t a, uint8_t user) {
+template <bool wr> uint32_t KT11::decode(uint16_t a, uint16_t mode) {
     if ((SR0 & 1) == 0) {
         return a > 0167777 ? ((uint32_t)a) + 0600000 : a;
     }
-    uint8_t i = user ? ((a >> 13) + 8) : (a >> 13);
+    uint8_t i = mode ? ((a >> 13) + 8) : (a >> 13);
     if (wr && !pages[i].write()) {
         SR0 = (1 << 13) | 1;
         SR0 |= (a >> 12) & ~1;
-        if (user) {
+        if (mode) {
             SR0 |= (1 << 5) | (1 << 6);
         }
         // SR2 = cpu.PC;
@@ -31,7 +31,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint8_t user) {
     if (!pages[i].read()) {
         SR0 = (1 << 15) | 1;
         SR0 |= (a >> 12) & ~1;
-        if (user) {
+        if (mode) {
             SR0 |= (1 << 5) | (1 << 6);
         }
         // SR2 = cpu.PC;
@@ -44,7 +44,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint8_t user) {
     if (pages[i].ed() ? (block < pages[i].len()) : (block > pages[i].len())) {
         SR0 = (1 << 14) | 1;
         SR0 |= (a >> 12) & ~1;
-        if (user) {
+        if (mode) {
             SR0 |= (1 << 5) | (1 << 6);
         }
         // SR2 = cpu.PC;
@@ -69,8 +69,8 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint8_t user) {
     return aa;
 }
 
-template uint32_t KT11::decode<true>(uint16_t a, uint8_t user);
-template uint32_t KT11::decode<false>(uint16_t a, uint8_t user);
+template uint32_t KT11::decode<true>(uint16_t, uint16_t);
+template uint32_t KT11::decode<false>(uint16_t, uint16_t);
 
 uint16_t KT11::read16(uint32_t a) {
     if ((a >= 0772300) && (a < 0772320)) {
@@ -112,8 +112,7 @@ void KT11::write16(uint32_t a, uint16_t v) {
 }
 
 void KT11::dumppages() {
-    uint8_t i;
-    for (i = 0; i < pages.size(); i++) {
+    for (uint8_t i = 0; i < pages.size(); i++) {
         printf("%0x: %06o %06o\r\n", i, pages[i].par, pages[i].pdr);
     }
 }

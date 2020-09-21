@@ -8,6 +8,7 @@
 
 extern KB11 cpu;
 
+
 void UNIBUS::write16(uint32_t a, uint16_t v) {
     if (a & 1) {
         printf("unibus: write16 to odd address %06o\n", a);
@@ -21,10 +22,8 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
     case 0777776:
         switch (v >> 14) {
         case 0:
-            cpu.switchmode(false);
-            break;
         case 3:
-            cpu.switchmode(true);
+            cpu.switchmode(v>>14);
             break;
         default:
             printf("invalid mode\n");
@@ -32,10 +31,8 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
         }
         switch ((v >> 12) & 3) {
         case 0:
-            cpu.prevuser = false;
-            break;
         case 3:
-            cpu.prevuser = true;
+            cpu.prevuser = ((v >> 12) & 3);
             break;
         default:
             printf("invalid mode\n");

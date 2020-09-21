@@ -22,7 +22,19 @@ void KB11::reset() {
     unibus.reset();
 }
 
-void KB11::switchmode(bool newm) {
+uint16_t KB11::currentmode() {
+    auto cm = (PSW >> 14);
+    assert((cm == 3) == curuser);
+    return cm;
+}
+
+uint16_t KB11::previousmode() {
+    auto pm = ((PSW >> 12) & 3);
+    assert((pm == 3) == prevuser);
+    return pm;
+}
+
+void KB11::switchmode(uint16_t newm) {
     prevuser = curuser;
     curuser = newm;
     if (prevuser) {
@@ -45,7 +57,7 @@ void KB11::switchmode(bool newm) {
 }
 
 inline uint16_t KB11::read16(uint16_t va) {
-    auto a = mmu.decode<false>(va, curuser);
+    auto a = mmu.decode<false>(va, currentmode());
     return unibus.read16(a);
 }
 
@@ -56,7 +68,7 @@ inline uint16_t KB11::fetch16() {
 }
 
 inline void KB11::write16(uint16_t va, uint16_t v) {
-    auto a = mmu.decode<true>(va, curuser);
+    auto a = mmu.decode<true>(va, currentmode());
     unibus.write16(a, v);
 }
 
@@ -412,7 +424,7 @@ void KB11::EMTX(const uint16_t instr) {
 void KB11::RTT() {
     R[7] = pop();
     uint16_t uval = pop();
-    if (curuser) {
+    if (currentmode()) {
         uval &= 047;
         uval |= PSW & 0177730;
     }
@@ -420,7 +432,8 @@ void KB11::RTT() {
 }
 
 void KB11::RESET() {
-    if (curuser) {
+    if (currentmode()) {
+        // RESET is ignored outside of kernel mode
         return;
     }
     unibus.reset();
@@ -430,7 +443,7 @@ void KB11::step() {
     PC = R[7];
     auto instr = fetch16();
 
-    if (1)
+    if (0)
         printstate();
 
     switch (instr >> 12) {    // xxSSDD Mostly double operand instructions
@@ -845,7 +858,7 @@ void KB11::popirq() {
 
 void KB11::handleinterrupt() {
     auto vec = itab[0].vec;
-    if (1)
+    if (0)
         printf("IRQ: %03o\n", vec);
 
     uint16_t vv = setjmp(trapbuf);
@@ -870,11 +883,10 @@ void KB11::printstate() {
     printf("R0 %06o R1 %06o R2 %06o R3 %06o R4 %06o R5 %06o R6 %06o R7 "
            "%06o\r\n",
            R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]);
-    printf("[%s%s%s%s%s%s", prevuser ? "u" : "k", curuser ? "U" : "K",
+    printf("[%s%s%s%s%s%s", previousmode() ? "u" : "k", currentmode() ? "U" : "K",
            PSW & FLAGN ? "N" : " ", PSW & FLAGZ ? "Z" : " ",
            PSW & FLAGV ? "V" : " ", PSW & FLAGC ? "C" : " ");
-    printf("]  instr %06o: %06o\t ", PC,
-           unibus.read16(mmu.decode<false>(PC, curuser)));
-    disasm(mmu.decode<false>(PC, curuser));
+    printf("]  instr %06o: %06o\t ", PC, read16(PC));
+    disasm(read16(PC));
     printf("\n");
 }
