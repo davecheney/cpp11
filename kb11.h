@@ -30,9 +30,6 @@ class KB11 {
     uint16_t PSW;
     uint16_t stacklimit, switchregister;
 
-    bool curuser;
-    bool prevuser;
-
     void step();
     void reset();
 
@@ -40,7 +37,8 @@ class KB11 {
     void interrupt(uint8_t vec, uint8_t pri);
     void handleinterrupt();
     void printstate();
-    void switchmode(uint16_t newm);
+
+    void writePSW(uint16_t psw);
 
     uint16_t currentmode();
     uint16_t previousmode();
@@ -61,6 +59,9 @@ class KB11 {
     uint16_t USP;
     uint16_t KSP;
 
+    bool curuser;
+    bool prevuser;
+
     inline bool N() { return PSW & FLAGN; }
     inline bool Z() { return PSW & FLAGZ; }
     inline bool V() { return PSW & FLAGV; }
@@ -75,6 +76,7 @@ class KB11 {
     uint16_t aget(uint8_t v, uint8_t l);
     void branch(int16_t o);
     void popirq();
+    void switchmode(uint16_t newm);
 
     inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
@@ -96,7 +98,8 @@ class KB11 {
         }
         auto a = mmu.decode<true>(va, currentmode());
         if (a & 1) {
-            unibus.write16(a & ~1, (unibus.read16(a & ~1) & 0xFF) | (v & 0xFF) << 8);
+            unibus.write16(a & ~1, (unibus.read16(a & ~1) & 0xFF) | (v & 0xFF)
+                                                                        << 8);
         } else {
             unibus.write16(a, (unibus.read16(a) & 0xFF00) | (v & 0xFF));
         }
@@ -442,8 +445,8 @@ class KB11 {
     template <uint8_t l> void SXT(const uint16_t instr) {
         const uint16_t da = DA(instr);
         if (PSW & FLAGN) {
-           const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-           memwrite<l>(da, max);
+            const uint16_t max = l == 2 ? 0xFFFF : 0xff;
+            memwrite<l>(da, max);
         } else {
             PSW |= FLAGZ;
             memwrite<l>(da, 0);

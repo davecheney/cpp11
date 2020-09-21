@@ -34,6 +34,28 @@ uint16_t KB11::previousmode() {
     return pm;
 }
 
+void KB11::writePSW(uint16_t psw) {
+    switch (psw >> 14) {
+    case 0:
+    case 3:
+        switchmode(psw >> 14);
+        break;
+    default:
+        printf("invalid mode\n");
+        std::abort();
+    }
+    switch ((psw >> 12) & 3) {
+    case 0:
+    case 3:
+        prevuser = ((psw >> 12) & 3);
+        break;
+    default:
+        printf("invalid mode\n");
+        std::abort();
+    }
+    PSW = psw;
+}
+
 void KB11::switchmode(uint16_t newm) {
     prevuser = curuser;
     curuser = newm;
@@ -883,9 +905,10 @@ void KB11::printstate() {
     printf("R0 %06o R1 %06o R2 %06o R3 %06o R4 %06o R5 %06o R6 %06o R7 "
            "%06o\r\n",
            R[0], R[1], R[2], R[3], R[4], R[5], R[6], R[7]);
-    printf("[%s%s%s%s%s%s", previousmode() ? "u" : "k", currentmode() ? "U" : "K",
-           PSW & FLAGN ? "N" : " ", PSW & FLAGZ ? "Z" : " ",
-           PSW & FLAGV ? "V" : " ", PSW & FLAGC ? "C" : " ");
+    printf("[%s%s%s%s%s%s", previousmode() ? "u" : "k",
+           currentmode() ? "U" : "K", PSW & FLAGN ? "N" : " ",
+           PSW & FLAGZ ? "Z" : " ", PSW & FLAGV ? "V" : " ",
+           PSW & FLAGC ? "C" : " ");
     printf("]  instr %06o: %06o\t ", PC, read16(PC));
     disasm(read16(PC));
     printf("\n");
