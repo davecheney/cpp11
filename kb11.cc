@@ -22,11 +22,7 @@ void KB11::reset() {
     unibus.reset();
 }
 
-uint16_t KB11::currentmode() {
-    auto cm = (PSW >> 14);
-    assert((cm == 3) == curuser);
-    return cm;
-}
+uint16_t KB11::currentmode() { return (PSW >> 14); }
 
 uint16_t KB11::previousmode() {
     auto pm = ((PSW >> 12) & 3);
@@ -59,8 +55,7 @@ void KB11::writePSW(uint16_t psw) {
 }
 
 void KB11::switchmode(uint16_t newm) {
-    prevuser = curuser;
-    curuser = newm;
+    prevuser = currentmode();
     stackpointer[PSW >> 14] = R[6];
     R[6] = stackpointer[newm];
 

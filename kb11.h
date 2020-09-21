@@ -61,8 +61,7 @@ class KB11 {
     uint16_t PSW;              // processor status word
     std::array<uint16_t, 4>
         stackpointer; // Alternate R6 (kernel, super, illegal, user)
-
-    bool curuser;
+        
     bool prevuser;
 
     inline bool N() { return PSW & FLAGN; }
