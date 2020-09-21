@@ -9,8 +9,6 @@
 
 void disasm(uint32_t ia);
 
-extern jmp_buf trapbuf;
-
 void KB11::reset() {
     uint16_t i;
     for (i = 0; i < 29; i++) {
@@ -806,17 +804,13 @@ void KB11::trapat(uint16_t vec) {
     if (0)
         printf("trap: %03o\n", vec);
 
-    auto prev = PSW;
+    auto psw = PSW;
     kernelmode();
-    push(prev);
+    push(psw);
     push(R[7]);
 
     R[7] = read16(vec);
-    prev = previousmode();
-    PSW = read16(vec + 2);
-    if (prev) {
-        PSW |= (1 << 13) | (1 << 12);
-    }
+    writePSW(read16(vec + 2) | (previousmode() << 12));
 }
 
 void KB11::printstate() {
