@@ -73,6 +73,10 @@ inline uint16_t KB11::read16(uint16_t va) {
     switch (a) {
     case 0777776:
         return PSW;
+    case 0777774:
+        return stacklimit;
+    case 0777570:
+        return switchregister;
     default:
         return unibus.read16(a);
     }
@@ -86,7 +90,19 @@ inline uint16_t KB11::fetch16() {
 
 inline void KB11::write16(uint16_t va, uint16_t v) {
     auto a = mmu.decode<true>(va, currentmode());
-    unibus.write16(a, v);
+    switch (a) {
+    case 0777776:
+        writePSW(v);
+        break;
+    case 0777774:
+        stacklimit = v;
+        break;
+    case 0777570:
+        switchregister = v;
+        break;
+    default:
+        unibus.write16(a, v);
+    }
 }
 
 inline void KB11::push(const uint16_t v) {
@@ -427,7 +443,7 @@ void KB11::EMTX(const uint16_t instr) {
     writePSW(PSW & 0037777);
     push(prev);
     push(R[7]);
-    R[7] = unibus.read16(uval);
+    R[7] = read16(uval);
     writePSW(unibus.read16(uval + 2));
 }
 

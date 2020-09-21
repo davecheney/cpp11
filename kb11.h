@@ -27,8 +27,6 @@ enum {
 
 class KB11 {
   public:
-    uint16_t stacklimit, switchregister;
-
     void step();
     void reset();
 
@@ -38,7 +36,6 @@ class KB11 {
     void interrupt(uint8_t vec, uint8_t pri);
     void handleinterrupt();
     void printstate();
-    void writePSW(uint16_t psw);
 
     // mode returns the current cpu mode.
     // 0: kernel, 1: supervisor, 2: illegal, 3: user
@@ -65,11 +62,12 @@ class KB11 {
     std::array<uint16_t, 8> R; // R0-R7
     uint16_t PC;               // holds R[7] during instruction execution
     uint16_t PSW;              // processor status word
+    uint16_t stacklimit, switchregister;
     std::array<uint16_t, 4>
         stackpointer; // Alternate R6 (kernel, super, illegal, user)
 
     bool prevuser;
-    
+
     inline bool N() { return PSW & FLAGN; }
     inline bool Z() { return PSW & FLAGZ; }
     inline bool V() { return PSW & FLAGV; }
@@ -89,6 +87,7 @@ class KB11 {
 
     // switchmode switches processor mode.
     void switchmode(uint16_t newm);
+    void writePSW(uint16_t psw);
 
     inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
 
@@ -96,11 +95,10 @@ class KB11 {
         if (l == 2) {
             return read16(va);
         }
-        auto a = mmu.decode<false>(va, currentmode());
-        if (a & 1) {
-            return unibus.read16(a & ~1) >> 8;
+        if (va & 1) {
+            return read16(va & ~1) >> 8;
         }
-        return unibus.read16(a & ~1) & 0xFF;
+        return read16(va & ~1) & 0xFF;
     }
 
     template <uint8_t l> inline void write(const uint16_t va, uint16_t v) {
@@ -108,12 +106,10 @@ class KB11 {
             write16(va, v);
             return;
         }
-        auto a = mmu.decode<true>(va, currentmode());
-        if (a & 1) {
-            unibus.write16(a & ~1, (unibus.read16(a & ~1) & 0xFF) | (v & 0xFF)
-                                                                        << 8);
+        if (va & 1) {
+            write16(va & ~1, (read16(va & ~1) & 0xFF) | (v & 0xFF) << 8);
         } else {
-            unibus.write16(a, (unibus.read16(a) & 0xFF00) | (v & 0xFF));
+            write16(va, (read16(va) & 0xFF00) | (v & 0xFF));
         }
     }
 
