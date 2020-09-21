@@ -33,13 +33,19 @@ class KB11 {
     void reset();
 
     void trapat(uint16_t vec);
+
+    // interrupt schedules an interrupt.
     void interrupt(uint8_t vec, uint8_t pri);
     void handleinterrupt();
     void printstate();
-
     void writePSW(uint16_t psw);
 
+    // mode returns the current cpu mode.
+    // 0: kernel, 1: supervisor, 2: illegal, 3: user
     uint16_t currentmode();
+
+    // previousmode returns the previous cpu mode.
+    // 0: kernel, 1: supervisor, 2: illegal, 3: user
     uint16_t previousmode();
 
     // returns the current CPU interrupt priority.
@@ -61,9 +67,9 @@ class KB11 {
     uint16_t PSW;              // processor status word
     std::array<uint16_t, 4>
         stackpointer; // Alternate R6 (kernel, super, illegal, user)
-        
-    bool prevuser;
 
+    bool prevuser;
+    
     inline bool N() { return PSW & FLAGN; }
     inline bool Z() { return PSW & FLAGZ; }
     inline bool V() { return PSW & FLAGV; }
@@ -77,7 +83,11 @@ class KB11 {
     uint16_t pop();
     uint16_t aget(uint8_t v, uint8_t l);
     void branch(int16_t o);
+
+    // pop the top interrupt off the itab.
     void popirq();
+
+    // switchmode switches processor mode.
     void switchmode(uint16_t newm);
 
     inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
