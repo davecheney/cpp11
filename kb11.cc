@@ -440,26 +440,6 @@ void KB11::MOVB(const uint16_t instr) {
     setNZ<1>(src);
 }
 
-// TST 0057DD
-void KB11::TST(const uint16_t instr) {
-    auto dst = memread<2>(DA(instr));
-    PSW &= 0xFFF0;
-    setZ(dst == 0);
-    if (dst & 0x8000) {
-        PSW |= FLAGN;
-    }
-}
-
-// TSTB 1057DD
-void KB11::TSTB(const uint16_t instr) {
-    auto dst = memread<1>(DA(instr));
-    PSW &= 0xFFF0;
-    setZ(dst == 0);
-    if (dst & 0x80) {
-        PSW |= FLAGN;
-    }
-}
-
 // SWAB 0003DD
 void KB11::SWAB(const uint16_t instr) {
     auto da = DA(instr);
@@ -611,7 +591,7 @@ void KB11::step() {
                 SBC<2>(instr);
                 return;
             case 057: // TST 0057DD
-                TST(instr);
+                TST<2>(instr);
                 return;
             case 060: // ROR 0060DD
                 ROR<2>(instr);
@@ -759,7 +739,7 @@ void KB11::step() {
                 SBC<1>(instr);
                 return;
             case 057: // TSTB 1057DD
-                TSTB(instr);
+                TST<1>(instr);
                 return;
             case 060: // RORB 1060DD
                 ROR<1>(instr);

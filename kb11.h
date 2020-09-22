@@ -185,6 +185,18 @@ class KB11 {
         }
     }
 
+    // Set N, Z,  clearing C & V
+    template <uint16_t len> void setNZC(uint16_t v) {
+        static_assert(len == 1 || len == 2);
+        PSW &= 0xFFF0;
+        if (v == 0) {
+            PSW |= FLAGZ;
+        }
+        if (v & (len == 2 ? 0x8000 : 0x80)) {
+            PSW |= FLAGN;
+        }
+    }
+
     template <uint8_t l> void BIC(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
@@ -431,6 +443,12 @@ class KB11 {
         auto dst = memread<l>(DA(instr));
         auto result = src & dst;
         setNZ<l>(result);
+    }
+
+    // TST 0057DD, TSTB 1057DD
+    template <uint16_t l> void TST(const uint16_t instr) {
+        auto dst = memread<l>(DA(instr));
+        setNZC<l>(dst);
     }
 
     void ADD(const uint16_t instr);
