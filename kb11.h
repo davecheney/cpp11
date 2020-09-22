@@ -118,6 +118,7 @@ class KB11 {
     }
 
     template <uint8_t l> uint16_t memread(uint16_t a) {
+        static_assert(l == 1 || l == 2);
         if (isReg(a)) {
             if (l == 2) {
                 return R[a & 7];
@@ -129,6 +130,7 @@ class KB11 {
     }
 
     template <uint8_t l> void memwrite(uint16_t a, uint16_t v) {
+        static_assert(l == 1 || l == 2);
         if (isReg(a)) {
             const uint8_t r = a & 7;
             if (l == 2) {
@@ -171,6 +173,14 @@ class KB11 {
         }
         static_assert(len == 1 || len == 2);
         if (v & (len == 2 ? 0x8000 : 0x80)) {
+            PSW |= FLAGN;
+        }
+    }
+
+    // Set N, Z & V (C unchanged)
+    template<uint16_t len> void setNZV(uint16_t v) {
+        setNZ<len>(v);
+        if (v == (len == 2 ? 0x7fff : 0x7f)) {
             PSW |= FLAGN;
         }
     }
@@ -225,20 +235,10 @@ class KB11 {
     }
 
     template <uint8_t l> void _DEC(const uint16_t instr) {
-        uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        uint16_t maxp = l == 2 ? 0x7FFF : 0x7f;
-        uint16_t da = DA(instr);
-        uint16_t uval = (memread<l>(da) - 1) & max;
+        auto da = DA(instr);
+        auto uval = (memread<l>(da) - 1) & (l == 2 ? 0xFFFF : 0xff);
         memwrite<l>(da, uval);
-        PSW &= 0xFFF1;
-        if (uval & msb) {
-            PSW |= FLAGN;
-        }
-        if (uval == maxp) {
-            PSW |= FLAGV;
-        }
-        setZ(uval == 0);
+        setNZV<l>(uval);
     }
 
     template <uint8_t l> void NEG(const uint16_t instr) {
