@@ -131,8 +131,8 @@ void KB11::setZ(const bool b) {
 }
 
 void KB11::ADD(const uint16_t instr) {
-    const uint16_t val1 = memread<2>(aget((instr >> 6) & 077, 2));
-    const uint16_t da = aget(instr & 077, 2);
+    const uint16_t val1 = memread<2>(SA(instr));
+    const uint16_t da = DA(instr);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = (val1 + val2) & 0xFFFF;
     PSW &= 0xFFF0;
@@ -149,9 +149,11 @@ void KB11::ADD(const uint16_t instr) {
     memwrite<2>(da, uval);
 }
 
+// SUB 16SSDD
 void KB11::SUB(const uint16_t instr) {
-    const uint16_t val1 = memread<2>(aget((instr >> 6) & 077, 2));
-    const uint16_t da = aget(instr & 077, 2);
+    // mask off top bit of instr so SA computes L=2
+    const uint16_t val1 = memread<2>(SA(instr & 0077777));
+    const uint16_t da = DA(instr);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = (val2 - val1) & 0xFFFF;
     PSW &= 0xFFF0;
@@ -168,12 +170,13 @@ void KB11::SUB(const uint16_t instr) {
     memwrite<2>(da, uval);
 }
 
+// JSR 004RDD
 void KB11::JSR(const uint16_t instr) {
-    auto dst = DA(instr);
-    if (isReg(dst)) {
+    if (((instr >> 3) & 7) == 0) {
         printf("JSR called on register\n");
         std::abort();
     }
+    auto dst = DA(instr);
     auto reg = (instr >> 6) & 7;
     push(R[reg]);
     R[reg] = R[7];
@@ -229,7 +232,7 @@ void KB11::DIV(const uint16_t instr) {
 
 void KB11::ASH(const uint16_t instr) {
     const uint16_t val1 = R[(instr >> 6) & 7];
-    const uint16_t da = aget(instr & 077, 2);
+    const uint16_t da = DA(instr);
     uint16_t val2 = memread<2>(da) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
@@ -262,7 +265,7 @@ void KB11::ASH(const uint16_t instr) {
 
 void KB11::ASHC(const uint16_t instr) {
     const uint32_t val1 = R[(instr >> 6) & 7] << 16 | R[((instr >> 6) & 7) | 1];
-    const uint16_t da = aget(instr & 077, 2);
+    const uint16_t da = DA(instr);
     uint16_t val2 = memread<2>(da) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
@@ -296,7 +299,7 @@ void KB11::ASHC(const uint16_t instr) {
 
 void KB11::XOR(const uint16_t instr) {
     const uint16_t val1 = R[(instr >> 6) & 7];
-    const uint16_t da = aget(instr & 077, 2);
+    const uint16_t da = DA(instr);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = val1 ^ val2;
     PSW &= 0xFFF1;
@@ -318,7 +321,7 @@ void KB11::SOB(const uint16_t instr) {
 }
 
 void KB11::JMP(const uint16_t instr) {
-    const uint16_t uval = aget(instr & 077, 2);
+    const uint16_t uval = DA(instr);
     if (isReg(uval)) {
         // Registers don't have a virtual address so trap!
         trapat(4);
@@ -334,7 +337,7 @@ void KB11::MARK(const uint16_t instr) {
 }
 
 void KB11::MFPI(const uint16_t instr) {
-    uint16_t da = aget(instr & 077, 2);
+    uint16_t da = DA(instr);
     uint16_t uval;
     if (da == 0170006) {
         if ((currentmode() == 3) && (previousmode() == 3)) {
@@ -359,7 +362,7 @@ void KB11::MFPI(const uint16_t instr) {
 }
 
 void KB11::MTPI(const uint16_t instr) {
-    uint16_t da = aget(instr & 077, 2);
+    uint16_t da = DA(instr);
     uint16_t uval = pop();
     if (da == 0170006) {
         if ((currentmode() == 3) && (previousmode() == 3)) {

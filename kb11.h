@@ -19,10 +19,6 @@ enum {
     INTRK = 0220
 };
 
-#define L(x) (2 - (x >> 15))
-#define SA(x) (aget(((x >> 6) & 077), L(x)))
-#define DA(x) (aget((x & 077), L(x)))
-
 class KB11 {
   public:
     void step();
@@ -77,6 +73,19 @@ class KB11 {
     inline void write16(uint16_t va, uint16_t v);
     void push(const uint16_t v);
     uint16_t pop();
+
+    inline uint16_t SA(uint16_t instr) {
+        auto reg = (instr >> 6) & 077;
+        auto len = (2 - (instr >> 15));
+        return aget(reg, len);
+    }
+
+    inline uint16_t DA(uint16_t instr) {
+        auto reg = instr & 077;
+        auto len = (2 - (instr >> 15));
+        return aget(reg, len);
+    }
+
     uint16_t aget(uint8_t v, uint8_t l);
     void branch(int16_t o);
 
@@ -135,7 +144,7 @@ class KB11 {
 
     template <uint8_t l> void MOV(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t uval = memread<l>(aget((instr >> 6) & 077, l));
+        uint16_t uval = memread<l>(SA(instr));
         const uint16_t da = DA(instr);
         PSW &= 0xFFF1;
         if (uval & msb) {
@@ -152,10 +161,11 @@ class KB11 {
         memwrite<l>(da, uval);
     }
 
+    // CMP 02SSDD, CMPB 12SSDD
     template <uint8_t l> void CMP(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        const uint16_t val1 = memread<l>(aget((instr >> 6) & 077, l));
+        const uint16_t val1 = memread<l>(SA(instr));
         const uint16_t da = DA(instr);
         const uint16_t val2 = memread<l>(da);
         const int32_t sval = (val1 - val2) & max;
@@ -349,9 +359,10 @@ class KB11 {
         }
     }
 
+    // TST 0057DD, TSTB 1057DD
     template <uint8_t l> void TST(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t uval = memread<l>(aget(instr & 077, l));
+        uint16_t uval = memread<l>(DA(instr));
         PSW &= 0xFFF0;
         if (uval & msb) {
             PSW |= FLAGN;
