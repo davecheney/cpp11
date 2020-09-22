@@ -19,9 +19,8 @@ enum {
     INTRK = 0220
 };
 
-#define S(x) ((x & 07700) >> 6)
 #define L(x) (2 - (x >> 15))
-#define SA(x) (aget(S(x), L(x)))
+#define SA(x) (aget(((x >> 6) & 077), L(x)))
 #define DA(x) (aget((x & 077), L(x)))
 
 class KB11 {
@@ -136,7 +135,7 @@ class KB11 {
 
     template <uint8_t l> void MOV(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t uval = memread<l>(aget(S(instr), l));
+        uint16_t uval = memread<l>(aget((instr >> 6) & 077, l));
         const uint16_t da = DA(instr);
         PSW &= 0xFFF1;
         if (uval & msb) {
@@ -156,7 +155,7 @@ class KB11 {
     template <uint8_t l> void CMP(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        const uint16_t val1 = memread<l>(aget(S(instr), l));
+        const uint16_t val1 = memread<l>(aget((instr >> 6) & 077, l));
         const uint16_t da = DA(instr);
         const uint16_t val2 = memread<l>(da);
         const int32_t sval = (val1 - val2) & max;

@@ -131,7 +131,7 @@ void KB11::setZ(const bool b) {
 }
 
 void KB11::ADD(const uint16_t instr) {
-    const uint16_t val1 = memread<2>(aget(S(instr), 2));
+    const uint16_t val1 = memread<2>(aget((instr >> 6) & 077, 2));
     const uint16_t da = aget(instr & 077, 2);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = (val1 + val2) & 0xFFFF;
@@ -150,7 +150,7 @@ void KB11::ADD(const uint16_t instr) {
 }
 
 void KB11::SUB(const uint16_t instr) {
-    const uint16_t val1 = memread<2>(aget(S(instr), 2));
+    const uint16_t val1 = memread<2>(aget((instr >> 6) & 077, 2));
     const uint16_t da = aget(instr & 077, 2);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = (val2 - val1) & 0xFFFF;
@@ -181,7 +181,7 @@ void KB11::JSR(const uint16_t instr) {
 }
 
 void KB11::MUL(const uint16_t instr) {
-    int32_t val1 = R[S(instr) & 7];
+    int32_t val1 = R[(instr >> 6) & 7];
     if (val1 & 0x8000) {
         val1 = -((0xFFFF ^ val1) + 1);
     }
@@ -191,8 +191,8 @@ void KB11::MUL(const uint16_t instr) {
         val2 = -((0xFFFF ^ val2) + 1);
     }
     const int32_t sval = val1 * val2;
-    R[S(instr) & 7] = sval >> 16;
-    R[(S(instr) & 7) | 1] = sval & 0xFFFF;
+    R[(instr >> 6) & 7] = sval >> 16;
+    R[((instr >> 6) & 7) | 1] = sval & 0xFFFF;
     PSW &= 0xFFF0;
     if (sval & 0x80000000) {
         PSW |= FLAGN;
@@ -204,7 +204,7 @@ void KB11::MUL(const uint16_t instr) {
 }
 
 void KB11::DIV(const uint16_t instr) {
-    const int32_t val1 = (R[S(instr) & 7] << 16) | (R[(S(instr) & 7) | 1]);
+    const int32_t val1 = (R[(instr >> 6) & 7] << 16) | (R[((instr >> 6) & 7) | 1]);
     const uint16_t da = DA(instr);
     const int32_t val2 = memread<2>(da);
     PSW &= 0xFFF0;
@@ -216,10 +216,10 @@ void KB11::DIV(const uint16_t instr) {
         PSW |= FLAGV;
         return;
     }
-    R[S(instr) & 7] = (val1 / val2) & 0xFFFF;
-    R[(S(instr) & 7) | 1] = (val1 % val2) & 0xFFFF;
-    setZ(R[S(instr) & 7] == 0);
-    if (R[S(instr) & 7] & 0100000) {
+    R[(instr >> 6) & 7] = (val1 / val2) & 0xFFFF;
+    R[((instr >> 6) & 7) | 1] = (val1 % val2) & 0xFFFF;
+    setZ(R[(instr >> 6) & 7] == 0);
+    if (R[(instr >> 6) & 7] & 0100000) {
         PSW |= FLAGN;
     }
     if (val1 == 0) {
@@ -228,7 +228,7 @@ void KB11::DIV(const uint16_t instr) {
 }
 
 void KB11::ASH(const uint16_t instr) {
-    const uint16_t val1 = R[S(instr) & 7];
+    const uint16_t val1 = R[(instr >> 6) & 7];
     const uint16_t da = aget(instr & 077, 2);
     uint16_t val2 = memread<2>(da) & 077;
     PSW &= 0xFFF0;
@@ -250,7 +250,7 @@ void KB11::ASH(const uint16_t instr) {
             PSW |= FLAGC;
         }
     }
-    R[S(instr) & 7] = sval;
+    R[(instr >> 6) &  7] = sval;
     setZ(sval == 0);
     if (sval & 0100000) {
         PSW |= FLAGN;
@@ -261,7 +261,7 @@ void KB11::ASH(const uint16_t instr) {
 }
 
 void KB11::ASHC(const uint16_t instr) {
-    const uint32_t val1 = R[S(instr) & 7] << 16 | R[(S(instr) & 7) | 1];
+    const uint32_t val1 = R[(instr >> 6) & 7] << 16 | R[((instr >> 6) & 7) | 1];
     const uint16_t da = aget(instr & 077, 2);
     uint16_t val2 = memread<2>(da) & 077;
     PSW &= 0xFFF0;
@@ -283,8 +283,8 @@ void KB11::ASHC(const uint16_t instr) {
             PSW |= FLAGC;
         }
     }
-    R[S(instr) & 7] = (sval >> 16) & 0xFFFF;
-    R[(S(instr) & 7) | 1] = sval & 0xFFFF;
+    R[(instr >> 6) & 7] = (sval >> 16) & 0xFFFF;
+    R[((instr >> 6) & 7) | 1] = sval & 0xFFFF;
     setZ(sval == 0);
     if (sval & 0x80000000) {
         PSW |= FLAGN;
@@ -295,7 +295,7 @@ void KB11::ASHC(const uint16_t instr) {
 }
 
 void KB11::XOR(const uint16_t instr) {
-    const uint16_t val1 = R[S(instr) & 7];
+    const uint16_t val1 = R[(instr >> 6) & 7];
     const uint16_t da = aget(instr & 077, 2);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = val1 ^ val2;
@@ -309,8 +309,8 @@ void KB11::XOR(const uint16_t instr) {
 
 void KB11::SOB(const uint16_t instr) {
     uint8_t o = instr & 0xFF;
-    R[S(instr) & 7]--;
-    if (R[S(instr) & 7]) {
+    R[(instr >> 6) & 7]--;
+    if (R[(instr >> 6) & 7]) {
         o &= 077;
         o <<= 1;
         R[7] -= o;
