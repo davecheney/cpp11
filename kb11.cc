@@ -207,7 +207,8 @@ void KB11::MUL(const uint16_t instr) {
 }
 
 void KB11::DIV(const uint16_t instr) {
-    const int32_t val1 = (R[(instr >> 6) & 7] << 16) | (R[((instr >> 6) & 7) | 1]);
+    const int32_t val1 =
+        (R[(instr >> 6) & 7] << 16) | (R[((instr >> 6) & 7) | 1]);
     const uint16_t da = DA(instr);
     const int32_t val2 = memread<2>(da);
     PSW &= 0xFFF0;
@@ -253,7 +254,7 @@ void KB11::ASH(const uint16_t instr) {
             PSW |= FLAGC;
         }
     }
-    R[(instr >> 6) &  7] = sval;
+    R[(instr >> 6) & 7] = sval;
     setZ(sval == 0);
     if (sval & 0100000) {
         PSW |= FLAGN;
@@ -411,6 +412,36 @@ void KB11::RESET() {
         return;
     }
     unibus.reset();
+}
+
+// MOV 01SSDD
+void KB11::MOV(const uint16_t instr) {
+    auto src = memread<2>(SA(instr));
+    PSW &= 0xFFF1;
+    setZ(src == 0);
+    if (src & 0x8000) {
+        PSW |= FLAGN;
+    }
+    memwrite<2>(DA(instr), src);
+}
+
+// MOVB 11SSDD
+void KB11::MOVB(const uint16_t instr) {
+    auto src = memread<1>(SA(instr));
+    PSW &= 0xFFF1;
+    setZ(src == 0);
+    if (src & 0x80) {
+        PSW |= FLAGN;
+    }
+    if (!(instr & 0x38)) {
+        if (src & 0200) {
+            // Special case: movb sign extends register to word size
+            src |= 0xFF00;
+        }
+        R[instr & 7] = src;
+        return;
+    }
+    memwrite<1>(DA(instr), src);
 }
 
 void KB11::step() {
@@ -584,7 +615,7 @@ void KB11::step() {
             }
         }
     case 1: // MOV  01SSDD
-        MOV<2>(instr);
+        MOV(instr);
         return;
     case 2: // CMP 02SSDD
         CMP<2>(instr);
@@ -725,7 +756,7 @@ void KB11::step() {
             }
         }
     case 9: // MOVB 11SSDD
-        MOV<1>(instr);
+        MOVB(instr);
         return;
     case 10: // CMPB 12SSDD
         CMP<1>(instr);

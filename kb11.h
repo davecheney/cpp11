@@ -142,25 +142,6 @@ class KB11 {
         write<l>(a, v);
     }
 
-    template <uint8_t l> void MOV(const uint16_t instr) {
-        const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t uval = memread<l>(SA(instr));
-        const uint16_t da = DA(instr);
-        PSW &= 0xFFF1;
-        if (uval & msb) {
-            PSW |= FLAGN;
-        }
-        setZ(uval == 0);
-        if ((isReg(da)) && (l == 1)) {
-            if (uval & msb) {
-                uval |= 0xFF00;
-            }
-            memwrite<2>(da, uval);
-            return;
-        }
-        memwrite<l>(da, uval);
-    }
-
     // CMP 02SSDD, CMPB 12SSDD
     template <uint8_t l> void CMP(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
@@ -489,6 +470,8 @@ class KB11 {
     void MTPI(const uint16_t instr);
     void RTS(const uint16_t instr);
     void EMTX(const uint16_t instr);
+    void MOV(uint16_t);
+    void MOVB(uint16_t);
     void RTT();
     void RESET();
 };
