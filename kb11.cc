@@ -488,7 +488,10 @@ void KB11::INC(const uint16_t instr) {
         PSW |= FLAGZ;
     }
     if (result & 0x8000) {
-        PSW |= FLAGN | FLAGV;
+        PSW |= FLAGN;
+    }
+    if (result == 0077777) {
+        PSW |= FLAGV;
     }
 }
 
@@ -503,7 +506,10 @@ void KB11::INCB(const uint16_t instr) {
         PSW |= FLAGZ;
     }
     if (result & 0x80) {
-        PSW |= FLAGN | FLAGV;
+        PSW |= FLAGN;
+    }
+    if (result == 0177) {
+        PSW |= FLAGV;
     }
 }
 
