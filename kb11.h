@@ -231,12 +231,6 @@ class KB11 {
         memwrite<l>(da, 0);
     }
 
-    template <uint8_t l> void SET(const uint16_t instr) {
-        PSW |= FLAGZ;
-        const uint16_t da = DA(instr);
-        memwrite<l>(da, 0);
-    }
-
     template <uint8_t l> void COM(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
