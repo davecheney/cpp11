@@ -185,10 +185,11 @@ class KB11 {
         }
     }
 
-    // Set N, Z,  clearing C & V
+    // Set N, Z & C clearing V
     template <uint16_t len> void setNZC(uint16_t v) {
         static_assert(len == 1 || len == 2);
         PSW &= 0xFFF0;
+        PSW |= FLAGC;
         if (v == 0) {
             PSW |= FLAGZ;
         }
@@ -226,26 +227,22 @@ class KB11 {
         }
     }
 
+    // CLR 0050DD, CLRB 1050DD
     template <uint8_t l> void CLR(const uint16_t instr) {
         PSW &= 0xFFF0;
         PSW |= FLAGZ;
         memwrite<l>(DA(instr), 0);
     }
 
+    // COM 0051DD, COMB 1051DD
     template <uint8_t l> void COM(const uint16_t instr) {
-        uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        uint16_t da = DA(instr);
-        uint16_t uval = memread<l>(da) ^ max;
-        memwrite<l>(da, uval);
-        PSW &= 0xFFF0;
-        PSW |= FLAGC;
-        if (uval & msb) {
-            PSW |= FLAGN;
-        }
-        setZ(uval == 0);
+        auto da = DA(instr);
+        auto dst = ~memread<l>(da);
+        memwrite<l>(da, dst);
+        setNZC<l>(dst);
     }
 
+    // DEC 0053DD, DECB 1053DD
     template <uint8_t l> void _DEC(const uint16_t instr) {
         auto da = DA(instr);
         auto uval = (memread<l>(da) - 1) & (l == 2 ? 0xFFFF : 0xff);
@@ -253,6 +250,7 @@ class KB11 {
         setNZV<l>(uval);
     }
 
+    // NEG 0054DD, NEGB 1054DD
     template <uint8_t l> void NEG(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
@@ -448,7 +446,13 @@ class KB11 {
     // TST 0057DD, TSTB 1057DD
     template <uint16_t l> void TST(const uint16_t instr) {
         auto dst = memread<l>(DA(instr));
-        setNZC<l>(dst);
+        PSW &= 0xFFF0;
+        if (dst == 0) {
+            PSW |= FLAGZ;
+        }
+        if (dst & (l == 2 ? 0x8000 : 0x80)) {
+            PSW |= FLAGN;
+        }
     }
 
     void ADD(const uint16_t instr);
@@ -469,8 +473,6 @@ class KB11 {
     void EMTX(const uint16_t instr);
     void MOV(uint16_t);
     void MOVB(uint16_t);
-    void TST(uint16_t);
-    void TSTB(uint16_t);
     void SWAB(uint16_t);
     void RTT();
     void RESET();
