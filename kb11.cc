@@ -417,29 +417,6 @@ void KB11::RESET() {
     unibus.reset();
 }
 
-// MOV 01SSDD
-void KB11::MOV(const uint16_t instr) {
-    auto src = memread<2>(SA(instr));
-    memwrite<2>(DA(instr), src);
-    setNZ<2>(src);
-}
-
-// MOVB 11SSDD
-void KB11::MOVB(const uint16_t instr) {
-    auto src = memread<1>(SA(instr));
-    if (!(instr & 0x38)) {
-        if (src & 0200) {
-            // Special case: movb sign extends register to word size
-            src |= 0xFF00;
-        }
-        R[instr & 7] = src;
-        setNZ<1>(src);
-        return;
-    }
-    memwrite<1>(DA(instr), src);
-    setNZ<1>(src);
-}
-
 // SWAB 0003DD
 void KB11::SWAB(const uint16_t instr) {
     auto da = DA(instr);
@@ -624,7 +601,7 @@ void KB11::step() {
             }
         }
     case 1: // MOV  01SSDD
-        MOV(instr);
+        MOV<2>(instr);
         return;
     case 2: // CMP 02SSDD
         CMP<2>(instr);
@@ -765,7 +742,7 @@ void KB11::step() {
             }
         }
     case 9: // MOVB 11SSDD
-        MOVB(instr);
+        MOV<1>(instr);
         return;
     case 10: // CMPB 12SSDD
         CMP<1>(instr);

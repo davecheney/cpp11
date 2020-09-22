@@ -455,6 +455,22 @@ class KB11 {
         }
     }
 
+    // MOV 01SSDD, MOVB 11SSDD
+    template <uint16_t len> void MOV(const uint16_t instr) {
+        auto src = memread<len>(SA(instr));
+        if (!(instr & 0x38) && (len == 1)) {
+            if (src & 0200) {
+                // Special case: movb sign extends register to word size
+                src |= 0xFF00;
+            }
+            R[instr & 7] = src;
+            setNZ<len>(src);
+            return;
+        }
+        memwrite<len>(DA(instr), src);
+        setNZ<len>(src);
+    }
+
     void ADD(const uint16_t instr);
     void SUB(const uint16_t instr);
     void JSR(const uint16_t instr);
@@ -471,8 +487,6 @@ class KB11 {
     void MTPI(const uint16_t instr);
     void RTS(const uint16_t instr);
     void EMTX(const uint16_t instr);
-    void MOV(uint16_t);
-    void MOVB(uint16_t);
     void SWAB(uint16_t);
     void RTT();
     void RESET();
