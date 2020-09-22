@@ -135,6 +135,7 @@ void KB11::ADD(const uint16_t instr) {
     const uint16_t da = DA(instr);
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = (val1 + val2) & 0xFFFF;
+    memwrite<2>(da, uval);
     PSW &= 0xFFF0;
     setZ(uval == 0);
     if (uval & 0x8000) {
@@ -146,7 +147,6 @@ void KB11::ADD(const uint16_t instr) {
     if ((val1 + val2) >= 0xFFFF) {
         PSW |= FLAGC;
     }
-    memwrite<2>(da, uval);
 }
 
 // SUB 16SSDD
@@ -157,6 +157,7 @@ void KB11::SUB(const uint16_t instr) {
     const uint16_t val2 = memread<2>(da);
     const uint16_t uval = (val2 - val1) & 0xFFFF;
     PSW &= 0xFFF0;
+    memwrite<2>(da, uval);
     setZ(uval == 0);
     if (uval & 0x8000) {
         PSW |= FLAGN;
@@ -167,20 +168,6 @@ void KB11::SUB(const uint16_t instr) {
     if (val1 > val2) {
         PSW |= FLAGC;
     }
-    memwrite<2>(da, uval);
-}
-
-// JSR 004RDD
-void KB11::JSR(const uint16_t instr) {
-    if (((instr >> 3) & 7) == 0) {
-        printf("JSR called on register\n");
-        std::abort();
-    }
-    auto dst = DA(instr);
-    auto reg = (instr >> 6) & 7;
-    push(R[reg]);
-    R[reg] = R[7];
-    R[7] = dst;
 }
 
 void KB11::MUL(const uint16_t instr) {
@@ -265,7 +252,8 @@ void KB11::ASH(const uint16_t instr) {
 }
 
 void KB11::ASHC(const uint16_t instr) {
-    const uint32_t val1 = R[(instr >> 6) & 7] << 16 | R[((instr >> 6) & 7) | 1];
+    const uint32_t val1 =
+        (uint32_t)(R[(instr >> 6) & 7] << 16) | (R[((instr >> 6) & 7) | 1]);
     const uint16_t da = DA(instr);
     uint16_t val2 = memread<2>(da) & 077;
     PSW &= 0xFFF0;
@@ -298,39 +286,54 @@ void KB11::ASHC(const uint16_t instr) {
     }
 }
 
+// XOR 064RDD
 void KB11::XOR(const uint16_t instr) {
-    const uint16_t val1 = R[(instr >> 6) & 7];
-    const uint16_t da = DA(instr);
-    const uint16_t val2 = memread<2>(da);
-    const uint16_t uval = val1 ^ val2;
+    auto reg = R[(instr >> 6) & 7];
+    auto da = DA(instr);
+    auto dst = memread<2>(da);
+    dst = reg ^ dst;
+    memwrite<2>(da, dst);
     PSW &= 0xFFF1;
-    setZ(uval == 0);
-    if (uval & 0x8000) {
+    setZ(dst == 0);
+    if (dst & 0x8000) {
         PSW |= FLAGN;
     }
-    memwrite<2>(da, uval);
 }
 
+// SOB 077RNN
 void KB11::SOB(const uint16_t instr) {
-    uint8_t o = instr & 0xFF;
     R[(instr >> 6) & 7]--;
     if (R[(instr >> 6) & 7]) {
-        o &= 077;
-        o <<= 1;
-        R[7] -= o;
+        R[7] -= (instr & 077) << 1;
     }
 }
 
+// JSR 004RDD
+void KB11::JSR(const uint16_t instr) {
+    if (((instr >> 3) & 7) == 0) {
+        printf("JSR called on register\n");
+        printstate();
+        std::abort();
+    }
+    auto dst = DA(instr);
+    auto reg = (instr >> 6) & 7;
+    push(R[reg]);
+    R[reg] = R[7];
+    R[7] = dst;
+}
+
+// JMP 0001DD
 void KB11::JMP(const uint16_t instr) {
-    const uint16_t uval = DA(instr);
-    if (isReg(uval)) {
+    if (((instr >> 3) & 7) == 0) {
         // Registers don't have a virtual address so trap!
-        trapat(4);
-        return;
+        printf("JMP called on register\n");
+        printstate();
+        std::abort();
     }
-    R[7] = uval;
+    R[7] = DA(instr);
 }
 
+// MARK 0064NN
 void KB11::MARK(const uint16_t instr) {
     R[6] = R[7] + ((instr & 077) << 1);
     R[7] = R[5];
@@ -386,24 +389,28 @@ void KB11::MTPI(const uint16_t instr) {
     }
 }
 
+// RTS 00020R
 void KB11::RTS(const uint16_t instr) {
     auto reg = instr & 7;
     R[7] = R[reg];
     R[reg] = pop();
 }
 
+// MFPT 000007
 void KB11::MFPT() {
     trapat(010); // not a PDP11/44
 }
 
+// RTI 000004, RTT 000006
 void KB11::RTT() {
     R[7] = pop();
-    uint16_t uval = pop();
-    if (currentmode()) {
-        uval &= 047;
-        uval |= PSW & 0177730;
+    auto psw = pop();
+    psw &= 0xf8ff;
+    if (currentmode()) { // user / super restrictions
+        // keep SPL and allow lower only for modes and register set
+        psw = (psw & 0xf81f) | (psw & 0xf8e0);
     }
-    writePSW(uval);
+    writePSW(psw);
 }
 
 void KB11::RESET() {
@@ -417,31 +424,36 @@ void KB11::RESET() {
 // MOV 01SSDD
 void KB11::MOV(const uint16_t instr) {
     auto src = memread<2>(SA(instr));
+    memwrite<2>(DA(instr), src);
     PSW &= 0xFFF1;
     setZ(src == 0);
     if (src & 0x8000) {
         PSW |= FLAGN;
     }
-    memwrite<2>(DA(instr), src);
 }
 
 // MOVB 11SSDD
 void KB11::MOVB(const uint16_t instr) {
     auto src = memread<1>(SA(instr));
-    PSW &= 0xFFF1;
-    setZ(src == 0);
-    if (src & 0x80) {
-        PSW |= FLAGN;
-    }
     if (!(instr & 0x38)) {
         if (src & 0200) {
             // Special case: movb sign extends register to word size
             src |= 0xFF00;
         }
         R[instr & 7] = src;
+        PSW &= 0xFFF1;
+        setZ(src == 0);
+        if (src & 0x80) {
+            PSW |= FLAGN;
+        }
         return;
     }
     memwrite<1>(DA(instr), src);
+    PSW &= 0xFFF1;
+    setZ(src == 0);
+    if (src & 0x80) {
+        PSW |= FLAGN;
+    }
 }
 
 // TST 0057DD
@@ -469,12 +481,12 @@ void KB11::SWAB(const uint16_t instr) {
     auto da = DA(instr);
     auto dst = memread<2>(da);
     dst = (dst << 8) | (dst >> 8);
+    memwrite<2>(da, dst);
     PSW &= 0xFFF0;
     setZ((dst & 0xff00) == 0);
     if (dst & 0x80) {
         PSW |= FLAGN;
     }
-    memwrite<2>(da, dst);
 }
 
 // INC 0052DD
