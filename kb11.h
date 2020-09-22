@@ -19,11 +19,10 @@ enum {
     INTRK = 0220
 };
 
-#define D(x) (x & 077)
 #define S(x) ((x & 07700) >> 6)
 #define L(x) (2 - (x >> 15))
 #define SA(x) (aget(S(x), L(x)))
-#define DA(x) (aget(D(x), L(x)))
+#define DA(x) (aget((x & 077), L(x)))
 
 class KB11 {
   public:
@@ -353,7 +352,7 @@ class KB11 {
 
     template <uint8_t l> void TST(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t uval = memread<l>(aget(D(instr), l));
+        uint16_t uval = memread<l>(aget(instr & 077, l));
         PSW &= 0xFFF0;
         if (uval & msb) {
             PSW |= FLAGN;
