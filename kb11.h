@@ -415,17 +415,6 @@ class KB11 {
         memwrite<l>(da, sval);
     }
 
-    template <uint8_t l> void SXT(const uint16_t instr) {
-        const uint16_t da = DA(instr);
-        if (PSW & FLAGN) {
-            const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-            memwrite<l>(da, max);
-        } else {
-            PSW |= FLAGZ;
-            memwrite<l>(da, 0);
-        }
-    }
-
     // INC 0052DD, INCB 1052DD
     template <uint16_t l> void INC(const uint16_t instr) {
         auto da = DA(instr);
@@ -488,6 +477,7 @@ class KB11 {
     void RTS(const uint16_t instr);
     void EMTX(const uint16_t instr);
     void SWAB(uint16_t);
+    void SXT(uint16_t);
     void RTT();
     void RESET();
 };

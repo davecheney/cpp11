@@ -430,6 +430,13 @@ void KB11::SWAB(const uint16_t instr) {
     }
 }
 
+// SXT 0067DD
+void KB11::SXT(const uint16_t instr) {
+    auto result = N() ? 0xffff : 0;
+    memwrite<2>(DA(instr), result);
+    setNZ<2>(result);
+}
+
 void KB11::step() {
     PC = R[7];
     auto instr = fetch16();
@@ -592,7 +599,7 @@ void KB11::step() {
                 MTPI(instr);
                 return;
             case 067: // SXT 0067DD
-                SXT<2>(instr);
+                SXT(instr);
                 return;
             default: // We don't know this 0o00xxDD instruction
                 printf("unknown 00xxDD instruction\n");
