@@ -167,7 +167,7 @@ class KB11 {
 
     // Set N & Z clearing V (C unchanged)
     template <uint16_t len> void setNZ(uint16_t v) {
-        PSW &= 0xFFF1;
+        PSW &= (0xFFF0 | FLAGC);
         if (v == 0) {
             PSW |= FLAGZ;
         }
