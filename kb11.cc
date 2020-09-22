@@ -464,6 +464,19 @@ void KB11::TSTB(const uint16_t instr) {
     }
 }
 
+// SWAB 0003DD
+void KB11::SWAB(const uint16_t instr) {
+        auto da = DA(instr);
+        auto dst = memread<2>(da);
+        dst = (dst << 8) | (dst >> 8);
+        PSW &= 0xFFF0;
+        setZ((dst & 0xff00) == 0);
+        if (dst & 0x80) {
+            PSW |= FLAGN;
+        }
+        memwrite<2>(da, dst);
+    }
+
 void KB11::step() {
     PC = R[7];
     auto instr = fetch16();
@@ -533,7 +546,7 @@ void KB11::step() {
                     return;
                 }
             case 3: // SWAB 0003DD
-                SWAB<2>(instr);
+                SWAB(instr);
                 return;
             default:
                 printf("unknown 000xDD instruction\n");

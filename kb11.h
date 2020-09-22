@@ -431,18 +431,6 @@ class KB11 {
         }
     }
 
-    template <uint8_t l> void SWAB(const uint16_t instr) {
-        uint16_t da = DA(instr);
-        uint16_t uval = memread<l>(da);
-        uval = ((uval >> 8) | (uval << 8)) & 0xFFFF;
-        PSW &= 0xFFF0;
-        setZ(uval & 0xFF);
-        if (uval & 0x80) {
-            PSW |= FLAGN;
-        }
-        memwrite<l>(da, uval);
-    }
-
     void ADD(const uint16_t instr);
     void SUB(const uint16_t instr);
     void JSR(const uint16_t instr);
@@ -463,6 +451,7 @@ class KB11 {
     void MOVB(uint16_t);
     void TST(uint16_t);
     void TSTB(uint16_t);
+    void SWAB(uint16_t);
     void RTT();
     void RESET();
 };
