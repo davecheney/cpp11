@@ -163,19 +163,6 @@ class KB11 {
         }
     }
 
-    template <uint8_t l> void BIT(const uint16_t instr) {
-        const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        const uint16_t val1 = memread<l>(SA(instr));
-        const uint16_t da = DA(instr);
-        const uint16_t val2 = memread<l>(da);
-        const uint16_t uval = val1 & val2;
-        PSW &= 0xFFF1;
-        setZ(uval == 0);
-        if (uval & msb) {
-            PSW |= FLAGN;
-        }
-    }
-
     template <uint8_t l> void BIC(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
@@ -440,6 +427,8 @@ class KB11 {
     void SWAB(uint16_t);
     void INC(uint16_t);
     void INCB(uint16_t);
+    void BIT(uint16_t);
+    void BITB(uint16_t);
     void RTT();
     void RESET();
 };

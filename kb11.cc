@@ -525,6 +525,30 @@ void KB11::INCB(const uint16_t instr) {
     }
 }
 
+// BIT 03SSDD
+void KB11::BIT(const uint16_t instr) {
+    auto src = memread<2>(SA(instr));
+    auto dst = memread<2>(DA(instr));
+    auto result = src & dst;
+    PSW &= 0xFFF1;
+    setZ(result == 0);
+    if (result & 0x8000) {
+        PSW |= FLAGN;
+    }
+}
+
+// BITB 13SSDD
+void KB11::BITB(const uint16_t instr) {
+    auto src = memread<1>(SA(instr));
+    auto dst = memread<1>(DA(instr));
+    auto result = src & dst;
+    PSW &= 0xFFF1;
+    setZ(result == 0);
+    if (result & 0x80) {
+        PSW |= FLAGN;
+    }
+}
+
 void KB11::step() {
     PC = R[7];
     auto instr = fetch16();
@@ -702,7 +726,7 @@ void KB11::step() {
         CMP<2>(instr);
         return;
     case 3: // BIT 03SSDD
-        BIT<2>(instr);
+        BIT(instr);
         return;
     case 4: // BIC 04SSDD
         BIC<2>(instr);
@@ -843,7 +867,7 @@ void KB11::step() {
         CMP<1>(instr);
         return;
     case 11: // BITB 13SSDD
-        BIT<1>(instr);
+        BITB(instr);
         return;
     case 12: // BICB 14SSDD
         BIC<1>(instr);
