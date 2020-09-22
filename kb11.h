@@ -226,19 +226,6 @@ class KB11 {
         memwrite<l>(da, uval);
     }
 
-    template <uint8_t l> void INC(const uint16_t instr) {
-        const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        const uint16_t da = DA(instr);
-        const uint16_t uval = (memread<l>(da) + 1) & max;
-        PSW &= 0xFFF1;
-        if (uval & msb) {
-            PSW |= FLAGN | FLAGV;
-        }
-        setZ(uval == 0);
-        memwrite<l>(da, uval);
-    }
-
     template <uint8_t l> void _DEC(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
@@ -452,6 +439,8 @@ class KB11 {
     void TST(uint16_t);
     void TSTB(uint16_t);
     void SWAB(uint16_t);
+    void INC(uint16_t);
+    void INCB(uint16_t);
     void RTT();
     void RESET();
 };

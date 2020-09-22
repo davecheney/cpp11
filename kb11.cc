@@ -466,16 +466,46 @@ void KB11::TSTB(const uint16_t instr) {
 
 // SWAB 0003DD
 void KB11::SWAB(const uint16_t instr) {
-        auto da = DA(instr);
-        auto dst = memread<2>(da);
-        dst = (dst << 8) | (dst >> 8);
-        PSW &= 0xFFF0;
-        setZ((dst & 0xff00) == 0);
-        if (dst & 0x80) {
-            PSW |= FLAGN;
-        }
-        memwrite<2>(da, dst);
+    auto da = DA(instr);
+    auto dst = memread<2>(da);
+    dst = (dst << 8) | (dst >> 8);
+    PSW &= 0xFFF0;
+    setZ((dst & 0xff00) == 0);
+    if (dst & 0x80) {
+        PSW |= FLAGN;
     }
+    memwrite<2>(da, dst);
+}
+
+// INC 0052DD
+void KB11::INC(const uint16_t instr) {
+    auto da = DA(instr);
+    auto dst = memread<2>(da);
+    auto result = dst + 1;
+    memwrite<2>(da, result);
+    PSW &= 0xFFF1;
+    if (result == 0) {
+        PSW |= FLAGZ;
+    }
+    if (result & 0x8000) {
+        PSW |= FLAGN | FLAGV;
+    }
+}
+
+// INCB 1052DD
+void KB11::INCB(const uint16_t instr) {
+    auto da = DA(instr);
+    auto dst = memread<1>(da);
+    auto result = dst + 1;
+    memwrite<1>(da, result);
+    PSW &= 0xFFF1;
+    if (result == 0) {
+        PSW |= FLAGZ;
+    }
+    if (result & 0x80) {
+        PSW |= FLAGN | FLAGV;
+    }
+}
 
 void KB11::step() {
     PC = R[7];
@@ -600,7 +630,7 @@ void KB11::step() {
                 COM<2>(instr);
                 return;
             case 052: // INC 0052DD
-                INC<2>(instr);
+                INC(instr);
                 return;
             case 053: // DEC 0053DD
                 _DEC<2>(instr);
@@ -748,7 +778,7 @@ void KB11::step() {
                 COM<1>(instr);
                 return;
             case 052: // INCB 1052DD
-                INC<1>(instr);
+                INCB(instr);
                 return;
             case 053: // DECB 1053DD
                 _DEC<1>(instr);
