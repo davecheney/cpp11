@@ -46,12 +46,6 @@ inline uint16_t KB11::read16(uint16_t va) {
     }
 }
 
-inline uint16_t KB11::fetch16() {
-    auto val = read16(R[7]);
-    R[7] += 2;
-    return val;
-}
-
 inline void KB11::write16(uint16_t va, uint16_t v) {
     auto a = mmu.decode<true>(va, currentmode());
     switch (a) {
@@ -69,23 +63,10 @@ inline void KB11::write16(uint16_t va, uint16_t v) {
     }
 }
 
-inline void KB11::push(const uint16_t v) {
-    R[6] -= 2;
-    write16(R[6], v);
-}
+uint16_t KB11::DA(uint16_t instr) {
+    auto v = instr & 077;
+    auto l = (2 - (instr >> 15));
 
-inline uint16_t KB11::pop() {
-    auto val = read16(R[6]);
-    R[6] += 2;
-    return val;
-}
-
-// aget resolves the operand to a vaddress.
-// if the operand is a register, an address in
-// the range [0170000,0170007). This address range is
-// technically a valid IO page, but unibus doesn't map
-// any addresses here, so we can safely do this.
-uint16_t KB11::aget(uint8_t v, uint8_t l) {
     if ((v & 070) == 000) {
         return 0170000 | (v & 7);
     }

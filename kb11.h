@@ -68,25 +68,34 @@ class KB11 {
     inline bool C() { return PSW & FLAGC; }
     void setZ(const bool b);
 
-    inline uint16_t fetch16();
-    inline uint16_t read16(uint16_t va);
-    inline void write16(uint16_t va, uint16_t v);
-    void push(const uint16_t v);
-    uint16_t pop();
+    uint16_t read16(uint16_t va);
+    void write16(uint16_t va, uint16_t v);
+
+    inline uint16_t fetch16() {
+        auto val = read16(R[7]);
+        R[7] += 2;
+        return val;
+    }
+
+    inline void push(const uint16_t v) {
+        R[6] -= 2;
+        write16(R[6], v);
+    }
+
+    inline uint16_t pop() {
+        auto val = read16(R[6]);
+        R[6] += 2;
+        return val;
+    }
+
+    uint16_t DA(uint16_t instr);
 
     inline uint16_t SA(uint16_t instr) {
-        auto reg = (instr >> 6) & 077;
-        auto len = (2 - (instr >> 15));
-        return aget(reg, len);
+        // reconstruct L00SSDD as L0000SS
+        instr = (instr & (1 << 15)) | ((instr >> 6) & 077);
+        return DA(instr);
     }
 
-    inline uint16_t DA(uint16_t instr) {
-        auto reg = instr & 077;
-        auto len = (2 - (instr >> 15));
-        return aget(reg, len);
-    }
-
-    uint16_t aget(uint8_t v, uint8_t l);
     void branch(int16_t o);
 
     // kernelmode pushes the current processor mode and switchs to kernel.
