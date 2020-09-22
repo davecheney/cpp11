@@ -334,17 +334,6 @@ class KB11 {
         }
     }
 
-    // TST 0057DD, TSTB 1057DD
-    template <uint8_t l> void TST(const uint16_t instr) {
-        uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t uval = memread<l>(DA(instr));
-        PSW &= 0xFFF0;
-        if (uval & msb) {
-            PSW |= FLAGN;
-        }
-        setZ(uval == 0);
-    }
-
     template <uint8_t l> void ROR(const uint16_t instr) {
         int32_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
@@ -472,6 +461,8 @@ class KB11 {
     void EMTX(const uint16_t instr);
     void MOV(uint16_t);
     void MOVB(uint16_t);
+    void TST(uint16_t);
+    void TSTB(uint16_t);
     void RTT();
     void RESET();
 };
