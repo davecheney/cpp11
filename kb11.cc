@@ -353,12 +353,7 @@ void KB11::MFPI(const uint16_t instr) {
         uval = unibus.read16(mmu.decode<false>(da, previousmode()));
     }
     push(uval);
-    PSW &= 0xFFF0;
-    PSW |= FLAGC;
-    setZ(uval == 0);
-    if (uval & 0x8000) {
-        PSW |= FLAGN;
-    }
+    setNZ<2>(uval);
 }
 
 void KB11::MTPI(const uint16_t instr) {
@@ -377,12 +372,7 @@ void KB11::MTPI(const uint16_t instr) {
     } else {
         unibus.write16(mmu.decode<true>(da, previousmode()), uval);
     }
-    PSW &= 0xFFF0;
-    PSW |= FLAGC;
-    setZ(uval == 0);
-    if (uval & 0x8000) {
-        PSW |= FLAGN;
-    }
+    setNZ<2>(uval);
 }
 
 // RTS 00020R
