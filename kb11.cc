@@ -293,11 +293,7 @@ void KB11::XOR(const uint16_t instr) {
     auto dst = memread<2>(da);
     dst = reg ^ dst;
     memwrite<2>(da, dst);
-    PSW &= 0xFFF1;
-    setZ(dst == 0);
-    if (dst & 0x8000) {
-        PSW |= FLAGN;
-    }
+    setNZ<2>(dst);
 }
 
 // SOB 077RNN
@@ -425,11 +421,7 @@ void KB11::RESET() {
 void KB11::MOV(const uint16_t instr) {
     auto src = memread<2>(SA(instr));
     memwrite<2>(DA(instr), src);
-    PSW &= 0xFFF1;
-    setZ(src == 0);
-    if (src & 0x8000) {
-        PSW |= FLAGN;
-    }
+    setNZ<2>(src);
 }
 
 // MOVB 11SSDD
@@ -441,19 +433,11 @@ void KB11::MOVB(const uint16_t instr) {
             src |= 0xFF00;
         }
         R[instr & 7] = src;
-        PSW &= 0xFFF1;
-        setZ(src == 0);
-        if (src & 0x80) {
-            PSW |= FLAGN;
-        }
+        setNZ<1>(src);
         return;
     }
     memwrite<1>(DA(instr), src);
-    PSW &= 0xFFF1;
-    setZ(src == 0);
-    if (src & 0x80) {
-        PSW |= FLAGN;
-    }
+    setNZ<1>(src);
 }
 
 // TST 0057DD
@@ -530,11 +514,7 @@ void KB11::BIT(const uint16_t instr) {
     auto src = memread<2>(SA(instr));
     auto dst = memread<2>(DA(instr));
     auto result = src & dst;
-    PSW &= 0xFFF1;
-    setZ(result == 0);
-    if (result & 0x8000) {
-        PSW |= FLAGN;
-    }
+    setNZ<2>(result);
 }
 
 // BITB 13SSDD
@@ -542,11 +522,7 @@ void KB11::BITB(const uint16_t instr) {
     auto src = memread<1>(SA(instr));
     auto dst = memread<1>(DA(instr));
     auto result = src & dst;
-    PSW &= 0xFFF1;
-    setZ(result == 0);
-    if (result & 0x80) {
-        PSW |= FLAGN;
-    }
+    setNZ<1>(result);
 }
 
 void KB11::step() {

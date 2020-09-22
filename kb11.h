@@ -163,6 +163,18 @@ class KB11 {
         }
     }
 
+    // Set N & Z clearing V (C unchanged)
+    template<uint16_t len> void setNZ(uint16_t v) {
+        PSW &= 0xFFF1;
+        if (v == 0) {
+            PSW |= FLAGZ;
+        }
+        static_assert(len == 1 || len == 2);
+        if (v & (len == 2 ? 0x8000 : 0x80)) {
+            PSW |= FLAGN;
+        }
+    }
+
     template <uint8_t l> void BIC(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
@@ -283,7 +295,7 @@ class KB11 {
         int32_t sval = memread<l>(da);
         if (C()) {
             memwrite<l>(da, (sval - 1) & max);
-                        PSW &= 0xFFF0;
+            PSW &= 0xFFF0;
             if ((sval - 1) & msb) {
                 PSW |= FLAGN;
             }
