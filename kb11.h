@@ -181,7 +181,7 @@ class KB11 {
     template<uint16_t len> void setNZV(uint16_t v) {
         setNZ<len>(v);
         if (v == (len == 2 ? 0x7fff : 0x7f)) {
-            PSW |= FLAGN;
+            PSW |= FLAGV;
         }
     }
 
