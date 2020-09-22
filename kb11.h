@@ -425,6 +425,14 @@ class KB11 {
         setNZV<l>(result);
     }
 
+    // BIT 03SSDD, BITB 13SSDD
+    template <uint16_t l> void BIT(const uint16_t instr) {
+        auto src = memread<l>(SA(instr));
+        auto dst = memread<l>(DA(instr));
+        auto result = src & dst;
+        setNZ<l>(result);
+    }
+
     void ADD(const uint16_t instr);
     void SUB(const uint16_t instr);
     void JSR(const uint16_t instr);
@@ -446,8 +454,6 @@ class KB11 {
     void TST(uint16_t);
     void TSTB(uint16_t);
     void SWAB(uint16_t);
-    void BIT(uint16_t);
-    void BITB(uint16_t);
     void RTT();
     void RESET();
 };
