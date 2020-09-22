@@ -166,7 +166,7 @@ class KB11 {
     }
 
     // Set N & Z clearing V (C unchanged)
-    template<uint16_t len> void setNZ(uint16_t v) {
+    template <uint16_t len> void setNZ(uint16_t v) {
         PSW &= 0xFFF1;
         if (v == 0) {
             PSW |= FLAGZ;
@@ -178,7 +178,7 @@ class KB11 {
     }
 
     // Set N, Z & V (C unchanged)
-    template<uint16_t len> void setNZV(uint16_t v) {
+    template <uint16_t len> void setNZV(uint16_t v) {
         setNZ<len>(v);
         if (v == (len == 2 ? 0x7fff : 0x7f)) {
             PSW |= FLAGV;
@@ -416,6 +416,15 @@ class KB11 {
         }
     }
 
+    // INC 0052DD, INCB 1052DD
+    template <uint16_t l> void INC(const uint16_t instr) {
+        auto da = DA(instr);
+        auto dst = memread<l>(da);
+        auto result = dst + 1;
+        memwrite<l>(da, result);
+        setNZV<l>(result);
+    }
+
     void ADD(const uint16_t instr);
     void SUB(const uint16_t instr);
     void JSR(const uint16_t instr);
@@ -437,8 +446,6 @@ class KB11 {
     void TST(uint16_t);
     void TSTB(uint16_t);
     void SWAB(uint16_t);
-    void INC(uint16_t);
-    void INCB(uint16_t);
     void BIT(uint16_t);
     void BITB(uint16_t);
     void RTT();

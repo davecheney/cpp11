@@ -473,42 +473,6 @@ void KB11::SWAB(const uint16_t instr) {
     }
 }
 
-// INC 0052DD
-void KB11::INC(const uint16_t instr) {
-    auto da = DA(instr);
-    auto dst = memread<2>(da);
-    auto result = dst + 1;
-    memwrite<2>(da, result);
-    PSW &= 0xFFF1;
-    if (result == 0) {
-        PSW |= FLAGZ;
-    }
-    if (result & 0x8000) {
-        PSW |= FLAGN;
-    }
-    if (result == 0077777) {
-        PSW |= FLAGV;
-    }
-}
-
-// INCB 1052DD
-void KB11::INCB(const uint16_t instr) {
-    auto da = DA(instr);
-    auto dst = memread<1>(da);
-    auto result = dst + 1;
-    memwrite<1>(da, result);
-    PSW &= 0xFFF1;
-    if (result == 0) {
-        PSW |= FLAGZ;
-    }
-    if (result & 0x80) {
-        PSW |= FLAGN;
-    }
-    if (result == 0177) {
-        PSW |= FLAGV;
-    }
-}
-
 // BIT 03SSDD
 void KB11::BIT(const uint16_t instr) {
     auto src = memread<2>(SA(instr));
@@ -648,7 +612,7 @@ void KB11::step() {
                 COM<2>(instr);
                 return;
             case 052: // INC 0052DD
-                INC(instr);
+                INC<2>(instr);
                 return;
             case 053: // DEC 0053DD
                 _DEC<2>(instr);
@@ -796,7 +760,7 @@ void KB11::step() {
                 COM<1>(instr);
                 return;
             case 052: // INCB 1052DD
-                INCB(instr);
+                INC<1>(instr);
                 return;
             case 053: // DECB 1053DD
                 _DEC<1>(instr);
