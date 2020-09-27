@@ -1,8 +1,8 @@
+#include "kt11.h"
+#include "avr11.h"
+#include "kb11.h"
 #include <stdint.h>
 #include <stdio.h>
-#include "avr11.h"
-#include "kt11.h"
-#include "kb11.h"
 
 extern KB11 cpu;
 
@@ -73,42 +73,43 @@ template uint32_t KT11::decode<true>(uint16_t, uint16_t);
 template uint32_t KT11::decode<false>(uint16_t, uint16_t);
 
 uint16_t KT11::read16(uint32_t a) {
-    if ((a >= 0772300) && (a < 0772320)) {
-        return pages[((a & 017) >> 1)].pdr;
+    // printf("kt11:read16: %06o\n", a);
+    auto i = ((a & 017) >> 1);
+    switch (a & ~037) {
+    case 0772300:
+        return pages[i].pdr;
+    case 0772340:
+        return pages[i].par;
+    case 0777600:
+        return pages[i + 8].pdr;
+    case 0777640:
+        return pages[i + 8].par;
+    default:
+        printf("mmu::read16 invalid read from %06o\n", a);
+        trap(INTBUS);
     }
-    if ((a >= 0772340) && (a < 0772360)) {
-        return pages[((a & 017) >> 1)].par;
-    }
-    if ((a >= 0777600) && (a < 0777620)) {
-        return pages[((a & 017) >> 1) + 8].pdr;
-    }
-    if ((a >= 0777640) && (a < 0777660)) {
-        return pages[((a & 017) >> 1) + 8].par;
-    }
-    printf("mmu::read16 invalid read from %06o\n", a);
-    trap(INTBUS);
 }
 
 void KT11::write16(uint32_t a, uint16_t v) {
-    auto i = (a & 017) >> 1;
-    if ((a >= 0772300) && (a < 0772320)) {
+    // printf("kt11:writ16: %06o %06o\n", a, v);
+    auto i = ((a & 017) >> 1);
+    switch (a & ~037) {
+    case 0772300:
         pages[i].pdr = v;
-        return;
-    }
-    if ((a >= 0772340) && (a < 0772360)) {
+        break;
+    case 0772340:
         pages[i].par = v;
-        return;
-    }
-    if ((a >= 0777600) && (a < 0777620)) {
+        break;
+    case 0777600:
         pages[i + 8].pdr = v;
-        return;
-    }
-    if ((a >= 0777640) && (a < 0777660)) {
+        break;
+    case 0777640:
         pages[i + 8].par = v;
-        return;
+        break;
+    default:
+        printf("mmu::write16 write to invalid address %06o\n", a);
+        trap(INTBUS);
     }
-    printf("mmu::write16 write to invalid address %06o\n", a);
-    trap(INTBUS);
 }
 
 void KT11::dumppages() {
