@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
+#include <assert.h>
 
 #include "avr11.h"
 #include "kb11.h"
