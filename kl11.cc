@@ -73,9 +73,11 @@ void KL11::poll() {
                 rcsr |= 0x80;
                 if (rcsr & 0x40) {
                     cpu.interrupt(INTTTYIN, 4);
-                }
+                }    
+            } else {
                 keypressed = false;
             }
+
         }
     }
 
