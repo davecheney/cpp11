@@ -4,6 +4,8 @@
 class KL11 {
 
   public:
+    KL11();
+
     void clearterminal();
     void poll();
     uint16_t read16(uint32_t a);

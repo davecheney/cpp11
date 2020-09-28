@@ -1,8 +1,8 @@
 #include "kw11.h"
 #include "avr11.h"
 #include "kb11.h"
-#include <csignal>
 #include <iostream>
+#include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
 
@@ -11,10 +11,11 @@ extern KB11 cpu;
 void kw11alarm(int) { cpu.unibus.kw11.tick(); }
 
 KW11::KW11() {
-    struct sigaction sa = {
-        .__sigaction_u.__sa_handler = kw11alarm,
-        .sa_flags = SA_RESTART,
-    };
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sa.sa_handler = kw11alarm;
+
     if (sigaction(SIGALRM, &sa, NULL) < 0)
         perror("sigaction");
 

@@ -1,4 +1,6 @@
 #include <cstdlib>
+#include <fcntl.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/select.h>
@@ -9,29 +11,40 @@
 
 extern KB11 cpu;
 
+bool keypressed = false;
+
+static void sigioHandler(int) { keypressed = true; }
+
+KL11::KL11() {
+    struct sigaction sa;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = SA_RESTART;
+    sa.sa_handler = sigioHandler;
+    if (sigaction(SIGIO, &sa, NULL) == -1)
+        perror("sigaction");
+
+    /* Set owner process that is to receive "I/O possible" signal */
+
+    if (fcntl(STDIN_FILENO, F_SETOWN, getpid()) == -1)
+        perror("fcntl(F_SETOWN)");
+
+    /* Enable "I/O possible" signaling and make I/O nonblocking
+       for file descriptor */
+
+    auto flags = fcntl(STDIN_FILENO, F_GETFL);
+    if (fcntl(STDIN_FILENO, F_SETFL, flags | O_ASYNC | O_NONBLOCK) == -1)
+        perror("fcntl(F_SETFL)");
+}
+
 void KL11::addchar(char c) {
     if (!(rcsr & 0x80)) {
         // unit not busy
-        rbuf = c;
+        rbuf = c & 0x7f;
         rcsr |= 0x80;
         if (rcsr & 0x40) {
             cpu.interrupt(INTTTYIN, 4);
         }
     }
-}
-
-int is_key_pressed(void) {
-    timeval tv = {
-        .tv_sec = 0,
-        .tv_usec = 0,
-    };
-    fd_set fds;
-
-    FD_ZERO(&fds);
-    FD_SET(STDIN_FILENO, &fds);
-
-    select(STDIN_FILENO + 1, &fds, NULL, NULL, &tv);
-    return FD_ISSET(STDIN_FILENO, &fds);
 }
 
 void KL11::clearterminal() {
@@ -41,9 +54,30 @@ void KL11::clearterminal() {
     xbuf = 0;
 }
 
+int getchar() {
+    char ch;
+    while (read(STDIN_FILENO, &ch, 1) > 0) {
+        printf("read %06o\n", ch);
+        break;
+    }
+    return ch;
+}
+
 void KL11::poll() {
-    if (is_key_pressed())
-        addchar(fgetc(stdin));
+    if (!(rcsr & 0x80)) {
+        // unit not busy
+        if (keypressed) {
+            char ch;
+            if (read(STDIN_FILENO, &ch, 1) > 0) {
+                rbuf = ch & 0x7f;
+                rcsr |= 0x80;
+                if (rcsr & 0x40) {
+                    cpu.interrupt(INTTTYIN, 4);
+                }
+                keypressed = false;
+            }
+        }
+    }
 
     if ((xcsr & 0x80) == 0) {
         if (++count > 32) {
