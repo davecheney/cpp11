@@ -16,8 +16,8 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint16_t mode) {
     if ((SR0 & 1) == 0) {
         return a > 0167777 ? ((uint32_t)a) + 0600000 : a;
     }
-    uint8_t i = mode ? ((a >> 13) + 8) : (a >> 13);
-    if (wr && !pages[i].write()) {
+    auto i = (a >> 13);
+    if (wr && !pages[mode][i].write()) {
         SR0 = (1 << 13) | 1;
         SR0 |= (a >> 12) & ~1;
         if (mode) {
@@ -28,7 +28,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint16_t mode) {
         printf("mmu::decode write to read-only page %06o\n", a);
         trap(INTFAULT);
     }
-    if (!pages[i].read()) {
+    if (!pages[mode][i].read()) {
         SR0 = (1 << 15) | 1;
         SR0 |= (a >> 12) & ~1;
         if (mode) {
@@ -41,7 +41,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint16_t mode) {
     uint8_t block = (a >> 6) & 0177;
     uint8_t disp = a & 077;
     // if ((p.ed() && (block < p.len())) || (!p.ed() && (block > p.len()))) {
-    if (pages[i].ed() ? (block < pages[i].len()) : (block > pages[i].len())) {
+    if (pages[mode][i].ed() ? (block < pages[mode][i].len()) : (block > pages[mode][i].len())) {
         SR0 = (1 << 14) | 1;
         SR0 |= (a >> 12) & ~1;
         if (mode) {
@@ -51,21 +51,18 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint16_t mode) {
         printf(
             "page length exceeded, address %06o (block %03o) is beyond length "
             "%03o\r\n",
-            a, block, pages[i].len());
+            a, block, pages[mode][i].len());
         trap(INTFAULT);
     }
     if (wr) {
-        pages[i].pdr |= 1 << 6;
+        pages[mode][i].pdr |= 1 << 6;
     }
     // danger, this can be cast to a uint16_t if you aren't careful
-    uint32_t aa = pages[i].par & 07777;
+    uint32_t aa = pages[mode][i].par & 07777;
     aa += block;
     aa <<= 6;
     aa += disp;
-    if (DEBUG_MMU) {
-        printf("decode: slow %06o -> %06o\n", a, aa);
-    }
-
+    // printf("decode: slow %06o -> %06o\n", a, aa);
     return aa;
 }
 
@@ -77,13 +74,13 @@ uint16_t KT11::read16(uint32_t a) {
     auto i = ((a & 017) >> 1);
     switch (a & ~037) {
     case 0772300:
-        return pages[i].pdr;
+        return pages[00][i].pdr;
     case 0772340:
-        return pages[i].par;
+        return pages[00][i].par;
     case 0777600:
-        return pages[i + 8].pdr;
+        return pages[03][i].pdr;
     case 0777640:
-        return pages[i + 8].par;
+        return pages[03][i].par;
     default:
         printf("mmu::read16 invalid read from %06o\n", a);
         trap(INTBUS);
@@ -91,29 +88,23 @@ uint16_t KT11::read16(uint32_t a) {
 }
 
 void KT11::write16(uint32_t a, uint16_t v) {
-    // printf("kt11:writ16: %06o %06o\n", a, v);
+    //  printf("kt11:write16: %06o %06o\n", a, v);
     auto i = ((a & 017) >> 1);
     switch (a & ~037) {
     case 0772300:
-        pages[i].pdr = v;
+        pages[00][i].pdr = v;
         break;
     case 0772340:
-        pages[i].par = v;
+        pages[00][i].par = v;
         break;
     case 0777600:
-        pages[i + 8].pdr = v;
+        pages[03][i].pdr = v;
         break;
     case 0777640:
-        pages[i + 8].par = v;
+        pages[03][i].par = v;
         break;
     default:
         printf("mmu::write16 write to invalid address %06o\n", a);
         trap(INTBUS);
-    }
-}
-
-void KT11::dumppages() {
-    for (uint8_t i = 0; i < pages.size(); i++) {
-        printf("%0x: %06o %06o\r\n", i, pages[i].par, pages[i].pdr);
     }
 }

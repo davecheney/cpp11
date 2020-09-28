@@ -42,7 +42,7 @@ void KW11::write16(uint32_t a, uint16_t v) {
 uint16_t KW11::read16(uint32_t a) {
     switch (a) {
     case 0777546:
-        printf("kw11: csr read %06o\n", csr);
+        // printf("kw11: csr read %06o\n", csr);
         return csr;
     default:
         printf("kw11: read from invalid address %06o\n", a);

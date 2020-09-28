@@ -23,6 +23,6 @@ class KT11 {
     void write16(uint32_t a, uint16_t v);
 
   private:
-    std::array<page, 16> pages;
+    std::array<std::array<page, 8>, 4> pages;
     void dumppages();
 };
