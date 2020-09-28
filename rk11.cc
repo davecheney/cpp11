@@ -1,7 +1,7 @@
+#include <assert.h>
 #include <cstdlib>
 #include <stdint.h>
 #include <stdio.h>
-#include <assert.h>
 
 #include "avr11.h"
 #include "kb11.h"
@@ -79,7 +79,7 @@ void RK11::step() {
         return;
     case 6: // Drive Reset - falls through to be finished as a seek
         rker = 0;
-	[[ fallthrough ]];
+        [[fallthrough]];
     case 4: // Seek (and drive reset) - complete immediately
         printf("rk11: seek: cylinder: %03o sector: %03o\n", cylinder, sector);
         seek();
@@ -95,7 +95,6 @@ void RK11::step() {
         printf("unimplemented RK05 operation %06o\n", ((rkcs & 017) >> 1));
         std::abort();
     }
-    
 }
 
 void RK11::readwrite() {
@@ -109,7 +108,8 @@ void RK11::readwrite() {
 
     bool w = ((rkcs >> 1) & 7) == 1;
     if (0) {
-        printf("rk11: step: RKCS: %06o RKBA: %06o RKWC: %06o cylinder: %03o sector: %03o "
+        printf("rk11: step: RKCS: %06o RKBA: %06o RKWC: %06o cylinder: %03o "
+               "sector: %03o "
                "write: %x\n",
                rkcs, rkba, rkwc, cylinder, sector, w);
     }
@@ -142,8 +142,6 @@ void RK11::readwrite() {
             }
         }
     }
-
-
 }
 
 void RK11::seek() {

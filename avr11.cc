@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <cstdlib>
 #include <setjmp.h>
 #include <stdint.h>
@@ -5,14 +6,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <termios.h>
-#include <assert.h>
 
 #include "avr11.h"
 #include "kb11.h"
 
 KB11 cpu;
 
-void setup(char * disk) {
+void setup(char *disk) {
     struct termios old_terminal_settings, new_terminal_settings;
 
     // Get the current terminal settings
@@ -38,9 +38,7 @@ jmp_buf trapbuf;
 
 void loop0();
 
-[[ noreturn ]] void trap(uint16_t vec) {
-    longjmp(trapbuf, vec);
-}
+[[noreturn]] void trap(uint16_t vec) { longjmp(trapbuf, vec); }
 
 void loop() {
     auto vec = setjmp(trapbuf);
@@ -64,7 +62,7 @@ void loop0() {
     }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     assert(argc > 1);
     setup(argv[1]);
     while (1)

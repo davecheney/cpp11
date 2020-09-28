@@ -11,7 +11,13 @@ extern KB11 cpu;
 void kw11alarm(int) { cpu.unibus.kw11.tick(); }
 
 KW11::KW11() {
-    signal(SIGALRM, kw11alarm);
+    struct sigaction sa = {
+        .__sigaction_u.__sa_handler = kw11alarm,
+        .sa_flags = SA_RESTART,
+    };
+    if (sigaction(SIGALRM, &sa, NULL) < 0)
+        perror("sigaction");
+
     struct itimerval itv = {
         .it_interval =
             {

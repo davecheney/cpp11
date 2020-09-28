@@ -576,7 +576,7 @@ void KB11::step() {
                 printf("unknown 00xxDD instruction\n");
                 printstate();
                 trapat(INTINVAL);
-		return;
+                return;
             }
         }
     case 1: // MOV  01SSDD
@@ -743,7 +743,7 @@ void KB11::step() {
             // SETD ; not needed by UNIX, but used; therefore ignored
             return;
         }
-	[[ fallthrough ]];
+        [[fallthrough]];
     default: // 15  17xxxx FPP instructions
         printf("invalid 17xxxx FPP instruction\n");
         printstate();
