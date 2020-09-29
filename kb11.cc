@@ -151,34 +151,37 @@ void KB11::SUB(const uint16_t instr) {
     }
 }
 
+// MUL 070RSS
 void KB11::MUL(const uint16_t instr) {
-    int32_t val1 = R[(instr >> 6) & 7];
+    auto reg = (instr >> 6) & 7;
+    int32_t val1 = R[reg];
     if (val1 & 0x8000) {
         val1 = -((0xFFFF ^ val1) + 1);
     }
-    uint16_t da = DA(instr);
-    int32_t val2 = read<2>(da);
+    int32_t val2 = read<2>(DA(instr));
     if (val2 & 0x8000) {
         val2 = -((0xFFFF ^ val2) + 1);
     }
-    const int32_t sval = val1 * val2;
-    R[(instr >> 6) & 7] = sval >> 16;
-    R[((instr >> 6) & 7) | 1] = sval & 0xFFFF;
+    auto sval = val1 * val2;
+    R[reg] = sval >> 16;
+    R[reg | 1] = sval & 0xFFFF;
     PSW &= 0xFFF0;
-    if (sval & 0x80000000) {
+    if (sval < 1) {
         PSW |= FLAGN;
     }
-    setZ((sval & 0xFFFFFFFF) == 0);
+    if (sval == 0) {
+        PSW |= FLAGZ;
+    }
     if ((sval < (1 << 15)) || (sval >= ((1L << 15) - 1))) {
         PSW |= FLAGC;
     }
+    // printstate();
 }
 
 void KB11::DIV(const uint16_t instr) {
-    const int32_t val1 =
-        (R[(instr >> 6) & 7] << 16) | (R[((instr >> 6) & 7) | 1]);
-    const uint16_t da = DA(instr);
-    const int32_t val2 = read<2>(da);
+    auto reg = (instr >> 6) & 7;
+    int32_t val1 = (R[reg] << 16) | (R[reg | 1]);
+    int32_t val2 = read<2>(DA(instr));
     PSW &= 0xFFF0;
     if (val2 == 0) {
         PSW |= FLAGC;
@@ -188,10 +191,12 @@ void KB11::DIV(const uint16_t instr) {
         PSW |= FLAGV;
         return;
     }
-    R[(instr >> 6) & 7] = (val1 / val2) & 0xFFFF;
-    R[((instr >> 6) & 7) | 1] = (val1 % val2) & 0xFFFF;
-    setZ(R[(instr >> 6) & 7] == 0);
-    if (R[(instr >> 6) & 7] & 0100000) {
+    R[reg] = (val1 / val2) & 0xFFFF;
+    R[reg | 1] = (val1 % val2) & 0xFFFF;
+    if (R[reg] == 0) {
+        PSW |= FLAGZ;
+    }
+    if (R[reg] & 0100000) {
         PSW |= FLAGN;
     }
     if (val1 == 0) {
@@ -408,8 +413,7 @@ void KB11::step() {
     PC = R[7];
     auto instr = fetch16();
 
-    if (0)
-        printstate();
+    //   printstate();
 
     switch (instr >> 12) {    // xxSSDD Mostly double operand instructions
     case 0:                   // 00xxxx mixed group
@@ -798,7 +802,7 @@ void KB11::trapat(uint16_t vec) {
         std::abort();
     }
     if (0)
-        printf("trap: %03o\n", vec);
+        printf("trap: vec: %03o\n", vec);
 
     auto psw = PSW;
     kernelmode();
