@@ -317,40 +317,36 @@ void KB11::MARK(const uint16_t instr) {
     R[5] = pop();
 }
 
+// MFPI 0065SS
 void KB11::MFPI(const uint16_t instr) {
-    uint16_t da = DA(instr);
     uint16_t uval;
-    if (da == 0170006) {
-        if ((currentmode() == 3) && (previousmode() == 3)) {
-            uval = R[6];
+    if (!(instr & 0x38)) {
+        auto reg = instr & 7;
+        if ((reg != 6) || (currentmode() == previousmode())) {
+            uval = R[reg];
         } else {
             uval = stackpointer[previousmode()];
         }
-    } else if (isReg(da)) {
-        printf("invalid MFPI instruction\n");
-        printstate();
-        std::abort();
     } else {
+        auto da = DA(instr);
         uval = unibus.read16(mmu.decode<false>(da, previousmode()));
     }
     push(uval);
     setNZ<2>(uval);
 }
 
+// MTPI 0066DD
 void KB11::MTPI(const uint16_t instr) {
-    uint16_t da = DA(instr);
-    uint16_t uval = pop();
-    if (da == 0170006) {
-        if ((currentmode() == 3) && (previousmode() == 3)) {
-            R[6] = uval;
+    auto uval = pop();
+    if (!(instr & 0x38)) {
+        auto reg = instr & 7;
+        if ((reg != 6) || (currentmode() == previousmode())) {
+            R[reg] = uval;
         } else {
             stackpointer[previousmode()] = uval;
         }
-    } else if (isReg(da)) {
-        printf("invalid MTPI instrution\n");
-        printstate();
-        std::abort();
     } else {
+        auto da = DA(instr);
         unibus.write16(mmu.decode<true>(da, previousmode()), uval);
     }
     setNZ<2>(uval);
