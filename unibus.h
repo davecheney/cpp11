@@ -1,15 +1,17 @@
 #pragma once
-#include "ms11.h"
 #include "kl11.h"
 #include "rk11.h"
 #include "kw11.h"
 #include "pc11.h"
 #include <stdint.h>
 
+const uint32_t IOBASE_18BIT = 0760000;
+
 class UNIBUS {
 
   public:
-    MS11 core;
+    std::array<uint16_t,(IOBASE_18BIT >> 1)> core;
+
     KL11 cons;
     RK11 rk11;
     KW11 kw11;

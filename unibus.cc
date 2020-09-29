@@ -14,7 +14,7 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
         trap(INTBUS);
     }
     if (a < 0760000) {
-        core.write16(a, v);
+        core[a>>1] = v;
         return;
     }
     switch (a) {
@@ -51,7 +51,7 @@ uint16_t UNIBUS::read16(uint32_t a) {
         trap(INTBUS);
     }
     if (a < 0760000) {
-        return core.intptr[a >> 1];
+        return core[a >> 1];
     }
 
     if (a == 0777546) {
