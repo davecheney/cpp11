@@ -9,7 +9,7 @@ class KT11 {
       public:
         uint16_t par, pdr;
 
-        uint16_t addr();
+        uint32_t addr();
         uint8_t len();
         bool read();
         bool write();

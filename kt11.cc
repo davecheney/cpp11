@@ -6,7 +6,7 @@
 
 extern KB11 cpu;
 
-uint16_t KT11::page::addr() { return par & 07777; }
+uint32_t KT11::page::addr() { return par & 07777; }
 uint8_t KT11::page::len() { return (pdr >> 8) & 0x7f; }
 bool KT11::page::read() { return pdr & 2; }
 bool KT11::page::write() { return pdr & 6; };
@@ -58,11 +58,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint16_t mode) {
     if (wr) {
         pages[mode][i].pdr |= 1 << 6;
     }
-    // danger, this can be cast to a uint16_t if you aren't careful
-    uint32_t aa = pages[mode][i].par & 07777;
-    aa += block;
-    aa <<= 6;
-    aa += disp;
+    auto aa = ((pages[mode][i].addr() + block) << 6) + disp;
     // printf("decode: slow %06o -> %06o\n", a, aa);
     return aa;
 }
