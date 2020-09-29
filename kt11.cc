@@ -41,7 +41,8 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint16_t mode) {
     uint8_t block = (a >> 6) & 0177;
     uint8_t disp = a & 077;
     // if ((p.ed() && (block < p.len())) || (!p.ed() && (block > p.len()))) {
-    if (pages[mode][i].ed() ? (block < pages[mode][i].len()) : (block > pages[mode][i].len())) {
+    if (pages[mode][i].ed() ? (block < pages[mode][i].len())
+                            : (block > pages[mode][i].len())) {
         SR0 = (1 << 14) | 1;
         SR0 |= (a >> 12) & ~1;
         if (mode) {
@@ -73,6 +74,10 @@ uint16_t KT11::read16(uint32_t a) {
     // printf("kt11:read16: %06o\n", a);
     auto i = ((a & 017) >> 1);
     switch (a & ~037) {
+    case 0772200:
+        return pages[01][i].pdr;
+    case 0772240:
+        return pages[01][i].par;
     case 0772300:
         return pages[00][i].pdr;
     case 0772340:
@@ -91,6 +96,12 @@ void KT11::write16(uint32_t a, uint16_t v) {
     //  printf("kt11:write16: %06o %06o\n", a, v);
     auto i = ((a & 017) >> 1);
     switch (a & ~037) {
+    case 0772200:
+        pages[01][i].pdr = v;
+        break;
+    case 0772240:
+        pages[01][i].par = v;
+        break;
     case 0772300:
         pages[00][i].pdr = v;
         break;

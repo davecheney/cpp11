@@ -32,6 +32,7 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
 
     switch (a & ~077) {
     case 0777600: // MMU user mode 3 Map
+    case 0772200: // MMU kernel mode 0 Map
     case 0772300: // MMU kernel mode 0 Map
         cpu.mmu.write16(a, v);
         return;
@@ -79,6 +80,7 @@ uint16_t UNIBUS::read16(uint32_t a) {
 
     switch (a & ~077) {
     case 0777600: // MMU user mode 3 Map
+    case 0772200: // 
     case 0772300: // MMU kernel mode 0 Map
         return cpu.mmu.read16(a);
     case 0777400:
