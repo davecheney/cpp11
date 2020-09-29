@@ -102,45 +102,27 @@ class KB11 {
     void kernelmode();
     void writePSW(uint16_t psw);
 
-    inline bool isReg(const uint16_t a) { return (a & 0177770) == 0170000; }
-
-    template <uint8_t l> inline uint16_t read(const uint16_t va) {
-        if (l == 2) {
-            return read16(va);
-        }
-        if (va & 1) {
-            return read16(va & ~1) >> 8;
-        }
-        return read16(va & ~1) & 0xFF;
-    }
-
-    template <uint8_t l> inline void write(const uint16_t va, uint16_t v) {
-        if (l == 2) {
-            write16(va, v);
-            return;
-        }
-        if (va & 1) {
-            write16(va & ~1, (read16(va & ~1) & 0xFF) | (v & 0xFF) << 8);
-        } else {
-            write16(va, (read16(va) & 0xFF00) | (v & 0xFF));
-        }
-    }
-
-    template <uint8_t l> uint16_t memread(uint16_t a) {
+    template <uint8_t l> uint16_t read(uint16_t a) {
         static_assert(l == 1 || l == 2);
-        if (isReg(a)) {
+        if ((a & 0177770) == 0170000) {
             if (l == 2) {
                 return R[a & 7];
             } else {
                 return R[a & 7] & 0xFF;
             }
         }
-        return read<l>(a);
+        if (l == 2) {
+            return read16(a);
+        }
+        if (a & 1) {
+            return read16(a & ~1) >> 8;
+        }
+        return read16(a & ~1) & 0xFF;
     }
 
-    template <uint8_t l> void memwrite(uint16_t a, uint16_t v) {
+    template <uint8_t l> void write(uint16_t a, uint16_t v) {
         static_assert(l == 1 || l == 2);
-        if (isReg(a)) {
+        if ((a & 0177770) == 0170000) {
             const uint8_t r = a & 7;
             if (l == 2) {
                 R[r] = v;
@@ -150,16 +132,24 @@ class KB11 {
             }
             return;
         }
-        write<l>(a, v);
+        if (l == 2) {
+            write16(a, v);
+            return;
+        }
+        if (a & 1) {
+            write16(a & ~1, (read16(a & ~1) & 0xff) | (v << 8));
+        } else {
+            write16(a, (read16(a) & 0xFF00) | (v & 0xFF));
+        }
     }
 
     // CMP 02SSDD, CMPB 12SSDD
     template <uint8_t l> void CMP(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        const uint16_t val1 = memread<l>(SA(instr));
+        const uint16_t val1 = read<l>(SA(instr));
         const uint16_t da = DA(instr);
-        const uint16_t val2 = memread<l>(da);
+        const uint16_t val2 = read<l>(da);
         const int32_t sval = (val1 - val2) & max;
         PSW &= 0xFFF0;
         setZ(sval == 0);
@@ -210,11 +200,11 @@ class KB11 {
     template <uint8_t l> void BIC(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
         const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        const uint16_t val1 = memread<l>(SA(instr));
+        const uint16_t val1 = read<l>(SA(instr));
         const uint16_t da = DA(instr);
-        const uint16_t val2 = memread<l>(da);
+        const uint16_t val2 = read<l>(da);
         const uint16_t uval = (max ^ val1) & val2;
-        memwrite<l>(da, uval);
+        write<l>(da, uval);
         PSW &= 0xFFF1;
         setZ(uval == 0);
         if (uval & msb) {
@@ -224,11 +214,11 @@ class KB11 {
 
     template <uint8_t l> void BIS(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        const uint16_t val1 = memread<l>(SA(instr));
+        const uint16_t val1 = read<l>(SA(instr));
         const uint16_t da = DA(instr);
-        const uint16_t val2 = memread<l>(da);
+        const uint16_t val2 = read<l>(da);
         const uint16_t uval = val1 | val2;
-        memwrite<l>(da, uval);
+        write<l>(da, uval);
         PSW &= 0xFFF1;
         setZ(uval == 0);
         if (uval & msb) {
@@ -240,22 +230,22 @@ class KB11 {
     template <uint8_t l> void CLR(const uint16_t instr) {
         PSW &= 0xFFF0;
         PSW |= FLAGZ;
-        memwrite<l>(DA(instr), 0);
+        write<l>(DA(instr), 0);
     }
 
     // COM 0051DD, COMB 1051DD
     template <uint8_t l> void COM(const uint16_t instr) {
         auto da = DA(instr);
-        auto dst = ~memread<l>(da);
-        memwrite<l>(da, dst);
+        auto dst = ~read<l>(da);
+        write<l>(da, dst);
         setNZC<l>(dst);
     }
 
     // DEC 0053DD, DECB 1053DD
     template <uint8_t l> void _DEC(const uint16_t instr) {
         auto da = DA(instr);
-        auto uval = (memread<l>(da) - 1) & (l == 2 ? 0xFFFF : 0xff);
-        memwrite<l>(da, uval);
+        auto uval = (read<l>(da) - 1) & (l == 2 ? 0xFFFF : 0xff);
+        write<l>(da, uval);
         setNZV<l>(uval);
     }
 
@@ -264,8 +254,8 @@ class KB11 {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
-        int32_t sval = (-memread<l>(da)) & max;
-        memwrite<l>(da, sval);
+        int32_t sval = (-read<l>(da)) & max;
+        write<l>(da, sval);
         PSW &= 0xFFF0;
         if (sval & msb) {
             PSW |= FLAGN;
@@ -284,9 +274,9 @@ class KB11 {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
-        uint16_t uval = memread<l>(da);
+        uint16_t uval = read<l>(da);
         if (PSW & FLAGC) {
-            memwrite<l>(da, (uval + 1) & max);
+            write<l>(da, (uval + 1) & max);
             PSW &= 0xFFF0;
             if ((uval + 1) & msb) {
                 PSW |= FLAGN;
@@ -311,9 +301,9 @@ class KB11 {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
-        int32_t sval = memread<l>(da);
+        int32_t sval = read<l>(da);
         if (C()) {
-            memwrite<l>(da, (sval - 1) & max);
+            write<l>(da, (sval - 1) & max);
             PSW &= 0xFFF0;
             if ((sval - 1) & msb) {
                 PSW |= FLAGN;
@@ -341,7 +331,7 @@ class KB11 {
     template <uint8_t l> void ROR(const uint16_t instr) {
         int32_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
-        int32_t sval = memread<l>(da);
+        int32_t sval = read<l>(da);
         if (PSW & FLAGC) {
             sval |= max + 1;
         }
@@ -358,14 +348,14 @@ class KB11 {
             PSW |= FLAGV;
         }
         sval >>= 1;
-        memwrite<l>(da, sval);
+        write<l>(da, sval);
     }
 
     template <uint8_t l> void ROL(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         int32_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
-        int32_t sval = memread<l>(da) << 1;
+        int32_t sval = read<l>(da) << 1;
         if (PSW & FLAGC) {
             sval |= 1;
         }
@@ -381,13 +371,13 @@ class KB11 {
             PSW |= FLAGV;
         }
         sval &= max;
-        memwrite<l>(da, sval);
+        write<l>(da, sval);
     }
 
     template <uint8_t l> void ASR(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
         uint16_t da = DA(instr);
-        uint16_t uval = memread<l>(da);
+        uint16_t uval = read<l>(da);
         PSW &= 0xFFF0;
         if (uval & 1) {
             PSW |= FLAGC;
@@ -400,7 +390,7 @@ class KB11 {
         }
         uval = (uval & msb) | (uval >> 1);
         setZ(uval == 0);
-        memwrite<l>(da, uval);
+        write<l>(da, uval);
     }
 
     template <uint8_t l> void ASL(const uint16_t instr) {
@@ -408,7 +398,7 @@ class KB11 {
         uint16_t max = l == 2 ? 0xFFFF : 0xff;
         uint16_t da = DA(instr);
         // TODO(dfc) doesn't need to be an sval
-        int32_t sval = memread<l>(da);
+        int32_t sval = read<l>(da);
         PSW &= 0xFFF0;
         if (sval & msb) {
             PSW |= FLAGC;
@@ -421,29 +411,29 @@ class KB11 {
         }
         sval = (sval << 1) & max;
         setZ(sval == 0);
-        memwrite<l>(da, sval);
+        write<l>(da, sval);
     }
 
     // INC 0052DD, INCB 1052DD
     template <uint16_t l> void INC(const uint16_t instr) {
         auto da = DA(instr);
-        auto dst = memread<l>(da);
+        auto dst = read<l>(da);
         auto result = dst + 1;
-        memwrite<l>(da, result);
+        write<l>(da, result);
         setNZV<l>(result);
     }
 
     // BIT 03SSDD, BITB 13SSDD
     template <uint16_t l> void BIT(const uint16_t instr) {
-        auto src = memread<l>(SA(instr));
-        auto dst = memread<l>(DA(instr));
+        auto src = read<l>(SA(instr));
+        auto dst = read<l>(DA(instr));
         auto result = src & dst;
         setNZ<l>(result);
     }
 
     // TST 0057DD, TSTB 1057DD
     template <uint16_t l> void TST(const uint16_t instr) {
-        auto dst = memread<l>(DA(instr));
+        auto dst = read<l>(DA(instr));
         PSW &= 0xFFF0;
         if (dst == 0) {
             PSW |= FLAGZ;
@@ -455,7 +445,7 @@ class KB11 {
 
     // MOV 01SSDD, MOVB 11SSDD
     template <uint16_t len> void MOV(const uint16_t instr) {
-        auto src = memread<len>(SA(instr));
+        auto src = read<len>(SA(instr));
         if (!(instr & 0x38) && (len == 1)) {
             if (src & 0200) {
                 // Special case: movb sign extends register to word size
@@ -465,7 +455,7 @@ class KB11 {
             setNZ<len>(src);
             return;
         }
-        memwrite<len>(DA(instr), src);
+        write<len>(DA(instr), src);
         setNZ<len>(src);
     }
 

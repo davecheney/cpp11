@@ -112,11 +112,11 @@ void KB11::setZ(const bool b) {
 }
 
 void KB11::ADD(const uint16_t instr) {
-    const uint16_t val1 = memread<2>(SA(instr));
+    const uint16_t val1 = read<2>(SA(instr));
     const uint16_t da = DA(instr);
-    const uint16_t val2 = memread<2>(da);
+    const uint16_t val2 = read<2>(da);
     const uint16_t uval = (val1 + val2) & 0xFFFF;
-    memwrite<2>(da, uval);
+    write<2>(da, uval);
     PSW &= 0xFFF0;
     setZ(uval == 0);
     if (uval & 0x8000) {
@@ -133,12 +133,12 @@ void KB11::ADD(const uint16_t instr) {
 // SUB 16SSDD
 void KB11::SUB(const uint16_t instr) {
     // mask off top bit of instr so SA computes L=2
-    const uint16_t val1 = memread<2>(SA(instr & 0077777));
+    const uint16_t val1 = read<2>(SA(instr & 0077777));
     const uint16_t da = DA(instr);
-    const uint16_t val2 = memread<2>(da);
+    const uint16_t val2 = read<2>(da);
     const uint16_t uval = (val2 - val1) & 0xFFFF;
     PSW &= 0xFFF0;
-    memwrite<2>(da, uval);
+    write<2>(da, uval);
     setZ(uval == 0);
     if (uval & 0x8000) {
         PSW |= FLAGN;
@@ -157,7 +157,7 @@ void KB11::MUL(const uint16_t instr) {
         val1 = -((0xFFFF ^ val1) + 1);
     }
     uint16_t da = DA(instr);
-    int32_t val2 = memread<2>(da);
+    int32_t val2 = read<2>(da);
     if (val2 & 0x8000) {
         val2 = -((0xFFFF ^ val2) + 1);
     }
@@ -178,7 +178,7 @@ void KB11::DIV(const uint16_t instr) {
     const int32_t val1 =
         (R[(instr >> 6) & 7] << 16) | (R[((instr >> 6) & 7) | 1]);
     const uint16_t da = DA(instr);
-    const int32_t val2 = memread<2>(da);
+    const int32_t val2 = read<2>(da);
     PSW &= 0xFFF0;
     if (val2 == 0) {
         PSW |= FLAGC;
@@ -202,7 +202,7 @@ void KB11::DIV(const uint16_t instr) {
 void KB11::ASH(const uint16_t instr) {
     const uint16_t val1 = R[(instr >> 6) & 7];
     const uint16_t da = DA(instr);
-    uint16_t val2 = memread<2>(da) & 077;
+    uint16_t val2 = read<2>(da) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
     if (val2 & 040) {
@@ -236,7 +236,7 @@ void KB11::ASHC(const uint16_t instr) {
     const uint32_t val1 =
         (uint32_t)(R[(instr >> 6) & 7] << 16) | (R[((instr >> 6) & 7) | 1]);
     const uint16_t da = DA(instr);
-    uint16_t val2 = memread<2>(da) & 077;
+    uint16_t val2 = read<2>(da) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
     if (val2 & 040) {
@@ -271,9 +271,9 @@ void KB11::ASHC(const uint16_t instr) {
 void KB11::XOR(const uint16_t instr) {
     auto reg = R[(instr >> 6) & 7];
     auto da = DA(instr);
-    auto dst = memread<2>(da);
+    auto dst = read<2>(da);
     dst = reg ^ dst;
-    memwrite<2>(da, dst);
+    write<2>(da, dst);
     setNZ<2>(dst);
 }
 
@@ -387,9 +387,9 @@ void KB11::RESET() {
 // SWAB 0003DD
 void KB11::SWAB(const uint16_t instr) {
     auto da = DA(instr);
-    auto dst = memread<2>(da);
+    auto dst = read<2>(da);
     dst = (dst << 8) | (dst >> 8);
-    memwrite<2>(da, dst);
+    write<2>(da, dst);
     PSW &= 0xFFF0;
     setZ((dst & 0xff00) == 0);
     if (dst & 0x80) {
@@ -400,7 +400,7 @@ void KB11::SWAB(const uint16_t instr) {
 // SXT 0067DD
 void KB11::SXT(const uint16_t instr) {
     auto result = N() ? 0xffff : 0;
-    memwrite<2>(DA(instr), result);
+    write<2>(DA(instr), result);
     setNZ<2>(result);
 }
 
