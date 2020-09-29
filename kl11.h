@@ -17,6 +17,4 @@ class KL11 {
     uint16_t xcsr;
     uint16_t xbuf;
     uint8_t count;
-
-    void addchar(char c);
 };

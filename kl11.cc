@@ -36,17 +36,6 @@ KL11::KL11() {
         perror("fcntl(F_SETFL)");
 }
 
-void KL11::addchar(char c) {
-    if (!(rcsr & 0x80)) {
-        // unit not busy
-        rbuf = c & 0x7f;
-        rcsr |= 0x80;
-        if (rcsr & 0x40) {
-            cpu.interrupt(INTTTYIN, 4);
-        }
-    }
-}
-
 void KL11::clearterminal() {
     rcsr = 0;
     xcsr = 0x80;
@@ -73,11 +62,10 @@ void KL11::poll() {
                 rcsr |= 0x80;
                 if (rcsr & 0x40) {
                     cpu.interrupt(INTTTYIN, 4);
-                }    
+                }
             } else {
                 keypressed = false;
             }
-
         }
     }
 
