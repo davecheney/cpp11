@@ -69,7 +69,7 @@ void KL11::poll() {
         }
     }
 
-    if ((xcsr & 0x80) == 0) {
+    if (!(xcsr & 0x80)) {
         if (++count > 32) {
             fputc(xbuf & 0x7f, stderr);
             xcsr |= 0x80;
@@ -81,18 +81,18 @@ void KL11::poll() {
 }
 
 uint16_t KL11::read16(uint32_t a) {
-    switch (a & 06) {
-    case 00:
+    switch (a) {
+    case 0777560:
         return rcsr;
-    case 02:
+    case 0777562:
         if (rcsr & 0x80) {
             rcsr &= 0xff7e;
             return rbuf;
         }
         return 0;
-    case 04:
+    case 0777564:
         return xcsr;
-    case 06:
+    case 0777566:
         return 0;
     default:
         printf("consread16: read from invalid address %06o\n", a);
@@ -101,22 +101,23 @@ uint16_t KL11::read16(uint32_t a) {
 }
 
 void KL11::write16(uint32_t a, uint16_t v) {
-    switch (a & 06) {
-    case 00:
+    switch (a) {
+    case 0777560:
         if (v & (1 << 6)) {
             rcsr |= 1 << 6;
         } else {
             rcsr &= ~(1 << 6);
         }
         break;
-    case 04:
+    case 0777564:
+        // printf("kl11:write16: %06o %06o\n", a, v);
         if (v & (1 << 6)) {
             xcsr |= 1 << 6;
         } else {
             xcsr &= ~(1 << 6);
         }
         break;
-    case 06:
+    case 0777566:
         xbuf = v & 0x7f;
         xcsr &= 0xff7f;
         count = 0;

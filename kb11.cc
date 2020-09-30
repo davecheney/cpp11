@@ -205,9 +205,9 @@ void KB11::DIV(const uint16_t instr) {
 }
 
 void KB11::ASH(const uint16_t instr) {
-    const uint16_t val1 = R[(instr >> 6) & 7];
-    const uint16_t da = DA(instr);
-    uint16_t val2 = read<2>(da) & 077;
+    auto reg = (instr >> 6) & 7;
+    auto val1 = R[reg];
+    auto val2 = read<2>(DA(instr)) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
     if (val2 & 040) {
@@ -227,7 +227,7 @@ void KB11::ASH(const uint16_t instr) {
             PSW |= FLAGC;
         }
     }
-    R[(instr >> 6) & 7] = sval;
+    R[reg] = sval;
     setZ(sval == 0);
     if (sval & 0100000) {
         PSW |= FLAGN;
@@ -238,10 +238,9 @@ void KB11::ASH(const uint16_t instr) {
 }
 
 void KB11::ASHC(const uint16_t instr) {
-    const uint32_t val1 =
-        (uint32_t)(R[(instr >> 6) & 7] << 16) | (R[((instr >> 6) & 7) | 1]);
-    const uint16_t da = DA(instr);
-    uint16_t val2 = read<2>(da) & 077;
+    auto reg = (instr >> 6) & 7;
+    auto val1 = ((uint32_t)(R[reg]) << 16) | R[reg | 1];
+    auto val2 = read<2>(DA(instr)) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
     if (val2 & 040) {
@@ -261,8 +260,8 @@ void KB11::ASHC(const uint16_t instr) {
             PSW |= FLAGC;
         }
     }
-    R[(instr >> 6) & 7] = (sval >> 16) & 0xFFFF;
-    R[((instr >> 6) & 7) | 1] = sval & 0xFFFF;
+    R[reg] = (sval >> 16) & 0xFFFF;
+    R[reg | 1] = sval & 0xFFFF;
     setZ(sval == 0);
     if (sval & 0x80000000) {
         PSW |= FLAGN;
@@ -284,8 +283,9 @@ void KB11::XOR(const uint16_t instr) {
 
 // SOB 077RNN
 void KB11::SOB(const uint16_t instr) {
-    R[(instr >> 6) & 7]--;
-    if (R[(instr >> 6) & 7]) {
+    auto reg = (instr >> 6) & 7;
+    R[reg]--;
+    if (R[reg]) {
         R[7] -= (instr & 077) << 1;
     }
 }
@@ -427,7 +427,7 @@ void KB11::step() {
                     printstate();
                     std::abort();
                 case 1: // WAIT 000001
-                    sched_yield();
+                    // std::abort();
                     return;
                 case 3:          // BPT  000003
                     trapat(014); // Trap 14 - BPT
@@ -801,8 +801,8 @@ void KB11::trapat(uint16_t vec) {
         printf("Thou darst calling trapat() with an odd vector number?\n");
         std::abort();
     }
-    if (0)
-        printf("trap: vec: %03o\n", vec);
+
+    // printf("trap: vec: %03o\n", vec);
 
     auto psw = PSW;
     kernelmode();

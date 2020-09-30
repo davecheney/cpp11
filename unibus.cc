@@ -14,37 +14,37 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
         trap(INTBUS);
     }
     if (a < 0760000) {
-        core[a>>1] = v;
+        core[a >> 1] = v;
         return;
     }
     switch (a & ~077) {
-	case 0777400:
-		rk11.write16(a, v);
+    case 0777400:
+        rk11.write16(a, v);
         return;
-	case 0777500:
-		switch (a) {
-		case 0777546:
-			kw11.write16(a, v);
+    case 0777500:
+        switch (a) {
+        case 0777546:
+            kw11.write16(a, v);
             return;
-		case 0777572:
-			cpu.mmu.SR0 = v;
+        case 0777572:
+            cpu.mmu.SR0 = v;
             return;
-		case 0777574:
-			cpu.mmu.SR1 = v;
+        case 0777574:
+            cpu.mmu.SR1 = v;
             return;
-		case 0777576:
-			cpu.mmu.SR2 = v;
+        case 0777576:
+            cpu.mmu.SR2 = v;
             return;
-		default:
-			cons.write16(a, v);
+        default:
+            cons.write16(a, v);
             return;
-		}
-	case 0772200:
+        }
+    case 0772200:
     case 0772300:
     case 0777600:
-		cpu.mmu.write16(a, v);
+        cpu.mmu.write16(a, v);
         return;
-	default:
+    default:
         printf("unibus: write to invalid address %06o\n", a);
         trap(INTBUS);
     }
@@ -59,25 +59,25 @@ uint16_t UNIBUS::read16(uint32_t a) {
         return core[a >> 1];
     }
     switch (a & ~077) {
-	case 0777400:
-		return rk11.read16(a);
-	case 0777500:
-		switch (a) {
-		case 0777546:
-			return kw11.read16(a);
-		case 0777572:
-			return cpu.mmu.SR0;
-		case 0777574:
-			return cpu.mmu.SR1;
-		case 0777576:
-			return cpu.mmu.SR2;
-		default:
-			return cons.read16(a);
-		}
-	case 0772200:
+    case 0777400:
+        return rk11.read16(a);
+    case 0777500:
+        switch (a) {
+        case 0777546:
+            return kw11.read16(a);
+        case 0777572:
+            return cpu.mmu.SR0;
+        case 0777574:
+            return cpu.mmu.SR1;
+        case 0777576:
+            return cpu.mmu.SR2;
+        default:
+            return cons.read16(a);
+        }
+    case 0772200:
     case 0772300:
     case 0777600:
-		return cpu.mmu.read16(a);
+        return cpu.mmu.read16(a);
     default:
         printf("unibus: read from invalid address %06o\n", a);
         trap(INTBUS);

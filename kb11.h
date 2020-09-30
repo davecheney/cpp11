@@ -330,7 +330,7 @@ class KB11 {
 
     template <uint8_t l> void ROR(const uint16_t instr) {
         int32_t max = l == 2 ? 0xFFFF : 0xff;
-        uint16_t da = DA(instr);
+        auto da = DA(instr);
         int32_t sval = read<l>(da);
         if (PSW & FLAGC) {
             sval |= max + 1;
@@ -353,8 +353,8 @@ class KB11 {
 
     template <uint8_t l> void ROL(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        int32_t max = l == 2 ? 0xFFFF : 0xff;
-        uint16_t da = DA(instr);
+        uint16_t max = l == 2 ? 0xFFFF : 0xff;
+        auto da = DA(instr);
         int32_t sval = read<l>(da) << 1;
         if (PSW & FLAGC) {
             sval |= 1;
