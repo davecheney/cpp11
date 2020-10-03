@@ -143,14 +143,31 @@ class KB11 {
         }
     }
 
+    template <uint8_t l> inline uint16_t max() {
+        static_assert(l == 1 || l == 2);
+        if constexpr (l == 2) {
+            return 0xffff;
+        } else {
+            return 0xff;
+        }
+    }
+
+    template <uint8_t l> inline uint16_t msb() {
+        static_assert(l == 1 || l == 2);
+        if constexpr (l == 2) {
+            return 0x8000;
+        } else {
+            return 0x80;
+        }
+    }
+
     // CMP 02SSDD, CMPB 12SSDD
     template <uint8_t l> void CMP(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        const uint16_t val1 = read<l>(SA(instr));
-        const uint16_t da = DA(instr);
-        const uint16_t val2 = read<l>(da);
-        const int32_t sval = (val1 - val2) & max;
+        auto val1 = read<l>(SA(instr));
+        auto da = DA(instr);
+        auto val2 = read<l>(da);
+        auto sval = (val1 - val2) & max<l>();
         PSW &= 0xFFF0;
         setZ(sval == 0);
         if (sval & msb) {
@@ -185,7 +202,7 @@ class KB11 {
     }
 
     // Set N, Z & C clearing V
-    template <uint16_t len> void setNZC(uint16_t v) {
+    template <uint16_t len> inline void setNZC(uint16_t v) {
         static_assert(len == 1 || len == 2);
         PSW &= 0xFFF0;
         PSW |= FLAGC;
@@ -199,11 +216,10 @@ class KB11 {
 
     template <uint8_t l> void BIC(const uint16_t instr) {
         const uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        const uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        const uint16_t val1 = read<l>(SA(instr));
-        const uint16_t da = DA(instr);
-        const uint16_t val2 = read<l>(da);
-        const uint16_t uval = (max ^ val1) & val2;
+        auto val1 = read<l>(SA(instr));
+        auto da = DA(instr);
+        auto val2 = read<l>(da);
+        auto uval = (max<l>() ^ val1) & val2;
         write<l>(da, uval);
         PSW &= 0xFFF1;
         setZ(uval == 0);
@@ -252,9 +268,8 @@ class KB11 {
     // NEG 0054DD, NEGB 1054DD
     template <uint8_t l> void NEG(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        uint16_t da = DA(instr);
-        int32_t sval = (-read<l>(da)) & max;
+        auto da = DA(instr);
+        int32_t sval = (-read<l>(da)) & max<l>();
         write<l>(da, sval);
         PSW &= 0xFFF0;
         if (sval & msb) {
@@ -272,16 +287,15 @@ class KB11 {
 
     template <uint8_t l> void _ADC(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        uint16_t da = DA(instr);
-        uint16_t uval = read<l>(da);
+        auto da = DA(instr);
+        auto uval = read<l>(da);
         if (PSW & FLAGC) {
-            write<l>(da, (uval + 1) & max);
+            write<l>(da, (uval + 1) & max<l>());
             PSW &= 0xFFF0;
             if ((uval + 1) & msb) {
                 PSW |= FLAGN;
             }
-            setZ(uval == max);
+            setZ(uval == max<l>());
             if (uval == 0077777) {
                 PSW |= FLAGV;
             }
@@ -299,11 +313,10 @@ class KB11 {
 
     template <uint8_t l> void SBC(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        uint16_t da = DA(instr);
+        auto da = DA(instr);
         int32_t sval = read<l>(da);
         if (C()) {
-            write<l>(da, (sval - 1) & max);
+            write<l>(da, (sval - 1) & max<l>());
             PSW &= 0xFFF0;
             if ((sval - 1) & msb) {
                 PSW |= FLAGN;
@@ -329,22 +342,21 @@ class KB11 {
     }
 
     template <uint8_t l> void ROR(const uint16_t instr) {
-        int32_t max = l == 2 ? 0xFFFF : 0xff;
         auto da = DA(instr);
         int32_t sval = read<l>(da);
         if (PSW & FLAGC) {
-            sval |= max + 1;
+            sval |= max<l>() + 1;
         }
         PSW &= 0xFFF0;
         if (sval & 1) {
             PSW |= FLAGC;
         }
         // watch out for integer wrap around
-        if (sval & (max + 1)) {
+        if (sval & (max<l>() + 1)) {
             PSW |= FLAGN;
         }
-        setZ(!(sval & max));
-        if ((sval & 1) xor (sval & (max + 1))) {
+        setZ(!(sval & max<l>()));
+        if ((sval & 1) xor (sval & (max<l>() + 1))) {
             PSW |= FLAGV;
         }
         sval >>= 1;
@@ -353,24 +365,23 @@ class KB11 {
 
     template <uint8_t l> void ROL(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t max = l == 2 ? 0xFFFF : 0xff;
         auto da = DA(instr);
         int32_t sval = read<l>(da) << 1;
         if (PSW & FLAGC) {
             sval |= 1;
         }
         PSW &= 0xFFF0;
-        if (sval & (max + 1)) {
+        if (sval & (max<l>() + 1)) {
             PSW |= FLAGC;
         }
         if (sval & msb) {
             PSW |= FLAGN;
         }
-        setZ(!(sval & max));
+        setZ(!(sval & max<l>()));
         if ((sval ^ (sval >> 1)) & msb) {
             PSW |= FLAGV;
         }
-        sval &= max;
+        sval &= max<l>();
         write<l>(da, sval);
     }
 
@@ -395,8 +406,7 @@ class KB11 {
 
     template <uint8_t l> void ASL(const uint16_t instr) {
         uint16_t msb = l == 2 ? 0x8000 : 0x80;
-        uint16_t max = l == 2 ? 0xFFFF : 0xff;
-        uint16_t da = DA(instr);
+        auto da = DA(instr);
         // TODO(dfc) doesn't need to be an sval
         int32_t sval = read<l>(da);
         PSW &= 0xFFF0;
@@ -409,7 +419,7 @@ class KB11 {
         if ((sval ^ (sval << 1)) & msb) {
             PSW |= FLAGV;
         }
-        sval = (sval << 1) & max;
+        sval = (sval << 1) & max<l>();
         setZ(sval == 0);
         write<l>(da, sval);
     }
