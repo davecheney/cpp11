@@ -55,7 +55,7 @@ template <bool wr> uint32_t KT11::decode(uint16_t a, uint16_t mode) {
             a, block, pages[mode][i].len());
         trap(INTFAULT);
     }
-    if (wr) {
+    if constexpr(wr) {
         pages[mode][i].pdr |= 1 << 6;
     }
     auto aa = ((pages[mode][i].addr() + block) << 6) + disp;

@@ -3,7 +3,6 @@
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <sys/select.h>
 #include <unistd.h>
 
 #include "kb11.h"

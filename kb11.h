@@ -105,13 +105,13 @@ class KB11 {
     template <uint8_t l> uint16_t read(uint16_t a) {
         static_assert(l == 1 || l == 2);
         if ((a & 0177770) == 0170000) {
-            if (l == 2) {
+            if constexpr (l == 2) {
                 return R[a & 7];
             } else {
                 return R[a & 7] & 0xFF;
             }
         }
-        if (l == 2) {
+        if constexpr (l == 2) {
             return read16(a);
         }
         if (a & 1) {
@@ -123,8 +123,8 @@ class KB11 {
     template <uint8_t l> void write(uint16_t a, uint16_t v) {
         static_assert(l == 1 || l == 2);
         if ((a & 0177770) == 0170000) {
-            const uint8_t r = a & 7;
-            if (l == 2) {
+            auto r = a & 7;
+            if constexpr (l == 2) {
                 R[r] = v;
             } else {
                 R[r] &= 0xFF00;
@@ -132,7 +132,7 @@ class KB11 {
             }
             return;
         }
-        if (l == 2) {
+        if constexpr (l == 2) {
             write16(a, v);
             return;
         }
@@ -480,4 +480,5 @@ class KB11 {
     void SXT(uint16_t);
     void RTT();
     void RESET();
+    void WAIT();
 };

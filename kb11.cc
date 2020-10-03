@@ -3,6 +3,7 @@
 #include <setjmp.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "bootrom.h"
 #include "kb11.h"
@@ -112,10 +113,10 @@ void KB11::setZ(const bool b) {
 }
 
 void KB11::ADD(const uint16_t instr) {
-    const uint16_t val1 = read<2>(SA(instr));
-    const uint16_t da = DA(instr);
-    const uint16_t val2 = read<2>(da);
-    const uint16_t uval = (val1 + val2) & 0xFFFF;
+    auto val1 = read<2>(SA(instr));
+    auto da = DA(instr);
+    auto  val2 = read<2>(da);
+    auto  uval = (val1 + val2) & 0xFFFF;
     write<2>(da, uval);
     PSW &= 0xFFF0;
     setZ(uval == 0);
@@ -133,10 +134,10 @@ void KB11::ADD(const uint16_t instr) {
 // SUB 16SSDD
 void KB11::SUB(const uint16_t instr) {
     // mask off top bit of instr so SA computes L=2
-    const uint16_t val1 = read<2>(SA(instr & 0077777));
-    const uint16_t da = DA(instr);
-    const uint16_t val2 = read<2>(da);
-    const uint16_t uval = (val2 - val1) & 0xFFFF;
+    auto  val1 = read<2>(SA(instr & 0077777));
+    auto da = DA(instr);
+    auto  val2 = read<2>(da);
+    auto uval = (val2 - val1) & 0xFFFF;
     PSW &= 0xFFF0;
     write<2>(da, uval);
     setZ(uval == 0);
@@ -381,6 +382,10 @@ void KB11::RTT() {
     writePSW(psw);
 }
 
+void KB11::WAIT() {
+    pause();
+}
+
 void KB11::RESET() {
     if (currentmode()) {
         // RESET is ignored outside of kernel mode
@@ -427,7 +432,7 @@ void KB11::step() {
                     printstate();
                     std::abort();
                 case 1: // WAIT 000001
-                    // std::abort();
+                    WAIT();
                     return;
                 case 3:          // BPT  000003
                     trapat(014); // Trap 14 - BPT
