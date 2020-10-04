@@ -21,20 +21,18 @@ void KB11::reset() {
     unibus.reset();
 }
 
-uint16_t KB11::currentmode() { return (PSW >> 14); }
+inline uint16_t KB11::currentmode() { return (PSW >> 14); }
 
-uint16_t KB11::previousmode() { return ((PSW >> 12) & 3); }
+inline uint16_t KB11::previousmode() { return ((PSW >> 12) & 3); }
 
-uint16_t KB11::priority() { return ((PSW >> 5) & 7); }
-
-void KB11::writePSW(uint16_t psw) {
+inline void KB11::writePSW(const uint16_t psw) {
     stackpointer[currentmode()] = R[6];
     PSW = psw;
     R[6] = stackpointer[currentmode()];
 }
 
 inline uint16_t KB11::read16(uint16_t va) {
-    auto a = mmu.decode<false>(va, currentmode());
+    const auto a = mmu.decode<false>(va, currentmode());
     switch (a) {
     case 0777776:
         return PSW;
@@ -360,7 +358,7 @@ void KB11::MTPI(const uint16_t instr) {
 
 // RTS 00020R
 void KB11::RTS(const uint16_t instr) {
-    auto reg = instr & 7;
+    const auto reg = instr & 7;
     R[7] = R[reg];
     R[reg] = pop();
 }
@@ -382,11 +380,11 @@ void KB11::RTT() {
     writePSW(psw);
 }
 
-void KB11::WAIT() {
+inline void KB11::WAIT() {
     pause();
 }
 
-void KB11::RESET() {
+inline void KB11::RESET() {
     if (currentmode()) {
         // RESET is ignored outside of kernel mode
         return;

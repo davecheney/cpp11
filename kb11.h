@@ -6,19 +6,6 @@
 
 enum { FLAGN = 8, FLAGZ = 4, FLAGV = 2, FLAGC = 1 };
 
-// interrupts
-enum {
-    INTBUS = 0004,
-    INTINVAL = 0010,
-    INTDEBUG = 0014,
-    INTIOT = 0020,
-    INTTTYIN = 0060,
-    INTTTYOUT = 0064,
-    INTFAULT = 0250,
-    INTCLOCK = 0100,
-    INTRK = 0220
-};
-
 class KB11 {
   public:
     void step();
@@ -39,7 +26,7 @@ class KB11 {
     uint16_t previousmode();
 
     // returns the current CPU interrupt priority.
-    uint16_t priority();
+    inline uint16_t priority() { return ((PSW >> 5) & 7); }
 
     // pop the top interrupt off the itab.
     void popirq();
@@ -83,7 +70,7 @@ class KB11 {
     }
 
     inline uint16_t pop() {
-        auto val = read16(R[6]);
+        const auto val = read16(R[6]);
         R[6] += 2;
         return val;
     }

@@ -1,11 +1,17 @@
 #pragma once
+#include <stdint.h>
 
+// interrupts
 enum {
-    PRINTSTATE = false,
-    DEBUG_INTER = false,
-    DEBUG_RK05 = false,
-    DEBUG_MMU = false,
-
+    INTBUS = 0004,
+    INTINVAL = 0010,
+    INTDEBUG = 0014,
+    INTIOT = 0020,
+    INTTTYIN = 0060,
+    INTTTYOUT = 0064,
+    INTFAULT = 0250,
+    INTCLOCK = 0100,
+    INTRK = 0220
 };
 
 [[ noreturn ]] void trap(uint16_t num);
