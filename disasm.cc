@@ -21,7 +21,7 @@ enum { DD = 1 << 1, S = 1 << 2, RR = 1 << 3, O = 1 << 4, N = 1 << 5 };
 
 extern KB11 cpu;
 
-D disamtable[] = {
+const D disamtable[] = {
     {0177777, 0000001, "WAIT", 0, false},
     {0177777, 0000002, "RTI", 0, false},
     {0177777, 0000003, "BPT", 0, false},
@@ -140,7 +140,7 @@ void disasmaddr(uint16_t m, uint32_t a) {
 }
 
 void disasm(uint32_t a) {
-    auto ins = cpu.unibus.read16(a);
+    const auto ins = cpu.unibus.read16(a);
 
     D l = {0, 0, "", 0, false};
     for (auto i = 0; disamtable[i].ins; i++) {
@@ -158,8 +158,8 @@ void disasm(uint32_t a) {
     if (l.b && (ins & 0100000)) {
         printf("B");
     }
-    auto s = (ins & 07700) >> 6;
-    auto d = ins & 077;
+    const auto s = (ins & 07700) >> 6;
+    const auto d = ins & 077;
     auto o = ins & 0377;
     switch (l.flag) {
     case S | DD:

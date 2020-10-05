@@ -23,6 +23,7 @@ void setup(char *disk) {
            sizeof(struct termios));
 
     // disable canonical mode processing in the line discipline driver
+    new_terminal_settings.c_iflag &= ~ICRNL;
     new_terminal_settings.c_lflag &= ~ICANON;
     new_terminal_settings.c_lflag &= ~ECHO;
 

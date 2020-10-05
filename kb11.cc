@@ -55,14 +55,14 @@ inline void KB11::write16(uint16_t va, uint16_t v) {
         stacklimit = v;
         break;
     case 0777570:
-        switchregister = v;
+        displayregister = v;
         break;
     default:
         unibus.write16(a, v);
     }
 }
 
-uint16_t KB11::DA(uint16_t instr) {
+uint16_t KB11::DA(const uint16_t instr) {
     auto v = instr & 077;
     auto l = (2 - (instr >> 15));
 
@@ -110,21 +110,19 @@ void KB11::setZ(const bool b) {
         PSW |= FLAGZ;
 }
 
+// ADD 06SSDD
 void KB11::ADD(const uint16_t instr) {
-    auto val1 = read<2>(SA(instr));
-    auto da = DA(instr);
-    auto  val2 = read<2>(da);
-    auto  uval = (val1 + val2) & 0xFFFF;
-    write<2>(da, uval);
+    const auto src = read<2>(SA(instr));
+    const auto da = DA(instr);
+    const auto dst = read<2>(da);
+    const auto sum = src + dst;
+    write<2>(da, sum);
     PSW &= 0xFFF0;
-    setZ(uval == 0);
-    if (uval & 0x8000) {
-        PSW |= FLAGN;
-    }
-    if (!((val1 ^ val2) & 0x8000) && ((val2 ^ uval) & 0x8000)) {
+    setNZ<2>(sum);
+    if (!((src ^ dst) & 0x8000) && ((dst ^ sum) & 0x8000)) {
         PSW |= FLAGV;
     }
-    if ((val1 + val2) >= 0xFFFF) {
+    if ((int32_t(src) + int32_t(dst)) >= 0xFFFF) {
         PSW |= FLAGC;
     }
 }
@@ -138,10 +136,7 @@ void KB11::SUB(const uint16_t instr) {
     auto uval = (val2 - val1) & 0xFFFF;
     PSW &= 0xFFF0;
     write<2>(da, uval);
-    setZ(uval == 0);
-    if (uval & 0x8000) {
-        PSW |= FLAGN;
-    }
+    setNZ<2>(uval);
     if (((val1 ^ val2) & 0x8000) && (!((val2 ^ uval) & 0x8000))) {
         PSW |= FLAGV;
     }
@@ -152,7 +147,7 @@ void KB11::SUB(const uint16_t instr) {
 
 // MUL 070RSS
 void KB11::MUL(const uint16_t instr) {
-    auto reg = (instr >> 6) & 7;
+    const auto reg = (instr >> 6) & 7;
     int32_t val1 = R[reg];
     if (val1 & 0x8000) {
         val1 = -((0xFFFF ^ val1) + 1);
@@ -161,7 +156,7 @@ void KB11::MUL(const uint16_t instr) {
     if (val2 & 0x8000) {
         val2 = -((0xFFFF ^ val2) + 1);
     }
-    auto sval = val1 * val2;
+    const auto sval = val1 * val2;
     R[reg] = sval >> 16;
     R[reg | 1] = sval & 0xFFFF;
     PSW &= 0xFFF0;
@@ -174,11 +169,10 @@ void KB11::MUL(const uint16_t instr) {
     if ((sval < (1 << 15)) || (sval >= ((1L << 15) - 1))) {
         PSW |= FLAGC;
     }
-    // printstate();
 }
 
 void KB11::DIV(const uint16_t instr) {
-    auto reg = (instr >> 6) & 7;
+    const auto reg = (instr >> 6) & 7;
     int32_t val1 = (R[reg] << 16) | (R[reg | 1]);
     int32_t val2 = read<2>(DA(instr));
     PSW &= 0xFFF0;
@@ -204,8 +198,8 @@ void KB11::DIV(const uint16_t instr) {
 }
 
 void KB11::ASH(const uint16_t instr) {
-    auto reg = (instr >> 6) & 7;
-    auto val1 = R[reg];
+    const auto reg = (instr >> 6) & 7;
+    const auto val1 = R[reg];
     auto val2 = read<2>(DA(instr)) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
@@ -237,8 +231,8 @@ void KB11::ASH(const uint16_t instr) {
 }
 
 void KB11::ASHC(const uint16_t instr) {
-    auto reg = (instr >> 6) & 7;
-    auto val1 = ((uint32_t)(R[reg]) << 16) | R[reg | 1];
+    const auto reg = (instr >> 6) & 7;
+    const auto val1 = ((uint32_t)(R[reg]) << 16) | R[reg | 1];
     auto val2 = read<2>(DA(instr)) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
@@ -272,8 +266,8 @@ void KB11::ASHC(const uint16_t instr) {
 
 // XOR 064RDD
 void KB11::XOR(const uint16_t instr) {
-    auto reg = R[(instr >> 6) & 7];
-    auto da = DA(instr);
+    const auto reg = R[(instr >> 6) & 7];
+    const auto da = DA(instr);
     auto dst = read<2>(da);
     dst = reg ^ dst;
     write<2>(da, dst);
@@ -282,7 +276,7 @@ void KB11::XOR(const uint16_t instr) {
 
 // SOB 077RNN
 void KB11::SOB(const uint16_t instr) {
-    auto reg = (instr >> 6) & 7;
+    const auto reg = (instr >> 6) & 7;
     R[reg]--;
     if (R[reg]) {
         R[7] -= (instr & 077) << 1;
@@ -296,8 +290,8 @@ void KB11::JSR(const uint16_t instr) {
         printstate();
         std::abort();
     }
-    auto dst = DA(instr);
-    auto reg = (instr >> 6) & 7;
+    const auto dst = DA(instr);
+    const auto reg = (instr >> 6) & 7;
     push(R[reg]);
     R[reg] = R[7];
     R[7] = dst;
@@ -341,16 +335,16 @@ void KB11::MFPI(const uint16_t instr) {
 
 // MTPI 0066DD
 void KB11::MTPI(const uint16_t instr) {
-    auto uval = pop();
+    const auto uval = pop();
     if (!(instr & 0x38)) {
-        auto reg = instr & 7;
+        const auto reg = instr & 7;
         if ((reg != 6) || (currentmode() == previousmode())) {
             R[reg] = uval;
         } else {
             stackpointer[previousmode()] = uval;
         }
     } else {
-        auto da = DA(instr);
+        const auto da = DA(instr);
         unibus.write16(mmu.decode<true>(da, previousmode()), uval);
     }
     setNZ<2>(uval);
@@ -380,11 +374,11 @@ void KB11::RTT() {
     writePSW(psw);
 }
 
-inline void KB11::WAIT() {
+void KB11::WAIT() {
     pause();
 }
 
-inline void KB11::RESET() {
+void KB11::RESET() {
     if (currentmode()) {
         // RESET is ignored outside of kernel mode
         return;
@@ -394,7 +388,7 @@ inline void KB11::RESET() {
 
 // SWAB 0003DD
 void KB11::SWAB(const uint16_t instr) {
-    auto da = DA(instr);
+    const auto da = DA(instr);
     auto dst = read<2>(da);
     dst = (dst << 8) | (dst >> 8);
     write<2>(da, dst);
@@ -407,14 +401,14 @@ void KB11::SWAB(const uint16_t instr) {
 
 // SXT 0067DD
 void KB11::SXT(const uint16_t instr) {
-    auto result = N() ? 0xffff : 0;
+    const auto result = N() ? 0xffff : 0;
     write<2>(DA(instr), result);
     setNZ<2>(result);
 }
 
 void KB11::step() {
     PC = R[7];
-    auto instr = fetch16();
+    const auto instr = fetch16();
 
     //   printstate();
 
@@ -426,7 +420,7 @@ void KB11::step() {
             case 0:               // 0000xx group
                 switch (instr) {
                 case 0: // HALT 000000
-                    printf("HALT\n");
+                    printf("HALT: DR: %06o\n", displayregister);
                     printstate();
                     std::abort();
                 case 1: // WAIT 000001
@@ -807,7 +801,7 @@ void KB11::trapat(uint16_t vec) {
 
     // printf("trap: vec: %03o\n", vec);
 
-    auto psw = PSW;
+    const auto psw = PSW;
     kernelmode();
     push(psw);
     push(R[7]);

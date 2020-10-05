@@ -6,19 +6,19 @@
 class KT11 {
 
   public:
-    uint16_t SR0, SR1, SR2;
+    std::array<uint16_t, 4> SR;
 
     template <bool wr>
     inline uint32_t decode(const uint16_t a, const uint16_t mode) {
-        if ((SR0 & 1) == 0) {
+        if ((SR[0] & 1) == 0) {
             return a > 0167777 ? ((uint32_t)a) + 0600000 : a;
         }
         const auto i = (a >> 13);
         if (wr && !pages[mode][i].write()) {
-            SR0 = (1 << 13) | 1;
-            SR0 |= (a >> 12) & ~1;
+            SR[0] = (1 << 13) | 1;
+            SR[0] |= (a >> 12) & ~1;
             if (mode) {
-                SR0 |= (1 << 5) | (1 << 6);
+                SR[0] |= (1 << 5) | (1 << 6);
             }
             // SR2 = cpu.PC;
 
@@ -26,10 +26,10 @@ class KT11 {
             trap(0250); // intfault
         }
         if (!pages[mode][i].read()) {
-            SR0 = (1 << 15) | 1;
-            SR0 |= (a >> 12) & ~1;
+            SR[0] = (1 << 15) | 1;
+            SR[0] |= (a >> 12) & ~1;
             if (mode) {
-                SR0 |= (1 << 5) | (1 << 6);
+                SR[0] |= (1 << 5) | (1 << 6);
             }
             // SR2 = cpu.PC;
             printf("mmu::decode read from no-access page %06o\n", a);
@@ -41,10 +41,10 @@ class KT11 {
         // {
         if (pages[mode][i].ed() ? (block < pages[mode][i].len())
                                 : (block > pages[mode][i].len())) {
-            SR0 = (1 << 14) | 1;
-            SR0 |= (a >> 12) & ~1;
+            SR[0] = (1 << 14) | 1;
+            SR[0] |= (a >> 12) & ~1;
             if (mode) {
-                SR0 |= (1 << 5) | (1 << 6);
+                SR[0] |= (1 << 5) | (1 << 6);
             }
             // SR2 = cpu.PC;
             printf("page length exceeded, address %06o (block %03o) is beyond "

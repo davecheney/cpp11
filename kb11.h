@@ -45,7 +45,7 @@ class KB11 {
     std::array<uint16_t, 8> R; // R0-R7
     uint16_t PC;               // holds R[7] during instruction execution
     uint16_t PSW;              // processor status word
-    uint16_t stacklimit, switchregister;
+    uint16_t stacklimit, switchregister, displayregister;
     std::array<uint16_t, 4>
         stackpointer; // Alternate R6 (kernel, super, illegal, user)
 
@@ -59,7 +59,7 @@ class KB11 {
     void write16(uint16_t va, uint16_t v);
 
     inline uint16_t fetch16() {
-        auto val = read16(R[7]);
+        const auto val = read16(R[7]);
         R[7] += 2;
         return val;
     }
