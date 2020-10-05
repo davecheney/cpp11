@@ -27,13 +27,13 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
             kw11.write16(a, v);
             return;
         case 0777572:
-            cpu.mmu.SR0 = v;
+            cpu.mmu.SR[0] = v;
             return;
         case 0777574:
-            cpu.mmu.SR1 = v;
+            cpu.mmu.SR[1] = v;
             return;
         case 0777576:
-            cpu.mmu.SR2 = v;
+            cpu.mmu.SR[2] = v;
             return;
         default:
             cons.write16(a, v);
@@ -66,11 +66,11 @@ uint16_t UNIBUS::read16(uint32_t a) {
         case 0777546:
             return kw11.read16(a);
         case 0777572:
-            return cpu.mmu.SR0;
+            return cpu.mmu.SR[0];
         case 0777574:
-            return cpu.mmu.SR1;
+            return cpu.mmu.SR[1];
         case 0777576:
-            return cpu.mmu.SR2;
+            return cpu.mmu.SR[2];
         default:
             return cons.read16(a);
         }
