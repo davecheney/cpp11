@@ -53,7 +53,11 @@ class KB11 {
     inline bool Z() { return PSW & FLAGZ; }
     inline bool V() { return PSW & FLAGV; }
     inline bool C() { return PSW & FLAGC; }
-    void setZ(const bool b);
+
+    inline void setZ(const bool b) {
+        if (b)
+            PSW |= FLAGZ;
+    }
 
     uint16_t read16(uint16_t va);
     void write16(uint16_t va, uint16_t v);
@@ -75,12 +79,44 @@ class KB11 {
         return val;
     }
 
-    uint16_t DA(uint16_t instr);
+    template <uint16_t len> uint16_t DA(const uint16_t instr) {
+        auto v = instr & 077;
+        if ((v & 070) == 000) {
+            return 0170000 | (v & 7);
+        }
 
-    inline uint16_t SA(uint16_t instr) {
-        // reconstruct L00SSDD as L0000SS
-        instr = (instr & (1 << 15)) | ((instr >> 6) & 077);
-        return DA(instr);
+        auto l = len;
+        if (((v & 7) >= 6) || (v & 010)) {
+            l = 2;
+        }
+
+        uint16_t addr;
+        switch (v & 060) {
+        case 000:
+            v &= 7;
+            addr = R[v & 7];
+            break;
+        case 020:
+            addr = R[v & 7];
+            R[v & 7] += l;
+            break;
+        case 040:
+            R[v & 7] -= l;
+            addr = R[v & 7];
+            break;
+        case 060:
+            addr = fetch16();
+            addr += R[v & 7];
+            break;
+        }
+        if (v & 010) {
+            addr = read16(addr);
+        }
+        return addr;
+    }
+
+    template <uint8_t l> uint16_t SA(uint16_t instr) {
+        return DA<l>(instr >> 6);
     }
 
     void branch(int16_t o);
@@ -150,8 +186,8 @@ class KB11 {
 
     // CMP 02SSDD, CMPB 12SSDD
     template <uint8_t l> void CMP(const uint16_t instr) {
-        auto val1 = read<l>(SA(instr));
-        auto da = DA(instr);
+        auto val1 = read<l>(SA<l>(instr));
+        auto da = DA<l>(instr);
         auto val2 = read<l>(da);
         auto sval = (val1 - val2) & max<l>();
         PSW &= 0xFFF0;
@@ -201,8 +237,8 @@ class KB11 {
     }
 
     template <uint8_t l> void BIC(const uint16_t instr) {
-        auto val1 = read<l>(SA(instr));
-        auto da = DA(instr);
+        auto val1 = read<l>(SA<l>(instr));
+        auto da = DA<l>(instr);
         auto val2 = read<l>(da);
         auto uval = (max<l>() ^ val1) & val2;
         write<l>(da, uval);
@@ -214,8 +250,8 @@ class KB11 {
     }
 
     template <uint8_t l> void BIS(const uint16_t instr) {
-        auto val1 = read<l>(SA(instr));
-        auto da = DA(instr);
+        auto val1 = read<l>(SA<l>(instr));
+        auto da = DA<l>(instr);
         auto val2 = read<l>(da);
         auto uval = val1 | val2;
         write<l>(da, uval);
@@ -230,12 +266,12 @@ class KB11 {
     template <uint8_t l> void CLR(const uint16_t instr) {
         PSW &= 0xFFF0;
         PSW |= FLAGZ;
-        write<l>(DA(instr), 0);
+        write<l>(DA<l>(instr), 0);
     }
 
     // COM 0051DD, COMB 1051DD
     template <uint8_t l> void COM(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         auto dst = ~read<l>(da);
         write<l>(da, dst);
         setNZC<l>(dst);
@@ -243,7 +279,7 @@ class KB11 {
 
     // DEC 0053DD, DECB 1053DD
     template <uint8_t l> void _DEC(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         auto uval = (read<l>(da) - 1) & max<l>();
         write<l>(da, uval);
         setNZV<l>(uval);
@@ -251,7 +287,7 @@ class KB11 {
 
     // NEG 0054DD, NEGB 1054DD
     template <uint8_t l> void NEG(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         int32_t sval = (-read<l>(da)) & max<l>();
         write<l>(da, sval);
         PSW &= 0xFFF0;
@@ -269,7 +305,7 @@ class KB11 {
     }
 
     template <uint8_t l> void _ADC(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         auto uval = read<l>(da);
         if (PSW & FLAGC) {
             write<l>(da, (uval + 1) & max<l>());
@@ -294,7 +330,7 @@ class KB11 {
     }
 
     template <uint8_t l> void SBC(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         int32_t sval = read<l>(da);
         if (C()) {
             write<l>(da, (sval - 1) & max<l>());
@@ -323,7 +359,7 @@ class KB11 {
     }
 
     template <uint8_t l> void ROR(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         int32_t sval = read<l>(da);
         if (PSW & FLAGC) {
             sval |= max<l>() + 1;
@@ -345,7 +381,7 @@ class KB11 {
     }
 
     template <uint8_t l> void ROL(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         int32_t sval = read<l>(da) << 1;
         if (PSW & FLAGC) {
             sval |= 1;
@@ -366,7 +402,7 @@ class KB11 {
     }
 
     template <uint8_t l> void ASR(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         auto uval = read<l>(da);
         PSW &= 0xFFF0;
         if (uval & 1) {
@@ -384,7 +420,7 @@ class KB11 {
     }
 
     template <uint8_t l> void ASL(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         // TODO(dfc) doesn't need to be an sval
         int32_t sval = read<l>(da);
         PSW &= 0xFFF0;
@@ -404,7 +440,7 @@ class KB11 {
 
     // INC 0052DD, INCB 1052DD
     template <uint16_t l> void INC(const uint16_t instr) {
-        auto da = DA(instr);
+        auto da = DA<l>(instr);
         auto dst = read<l>(da);
         auto result = dst + 1;
         write<l>(da, result);
@@ -413,15 +449,15 @@ class KB11 {
 
     // BIT 03SSDD, BITB 13SSDD
     template <uint16_t l> void BIT(const uint16_t instr) {
-        auto src = read<l>(SA(instr));
-        auto dst = read<l>(DA(instr));
+        auto src = read<l>(SA<l>(instr));
+        auto dst = read<l>(DA<l>(instr));
         auto result = src & dst;
         setNZ<l>(result);
     }
 
     // TST 0057DD, TSTB 1057DD
     template <uint16_t l> void TST(const uint16_t instr) {
-        auto dst = read<l>(DA(instr));
+        auto dst = read<l>(DA<l>(instr));
         PSW &= 0xFFF0;
         if (dst == 0) {
             PSW |= FLAGZ;
@@ -433,7 +469,7 @@ class KB11 {
 
     // MOV 01SSDD, MOVB 11SSDD
     template <uint16_t len> void MOV(const uint16_t instr) {
-        auto src = read<len>(SA(instr));
+        auto src = read<len>(SA<len>(instr));
         if (!(instr & 0x38) && (len == 1)) {
             if (src & 0200) {
                 // Special case: movb sign extends register to word size
@@ -443,7 +479,7 @@ class KB11 {
             setNZ<len>(src);
             return;
         }
-        write<len>(DA(instr), src);
+        write<len>(DA<len>(instr), src);
         setNZ<len>(src);
     }
 

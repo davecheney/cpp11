@@ -69,7 +69,7 @@ void KL11::poll() {
     }
 
     if (!(xcsr & 0x80)) {
-        if (++count > 3000) {
+        if (++count > 600) {
             fputc(xbuf & 0x7f, stderr);
             xcsr |= 0x80;
             if (xcsr & (1 << 6)) {

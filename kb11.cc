@@ -62,41 +62,6 @@ inline void KB11::write16(uint16_t va, uint16_t v) {
     }
 }
 
-uint16_t KB11::DA(const uint16_t instr) {
-    auto v = instr & 077;
-    auto l = (2 - (instr >> 15));
-
-    if ((v & 070) == 000) {
-        return 0170000 | (v & 7);
-    }
-    if (((v & 7) >= 6) || (v & 010)) {
-        l = 2;
-    }
-    uint16_t addr = 0;
-    switch (v & 060) {
-    case 000:
-        v &= 7;
-        addr = R[v & 7];
-        break;
-    case 020:
-        addr = R[v & 7];
-        R[v & 7] += l;
-        break;
-    case 040:
-        R[v & 7] -= l;
-        addr = R[v & 7];
-        break;
-    case 060:
-        addr = fetch16();
-        addr += R[v & 7];
-        break;
-    }
-    if (v & 010) {
-        addr = read16(addr);
-    }
-    return addr;
-}
-
 void KB11::branch(int16_t o) {
     if (o & 0x80) {
         o = -(((~o) + 1) & 0xFF);
@@ -105,15 +70,10 @@ void KB11::branch(int16_t o) {
     R[7] += o;
 }
 
-void KB11::setZ(const bool b) {
-    if (b)
-        PSW |= FLAGZ;
-}
-
 // ADD 06SSDD
 void KB11::ADD(const uint16_t instr) {
-    const auto src = read<2>(SA(instr));
-    const auto da = DA(instr);
+    const auto src = read<2>(SA<2>(instr));
+    const auto da = DA<2>(instr);
     const auto dst = read<2>(da);
     const auto sum = src + dst;
     write<2>(da, sum);
@@ -130,8 +90,8 @@ void KB11::ADD(const uint16_t instr) {
 // SUB 16SSDD
 void KB11::SUB(const uint16_t instr) {
     // mask off top bit of instr so SA computes L=2
-    auto  val1 = read<2>(SA(instr & 0077777));
-    auto da = DA(instr);
+    auto  val1 = read<2>(SA<2>(instr));
+    auto da = DA<2>(instr);
     auto  val2 = read<2>(da);
     auto uval = (val2 - val1) & 0xFFFF;
     PSW &= 0xFFF0;
@@ -152,7 +112,7 @@ void KB11::MUL(const uint16_t instr) {
     if (val1 & 0x8000) {
         val1 = -((0xFFFF ^ val1) + 1);
     }
-    int32_t val2 = read<2>(DA(instr));
+    int32_t val2 = read<2>(DA<2>(instr));
     if (val2 & 0x8000) {
         val2 = -((0xFFFF ^ val2) + 1);
     }
@@ -174,7 +134,7 @@ void KB11::MUL(const uint16_t instr) {
 void KB11::DIV(const uint16_t instr) {
     const auto reg = (instr >> 6) & 7;
     int32_t val1 = (R[reg] << 16) | (R[reg | 1]);
-    int32_t val2 = read<2>(DA(instr));
+    int32_t val2 = read<2>(DA<2>(instr));
     PSW &= 0xFFF0;
     if (val2 == 0) {
         PSW |= FLAGC;
@@ -200,7 +160,7 @@ void KB11::DIV(const uint16_t instr) {
 void KB11::ASH(const uint16_t instr) {
     const auto reg = (instr >> 6) & 7;
     const auto val1 = R[reg];
-    auto val2 = read<2>(DA(instr)) & 077;
+    auto val2 = read<2>(DA<2>(instr)) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
     if (val2 & 040) {
@@ -233,7 +193,7 @@ void KB11::ASH(const uint16_t instr) {
 void KB11::ASHC(const uint16_t instr) {
     const auto reg = (instr >> 6) & 7;
     const auto val1 = ((uint32_t)(R[reg]) << 16) | R[reg | 1];
-    auto val2 = read<2>(DA(instr)) & 077;
+    auto val2 = read<2>(DA<2>(instr)) & 077;
     PSW &= 0xFFF0;
     int32_t sval;
     if (val2 & 040) {
@@ -267,7 +227,7 @@ void KB11::ASHC(const uint16_t instr) {
 // XOR 064RDD
 void KB11::XOR(const uint16_t instr) {
     const auto reg = R[(instr >> 6) & 7];
-    const auto da = DA(instr);
+    const auto da = DA<2>(instr);
     auto dst = read<2>(da);
     dst = reg ^ dst;
     write<2>(da, dst);
@@ -290,7 +250,7 @@ void KB11::JSR(const uint16_t instr) {
         printstate();
         std::abort();
     }
-    const auto dst = DA(instr);
+    const auto dst = DA<2>(instr);
     const auto reg = (instr >> 6) & 7;
     push(R[reg]);
     R[reg] = R[7];
@@ -305,7 +265,7 @@ void KB11::JMP(const uint16_t instr) {
         printstate();
         std::abort();
     }
-    R[7] = DA(instr);
+    R[7] = DA<2>(instr);
 }
 
 // MARK 0064NN
@@ -326,7 +286,7 @@ void KB11::MFPI(const uint16_t instr) {
             uval = stackpointer[previousmode()];
         }
     } else {
-        auto da = DA(instr);
+        auto da = DA<2>(instr);
         uval = unibus.read16(mmu.decode<false>(da, previousmode()));
     }
     push(uval);
@@ -344,7 +304,7 @@ void KB11::MTPI(const uint16_t instr) {
             stackpointer[previousmode()] = uval;
         }
     } else {
-        const auto da = DA(instr);
+        const auto da = DA<2>(instr);
         unibus.write16(mmu.decode<true>(da, previousmode()), uval);
     }
     setNZ<2>(uval);
@@ -374,9 +334,7 @@ void KB11::RTT() {
     writePSW(psw);
 }
 
-void KB11::WAIT() {
-    pause();
-}
+void KB11::WAIT() { pause(); }
 
 void KB11::RESET() {
     if (currentmode()) {
@@ -388,7 +346,7 @@ void KB11::RESET() {
 
 // SWAB 0003DD
 void KB11::SWAB(const uint16_t instr) {
-    const auto da = DA(instr);
+    const auto da = DA<2>(instr);
     auto dst = read<2>(da);
     dst = (dst << 8) | (dst >> 8);
     write<2>(da, dst);
@@ -402,7 +360,7 @@ void KB11::SWAB(const uint16_t instr) {
 // SXT 0067DD
 void KB11::SXT(const uint16_t instr) {
     const auto result = N() ? 0xffff : 0;
-    write<2>(DA(instr), result);
+    write<2>(DA<2>(instr), result);
     setNZ<2>(result);
 }
 
