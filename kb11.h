@@ -89,7 +89,6 @@ class KB11 {
     template <auto len> uint16_t fetchOperand(const uint16_t instr) {
         const auto mode = (instr >> 3) & 7;
         const auto reg = instr & 7;
-        const auto inc = ((reg >= 6) || (mode & 010) > 0) ? 2 : len;
 
         uint16_t addr;
         switch (mode) {
@@ -99,18 +98,18 @@ class KB11 {
             return R[reg];
         case 2: // Mode 2: (R)+ including immediate operand #x
             addr = R[reg];
-            R[reg] += inc;
+            R[reg] += (reg >= 6) ? 2 : len;
             return addr;
         case 3: // Mode 3: @(R)+
             addr = R[reg];
-            R[reg] += inc;
+            R[reg] += 2;
             return read16(addr);
         case 4: // Mode 4: -(R)
-            R[reg] -= inc;
+            R[reg] -= (reg >= 6) ? 2 : len;
             addr = R[reg];
             return addr;
         case 5: // Mode 5: @-(R)
-            R[reg] -= inc;
+            R[reg] -= 2;
             addr = R[reg];
             return read16(addr);
         case 6: // Mode 6: d(R)
@@ -146,7 +145,7 @@ class KB11 {
     void kernelmode();
     void writePSW(uint16_t psw);
 
-    template <uint8_t l> uint16_t read(uint16_t a) {
+    template <auto l> inline uint16_t read(uint16_t a) {
         static_assert(l == 1 || l == 2);
         if ((a & 0177770) == 0170000) {
             if constexpr (l == 2) {
