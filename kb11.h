@@ -78,44 +78,66 @@ class KB11 {
         return val;
     }
 
-    template <uint16_t len> uint16_t DA(const uint16_t instr) {
-        auto v = instr & 077;
-        if ((v & 070) == 000) {
-            return 0170000 | (v & 7);
+    template <auto len> inline uint16_t DA(const uint16_t instr) {
+        static_assert(len == 1 || len == 2);
+        if (!(instr & 070)) {
+            return 0170000 | (instr & 7);
         }
-
-        auto l = len;
-        if (((v & 7) >= 6) || (v & 010)) {
-            l = 2;
-        }
-
-        uint16_t addr;
-        switch (v & 060) {
-        case 000:
-            v &= 7;
-            addr = R[v & 7];
-            break;
-        case 020:
-            addr = R[v & 7];
-            R[v & 7] += l;
-            break;
-        case 040:
-            R[v & 7] -= l;
-            addr = R[v & 7];
-            break;
-        case 060:
-            addr = fetch16();
-            addr += R[v & 7];
-            break;
-        }
-        if (v & 010) {
-            addr = read16(addr);
-        }
-        return addr;
+        return fetchOperand<len>(instr);
     }
 
-    template <uint8_t l> uint16_t SA(uint16_t instr) {
-        return DA<l>(instr >> 6);
+    template <auto len> uint16_t fetchOperand(const uint16_t instr) {
+        const auto mode = (instr >> 3) & 7;
+        const auto reg = instr & 7;
+        const auto inc = ((reg >= 6) || (mode & 010) > 0) ? 2 : len;
+
+        uint16_t addr;
+        switch (mode) {
+        case 0: // Mode 0: Registers don't have a virtual address so trap!
+            trap(4);
+        case 1: // Mode 1: (R)
+            return R[reg];
+        case 2: // Mode 2: (R)+ including immediate operand #x
+            addr = R[reg];
+            R[reg] += inc;
+            return addr;
+        case 3: // Mode 3: @(R)+
+            addr = R[reg];
+            R[reg] += inc;
+            return read16(addr);
+        case 4: // Mode 4: -(R)
+            R[reg] -= inc;
+            addr = R[reg];
+            return addr;
+        case 5: // Mode 5: @-(R)
+            R[reg] -= inc;
+            addr = R[reg];
+            return read16(addr);
+        case 6: // Mode 6: d(R)
+            addr = fetch16();
+            addr = addr + R[reg];
+            return addr;
+        default: // 7 Mode 7: @d(R)
+            addr = fetch16();
+            addr = addr + R[reg];
+            return read16(addr);
+        }
+    }
+
+    template <auto len> uint16_t SS(const uint16_t instr) {
+        static_assert(len == 1 || len == 2);
+        if (!((instr >> 6) & 070)) {
+            // If register mode just get register value
+            return R[(instr >> 6) & 7] & max<len>();
+        }
+        const auto addr = fetchOperand<len>(instr >> 6);
+        if constexpr (len == 2) {
+            return read16(addr);
+        }
+        if (addr & 1) {
+            return read16(addr & ~1) >> 8;
+        }
+        return read16(addr & ~1) & 0xFF;
     }
 
     void branch(int16_t o);
@@ -185,7 +207,7 @@ class KB11 {
 
     // CMP 02SSDD, CMPB 12SSDD
     template <uint8_t l> void CMP(const uint16_t instr) {
-        auto val1 = read<l>(SA<l>(instr));
+        auto val1 = SS<l>(instr);
         auto da = DA<l>(instr);
         auto val2 = read<l>(da);
         auto sval = (val1 - val2) & max<l>();
@@ -236,7 +258,7 @@ class KB11 {
     }
 
     template <uint8_t l> void BIC(const uint16_t instr) {
-        auto val1 = read<l>(SA<l>(instr));
+        auto val1 = SS<l>(instr);
         auto da = DA<l>(instr);
         auto val2 = read<l>(da);
         auto uval = (max<l>() ^ val1) & val2;
@@ -249,7 +271,7 @@ class KB11 {
     }
 
     template <uint8_t l> void BIS(const uint16_t instr) {
-        auto val1 = read<l>(SA<l>(instr));
+        auto val1 = SS<l>(instr);
         auto da = DA<l>(instr);
         auto val2 = read<l>(da);
         auto uval = val1 | val2;
@@ -448,7 +470,7 @@ class KB11 {
 
     // BIT 03SSDD, BITB 13SSDD
     template <uint16_t l> void BIT(const uint16_t instr) {
-        auto src = read<l>(SA<l>(instr));
+        auto src = SS<l>(instr);
         auto dst = read<l>(DA<l>(instr));
         auto result = src & dst;
         setNZ<l>(result);
@@ -468,7 +490,7 @@ class KB11 {
 
     // MOV 01SSDD, MOVB 11SSDD
     template <uint16_t len> void MOV(const uint16_t instr) {
-        auto src = read<len>(SA<len>(instr));
+        auto src = SS<len>(instr);
         if (!(instr & 0x38) && (len == 1)) {
             if (src & 0200) {
                 // Special case: movb sign extends register to word size

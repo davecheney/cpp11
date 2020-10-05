@@ -72,7 +72,7 @@ void KB11::branch(int16_t o) {
 
 // ADD 06SSDD
 void KB11::ADD(const uint16_t instr) {
-    const auto src = read<2>(SA<2>(instr));
+    const auto src = SS<2>(instr);
     const auto da = DA<2>(instr);
     const auto dst = read<2>(da);
     const auto sum = src + dst;
@@ -89,8 +89,7 @@ void KB11::ADD(const uint16_t instr) {
 
 // SUB 16SSDD
 void KB11::SUB(const uint16_t instr) {
-    // mask off top bit of instr so SA computes L=2
-    auto  val1 = read<2>(SA<2>(instr));
+    auto  val1 = SS<2>(instr);
     auto da = DA<2>(instr);
     auto  val2 = read<2>(da);
     auto uval = (val2 - val1) & 0xFFFF;
