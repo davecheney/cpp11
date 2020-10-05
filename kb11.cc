@@ -62,12 +62,8 @@ inline void KB11::write16(uint16_t va, uint16_t v) {
     }
 }
 
-void KB11::branch(int16_t o) {
-    if (o & 0x80) {
-        o = -(((~o) + 1) & 0xFF);
-    }
-    o <<= 1;
-    R[7] += o;
+inline void KB11::branch(const uint16_t instr) {
+    R[7] += ((instr & 0x80) ? (instr | 0xff00) : (instr & 0xff)) << 1;
 }
 
 // ADD 06SSDD
@@ -440,36 +436,36 @@ void KB11::step() {
                 return;
             }
         case 1: // BR 0004 offset
-            branch(instr & 0xff);
+            branch(instr);
             return;
         case 2: // BNE 0010 offset
             if (!Z()) {
-                branch(instr & 0xff);
+                branch(instr);
             }
             return;
         case 3: // BEQ 0014 offset
             if (Z()) {
-                branch(instr & 0xff);
+                branch(instr);
             }
             return;
         case 4: // BGE 0020 offset
             if (!(N() xor V())) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 5: // BLT 0024 offset
             if (N() xor V()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 6: // BGT 0030 offset
             if ((!(N() xor V())) && (!Z())) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 7: // BLE 0034 offset
             if ((N() xor V()) || Z()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 8: // JSR 004RDD In two parts
@@ -581,42 +577,42 @@ void KB11::step() {
         switch ((instr >> 8) & 0xf) { // 10xxxx 8 bit instructions first
         case 0:                       // BPL 1000 offset
             if (!N()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 1: // BMI 1004 offset
             if (N()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 2: // BHI 1010 offset
             if ((!C()) && (!Z())) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 3: // BLOS 1014 offset
             if (C() || Z()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 4: // BVC 1020 offset
             if (!V()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 5: // BVS 1024 offset
             if (V()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 6: // BCC 1030 offset
             if (!C()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 7: // BCS 1034 offset
             if (C()) {
-                branch(instr & 0xFF);
+                branch(instr);
             }
             return;
         case 8:          // EMT 1040 operand

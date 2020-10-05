@@ -139,7 +139,7 @@ class KB11 {
         return read16(addr & ~1) & 0xFF;
     }
 
-    void branch(int16_t o);
+    void branch(uint16_t);
 
     // kernelmode pushes the current processor mode and switchs to kernel.
     void kernelmode();
