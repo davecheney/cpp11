@@ -23,6 +23,10 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
         return;
     case 0777500:
         switch (a) {
+        case 0777514:
+        case 0777516:
+            lp11.write16(a, v);
+            return;
         case 0777546:
             kw11.write16(a, v);
             return;
@@ -33,7 +37,11 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
             cpu.mmu.SR[1] = v;
             return;
         case 0777576:
+<<<<<<< Updated upstream
             cpu.mmu.SR[2] = v;
+=======
+            // do nothing, SR2 is read only
+>>>>>>> Stashed changes
             return;
         default:
             cons.write16(a, v);
@@ -63,6 +71,9 @@ uint16_t UNIBUS::read16(uint32_t a) {
         return rk11.read16(a);
     case 0777500:
         switch (a) {
+        case 0777514:
+        case 0777516:
+            return lp11.read16(a);
         case 0777546:
             return kw11.read16(a);
         case 0777572:
@@ -88,4 +99,5 @@ void UNIBUS::reset() {
     cons.clearterminal();
     rk11.reset();
     kw11.write16(0777546, 0x00); // disable line clock INTR
+    lp11.reset();
 }

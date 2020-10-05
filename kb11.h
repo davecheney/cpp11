@@ -53,7 +53,6 @@ class KB11 {
     inline bool Z() { return PSW & FLAGZ; }
     inline bool V() { return PSW & FLAGV; }
     inline bool C() { return PSW & FLAGC; }
-
     inline void setZ(const bool b) {
         if (b)
             PSW |= FLAGZ;
