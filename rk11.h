@@ -13,7 +13,7 @@ class RK11 {
     void step();
 
   private:
-    uint16_t rkds, rker, rkcs, rkwc, rkba;
+    uint16_t rkds, rker, rkcs, rkwc, rkba, rkda;
     uint32_t drive, sector, surface, cylinder;
 
     void rknotready();

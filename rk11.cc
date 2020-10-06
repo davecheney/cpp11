@@ -17,19 +17,21 @@ enum {
 };
 
 uint16_t RK11::read16(uint32_t a) {
-    switch (a & 0x17) {
-    case 000:
+    switch (a) {
+    case 0777400:
         // 777400 Drive Status
         return rkds;
-    case 002:
+    case 0777402:
         // 777402 Error Register
         return rker;
-    case 004:
+    case 0777404:
         // 777404 Control Status
         return rkcs & 0xfffe; // go bit is read only
-    case 006:
+    case 0777406:
         // 777406 Word Count
         return rkwc;
+    case 0777412:
+        return rkda;
     default:
         printf("rk11::read16 invalid read %06o\n", a);
         std::abort();
@@ -81,7 +83,6 @@ void RK11::step() {
         rker = 0;
         [[fallthrough]];
     case 4: // Seek (and drive reset) - complete immediately
-        printf("rk11: seek: cylinder: %03o sector: %03o\n", cylinder, sector);
         seek();
         rkcs &= ~0x2000; // Clear search complete - reset by rk11_seekEnd
         rkcs |= 0x80;    // set done - ready to accept new command
@@ -109,12 +110,12 @@ void RK11::readwrite() {
     bool w = ((rkcs >> 1) & 7) == 1;
     if (0) {
         printf("rk11: step: RKCS: %06o RKBA: %06o RKWC: %06o cylinder: %03o "
-               "sector: %03o "
-               "write: %x\n",
-               rkcs, rkba, rkwc, cylinder, sector, w);
+               "surface: %03o sector: %03o "
+               "write: %x: RKER: %06o\n",
+               rkcs, rkba, rkwc, cylinder, surface, sector, w, rker);
     }
 
-    for (uint16_t i = 0; i < 256 && rkwc != 0; i++) {
+    for (auto i = 0; i < 256 && rkwc != 0; i++) {
         if (w) {
             auto val = cpu.unibus.read16(rkba);
             uint8_t buf[2] = {static_cast<uint8_t>(val & 0xff),
@@ -153,18 +154,21 @@ void RK11::seek() {
 }
 
 void RK11::write16(uint32_t a, uint16_t v) {
-    switch (a & 017) {
-    case 004:
+    // printf("rk11:write16: %06o %06o\n", a, v);
+    switch (a) {
+    case 0777404:
         rkcs =
             (v & ~0xf080) | (rkcs & 0xf080); // Bits 7 and 12 - 15 are read only
+
         break;
-    case 006:
+    case 0777406:
         rkwc = v;
         break;
-    case 010:
+    case 0777410:
         rkba = v;
         break;
-    case 012:
+    case 0777412:
+        rkda = v;
         drive = v >> 13;
         cylinder = (v >> 5) & 0377;
         surface = (v >> 4) & 1;
@@ -177,10 +181,12 @@ void RK11::write16(uint32_t a, uint16_t v) {
 }
 
 void RK11::reset() {
+    printf("rk11: reset\n");
     rkds = 04700; // Set bits 6, 7, 8, 11
     rker = 0;
     rkcs = 0200;
     rkwc = 0;
     rkba = 0;
+    rkda = 0;
     drive = cylinder = surface = sector = 0;
 }

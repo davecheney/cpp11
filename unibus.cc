@@ -37,11 +37,7 @@ void UNIBUS::write16(uint32_t a, uint16_t v) {
             cpu.mmu.SR[1] = v;
             return;
         case 0777576:
-<<<<<<< Updated upstream
-            cpu.mmu.SR[2] = v;
-=======
             // do nothing, SR2 is read only
->>>>>>> Stashed changes
             return;
         default:
             cons.write16(a, v);
