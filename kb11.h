@@ -160,7 +160,7 @@ class KB11 {
         if (a & 1) {
             return read16(a & ~1) >> 8;
         }
-        return read16(a & ~1) & 0xFF;
+        return read16(a) & 0xFF;
     }
 
     template <uint8_t l> void write(uint16_t a, uint16_t v) {
@@ -225,13 +225,13 @@ class KB11 {
 
     // Set N & Z clearing V (C unchanged)
     template <uint16_t len> inline void setNZ(uint16_t v) {
-        PSW &= (0xFFF0 | FLAGC);
-        if (v == 0) {
-            PSW |= FLAGZ;
-        }
         static_assert(len == 1 || len == 2);
+        PSW &= (0xFFF0 | FLAGC);
         if (v & msb<len>()) {
             PSW |= FLAGN;
+        }
+        if ((v & max<len>()) == 0) {
+            PSW |= FLAGZ;
         }
     }
 

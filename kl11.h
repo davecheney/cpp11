@@ -15,6 +15,9 @@ class KL11 {
     uint16_t rcsr;
     uint16_t rbuf;
     uint16_t xcsr;
-    uint16_t xbuf;
+    uint8_t xbuf;
     uint16_t count;
+
+    inline bool rcvrdone() { return rcsr & 0x80; }
+    inline bool xmitready() { return xcsr & 0x80; }
 };

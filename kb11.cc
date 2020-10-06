@@ -85,9 +85,9 @@ void KB11::ADD(const uint16_t instr) {
 
 // SUB 16SSDD
 void KB11::SUB(const uint16_t instr) {
-    auto  val1 = SS<2>(instr);
+    auto val1 = SS<2>(instr);
     auto da = DA<2>(instr);
-    auto  val2 = read<2>(da);
+    auto val2 = read<2>(da);
     auto uval = (val2 - val1) & 0xFFFF;
     PSW &= 0xFFF0;
     write<2>(da, uval);

@@ -40,6 +40,7 @@ void KL11::clearterminal() {
     xcsr = 0x80;
     rbuf = 0;
     xbuf = 0;
+    count = 0;
 }
 
 int getchar() {
@@ -52,7 +53,7 @@ int getchar() {
 }
 
 void KL11::poll() {
-    if (!(rcsr & 0x80)) {
+    if (!rcvrdone()) {
         // unit not busy
         if (keypressed) {
             char ch;
@@ -68,13 +69,16 @@ void KL11::poll() {
         }
     }
 
-    if (!(xcsr & 0x80)) {
-        if (++count > 600) {
-            fputc(xbuf & 0x7f, stderr);
-            xcsr |= 0x80;
-            if (xcsr & (1 << 6)) {
-                cpu.interrupt(INTTTYOUT, 4);
-            }
+    if (xbuf) {
+        write(STDERR_FILENO, &xbuf, 1);
+	xbuf = 0;
+        count = 32;
+    }
+
+    if (!xmitready() && (--count == 0)) {
+        xcsr |= 0x80;
+        if (xcsr & 0x40) {
+            cpu.interrupt(INTTTYOUT, 4);
         }
     }
 }
@@ -84,17 +88,14 @@ uint16_t KL11::read16(uint32_t a) {
     case 0777560:
         return rcsr;
     case 0777562:
-        if (rcsr & 0x80) {
-            rcsr &= 0xff7e;
-            return rbuf;
-        }
-        return 0;
+        rcsr &= ~0x80;
+        return rbuf;
     case 0777564:
         return xcsr;
     case 0777566:
         return 0;
     default:
-        printf("consread16: read from invalid address %06o\n", a);
+        printf("kl11: read from invalid address %06o\n", a);
         std::abort();
     }
 }
@@ -102,27 +103,21 @@ uint16_t KL11::read16(uint32_t a) {
 void KL11::write16(uint32_t a, uint16_t v) {
     switch (a) {
     case 0777560:
-        if (v & (1 << 6)) {
-            rcsr |= 1 << 6;
-        } else {
-            rcsr &= ~(1 << 6);
-        }
+        rcsr |= v & (0x40);
+        break;
+    case 0777562:
+        rcsr &= ~0x80;
         break;
     case 0777564:
         // printf("kl11:write16: %06o %06o\n", a, v);
-        if (v & (1 << 6)) {
-            xcsr |= 1 << 6;
-        } else {
-            xcsr &= ~(1 << 6);
-        }
+        xcsr |= v & (0x40);
         break;
     case 0777566:
         xbuf = v & 0x7f;
-        xcsr &= 0xff7f;
-        count = 0;
+        xcsr &= ~0x80;
         break;
     default:
-        printf("conswrite16: write to invalid address %06o\n", a);
+        printf("kl11: write to invalid address %06o\n", a);
         std::abort();
     }
 }
