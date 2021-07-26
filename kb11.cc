@@ -11,8 +11,7 @@
 void disasm(uint32_t ia);
 
 void KB11::reset() {
-    uint16_t i;
-    for (i = 0; i < 29; i++) {
+    for (auto i = 0; i < 29; i++) {
         unibus.write16(02000 + (i * 2), bootrom[i]);
     }
     R[7] = 002002;
@@ -21,17 +20,7 @@ void KB11::reset() {
     unibus.reset();
 }
 
-inline uint16_t KB11::currentmode() { return (PSW >> 14); }
-
-inline uint16_t KB11::previousmode() { return ((PSW >> 12) & 3); }
-
-inline void KB11::writePSW(const uint16_t psw) {
-    stackpointer[currentmode()] = R[6];
-    PSW = psw;
-    R[6] = stackpointer[currentmode()];
-}
-
-inline uint16_t KB11::read16(uint16_t va) {
+inline uint16_t KB11::read16(const uint16_t va) {
     const auto a = mmu.decode<false>(va, currentmode());
     switch (a) {
     case 0777776:
@@ -41,12 +30,14 @@ inline uint16_t KB11::read16(uint16_t va) {
     case 0777570:
         return switchregister;
     default:
+        if (a == 0777772)
+            printstate();
         return unibus.read16(a);
     }
 }
 
-inline void KB11::write16(uint16_t va, uint16_t v) {
-    auto a = mmu.decode<true>(va, currentmode());
+inline void KB11::write16(const uint16_t va, const uint16_t v) {
+    const auto a = mmu.decode<true>(va, currentmode());
     switch (a) {
     case 0777776:
         writePSW(v);
@@ -58,12 +49,10 @@ inline void KB11::write16(uint16_t va, uint16_t v) {
         displayregister = v;
         break;
     default:
+        if (a == 0140000)
+            printstate();
         unibus.write16(a, v);
     }
-}
-
-inline void KB11::branch(const uint16_t instr) {
-    R[7] += ((instr & 0x80) ? (instr | 0xff00) : (instr & 0xff)) << 1;
 }
 
 // ADD 06SSDD
@@ -85,10 +74,10 @@ void KB11::ADD(const uint16_t instr) {
 
 // SUB 16SSDD
 void KB11::SUB(const uint16_t instr) {
-    auto val1 = SS<2>(instr);
-    auto da = DA<2>(instr);
-    auto val2 = read<2>(da);
-    auto uval = (val2 - val1) & 0xFFFF;
+    const auto val1 = SS<2>(instr);
+    const auto da = DA<2>(instr);
+    const auto val2 = read<2>(da);
+    const auto uval = (val2 - val1) & 0xFFFF;
     PSW &= 0xFFF0;
     write<2>(da, uval);
     setNZ<2>(uval);
@@ -128,8 +117,8 @@ void KB11::MUL(const uint16_t instr) {
 
 void KB11::DIV(const uint16_t instr) {
     const auto reg = (instr >> 6) & 7;
-    int32_t val1 = (R[reg] << 16) | (R[reg | 1]);
-    int32_t val2 = read<2>(DA<2>(instr));
+    const int32_t val1 = (R[reg] << 16) | (R[reg | 1]);
+    const int32_t val2 = read<2>(DA<2>(instr));
     PSW &= 0xFFF0;
     if (val2 == 0) {
         PSW |= FLAGC;
@@ -223,8 +212,7 @@ void KB11::ASHC(const uint16_t instr) {
 void KB11::XOR(const uint16_t instr) {
     const auto reg = R[(instr >> 6) & 7];
     const auto da = DA<2>(instr);
-    auto dst = read<2>(da);
-    dst = reg ^ dst;
+    const auto dst = reg ^ read<2>(da);
     write<2>(da, dst);
     setNZ<2>(dst);
 }
@@ -274,14 +262,14 @@ void KB11::MARK(const uint16_t instr) {
 void KB11::MFPI(const uint16_t instr) {
     uint16_t uval;
     if (!(instr & 0x38)) {
-        auto reg = instr & 7;
+        const auto reg = instr & 7;
         if ((reg != 6) || (currentmode() == previousmode())) {
             uval = R[reg];
         } else {
             uval = stackpointer[previousmode()];
         }
     } else {
-        auto da = DA<2>(instr);
+        const auto da = DA<2>(instr);
         uval = unibus.read16(mmu.decode<false>(da, previousmode()));
     }
     push(uval);
@@ -346,7 +334,9 @@ void KB11::SWAB(const uint16_t instr) {
     dst = (dst << 8) | (dst >> 8);
     write<2>(da, dst);
     PSW &= 0xFFF0;
-    setZ((dst & 0xff00) == 0);
+    if ((dst & 0xff00) == 0) {
+        PSW |= FLAGZ;
+    }
     if (dst & 0x80) {
         PSW |= FLAGN;
     }
@@ -354,16 +344,22 @@ void KB11::SWAB(const uint16_t instr) {
 
 // SXT 0067DD
 void KB11::SXT(const uint16_t instr) {
-    const auto result = N() ? 0xffff : 0;
-    write<2>(DA<2>(instr), result);
-    setNZ<2>(result);
+    if (N()) {
+        write<2>(DA<2>(instr), 0xffff);
+        PSW &= ~FLAGZ;
+    } else {
+        write<2>(DA<2>(instr), 0);
+        PSW |= FLAGZ;
+    }
+    PSW &= ~FLAGV;
 }
 
 void KB11::step() {
     PC = R[7];
     const auto instr = fetch16();
 
-    //   printstate();
+    if (print)
+        printstate();
 
     switch (instr >> 12) {    // xxSSDD Mostly double operand instructions
     case 0:                   // 00xxxx mixed group
@@ -712,8 +708,8 @@ void KB11::interrupt(uint8_t vec, uint8_t pri) {
         itab[0].pri = pri;
         return;
     }
-    uint8_t i;
-    for (i = 0; i < itab.size(); i++) {
+    uint8_t i = 0;
+    for (; i < itab.size(); i++) {
         if ((itab[i].vec == 0) || (itab[i].pri < pri)) {
             break;
         }
@@ -727,8 +723,7 @@ void KB11::interrupt(uint8_t vec, uint8_t pri) {
         printf("interrupt table full\n");
         std::abort();
     }
-    uint8_t j;
-    for (j = i + 1; j < itab.size(); j++) {
+    for (uint8_t j = i + 1; j < itab.size(); j++) {
         itab[j] = itab[j - 1];
     }
     itab[i].vec = vec;
@@ -744,8 +739,6 @@ void KB11::popirq() {
     itab[itab.size() - 1].pri = 0;
 }
 
-void KB11::kernelmode() { writePSW((PSW & 0007777) | (currentmode() << 12)); }
-
 void KB11::trapat(uint16_t vec) {
     if (vec & 1) {
         printf("Thou darst calling trapat() with an odd vector number?\n");
@@ -753,6 +746,7 @@ void KB11::trapat(uint16_t vec) {
     }
 
     // printf("trap: vec: %03o\n", vec);
+    //  if (vec == 0220) print = true;
 
     const auto psw = PSW;
     kernelmode();

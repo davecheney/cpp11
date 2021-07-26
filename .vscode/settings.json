@@ -61,6 +61,7 @@
         "vector": "cpp",
         "*.tcc": "cpp",
         "stop_token": "cpp",
-        "memory_resource": "cpp"
+        "memory_resource": "cpp",
+        "random": "cpp"
     }
 }

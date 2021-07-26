@@ -19,14 +19,14 @@ class KB11 {
 
     // mode returns the current cpu mode.
     // 0: kernel, 1: supervisor, 2: illegal, 3: user
-    uint16_t currentmode();
+    constexpr inline uint16_t currentmode() { return (PSW >> 14); }
 
     // previousmode returns the previous cpu mode.
     // 0: kernel, 1: supervisor, 2: illegal, 3: user
-    uint16_t previousmode();
+    constexpr inline uint16_t previousmode() { return ((PSW >> 12) & 3); }
 
     // returns the current CPU interrupt priority.
-    inline uint16_t priority() { return ((PSW >> 5) & 7); }
+    constexpr inline uint16_t priority() { return ((PSW >> 5) & 7); }
 
     // pop the top interrupt off the itab.
     void popirq();
@@ -48,6 +48,8 @@ class KB11 {
     uint16_t stacklimit, switchregister, displayregister;
     std::array<uint16_t, 4>
         stackpointer; // Alternate R6 (kernel, super, illegal, user)
+
+    bool print;
 
     inline bool N() { return PSW & FLAGN; }
     inline bool Z() { return PSW & FLAGZ; }
@@ -123,7 +125,7 @@ class KB11 {
         }
     }
 
-    template <auto len> uint16_t SS(const uint16_t instr) {
+    template <auto len> constexpr uint16_t SS(const uint16_t instr) {
         static_assert(len == 1 || len == 2);
         if (!((instr >> 6) & 070)) {
             // If register mode just get register value
@@ -139,13 +141,26 @@ class KB11 {
         return read16(addr & ~1) & 0xFF;
     }
 
-    void branch(uint16_t);
+    constexpr inline void branch(const uint16_t instr) {
+        if (instr & 0x80) {
+            R[7] += (instr | 0xff00) << 1;
+        } else {
+            R[7] += (instr & 0xff) << 1;
+        }
+    }
+
+    constexpr inline void writePSW(const uint16_t psw) {
+        stackpointer[currentmode()] = R[6];
+        PSW = psw;
+        R[6] = stackpointer[currentmode()];
+    }
 
     // kernelmode pushes the current processor mode and switchs to kernel.
-    void kernelmode();
-    void writePSW(uint16_t psw);
+    constexpr inline void kernelmode() {
+        writePSW((PSW & 0007777) | (currentmode() << 12));
+    }
 
-    template <auto l> inline uint16_t read(uint16_t a) {
+    template <auto l> constexpr inline uint16_t read(const uint16_t a) {
         static_assert(l == 1 || l == 2);
         if ((a & 0177770) == 0170000) {
             if constexpr (l == 2) {
@@ -163,7 +178,7 @@ class KB11 {
         return read16(a) & 0xFF;
     }
 
-    template <uint8_t l> void write(uint16_t a, uint16_t v) {
+    template <auto l> constexpr void write(const uint16_t a, const uint16_t v) {
         static_assert(l == 1 || l == 2);
         if ((a & 0177770) == 0170000) {
             auto r = a & 7;
@@ -186,7 +201,7 @@ class KB11 {
         }
     }
 
-    template <uint8_t l> inline uint16_t max() {
+    template <auto l> constexpr inline uint16_t max() {
         static_assert(l == 1 || l == 2);
         if constexpr (l == 2) {
             return 0xffff;
@@ -195,7 +210,7 @@ class KB11 {
         }
     }
 
-    template <uint8_t l> inline uint16_t msb() {
+    template <auto l> constexpr inline uint16_t msb() {
         static_assert(l == 1 || l == 2);
         if constexpr (l == 2) {
             return 0x8000;
@@ -205,26 +220,28 @@ class KB11 {
     }
 
     // CMP 02SSDD, CMPB 12SSDD
-    template <uint8_t l> void CMP(const uint16_t instr) {
-        auto val1 = SS<l>(instr);
-        auto da = DA<l>(instr);
-        auto val2 = read<l>(da);
-        auto sval = (val1 - val2) & max<l>();
+    template <auto l> void CMP(const uint16_t instr) {
+        const auto src = SS<l>(instr);
+        const auto da = DA<l>(instr);
+        const auto dst = read<l>(da);
+        const auto sval = (src - dst) & max<l>();
         PSW &= 0xFFF0;
-        setZ(sval == 0);
+        if (sval == 0) {
+            PSW |= FLAGZ;
+        }
         if (sval & msb<l>()) {
             PSW |= FLAGN;
         }
-        if (((val1 ^ val2) & msb<l>()) && (!((val2 ^ sval) & msb<l>()))) {
+        if (((src ^ dst) & msb<l>()) && (!((dst ^ sval) & msb<l>()))) {
             PSW |= FLAGV;
         }
-        if (val1 < val2) {
+        if (src < dst) {
             PSW |= FLAGC;
         }
     }
 
     // Set N & Z clearing V (C unchanged)
-    template <uint16_t len> inline void setNZ(uint16_t v) {
+    template <auto len> inline void setNZ(const uint16_t v) {
         static_assert(len == 1 || len == 2);
         PSW &= (0xFFF0 | FLAGC);
         if (v & msb<len>()) {
@@ -236,31 +253,31 @@ class KB11 {
     }
 
     // Set N, Z & V (C unchanged)
-    template <uint16_t len> inline void setNZV(uint16_t v) {
+    template <auto len> inline void setNZV(const uint16_t v) {
         setNZ<len>(v);
-        if (v == (msb<len>() - 1)) {
+        if (v == msb<len>()) {
             PSW |= FLAGV;
         }
     }
 
     // Set N, Z & C clearing V
-    template <uint16_t len> inline void setNZC(uint16_t v) {
+    template <auto len> inline void setNZC(const uint16_t v) {
         static_assert(len == 1 || len == 2);
         PSW &= 0xFFF0;
-        PSW |= FLAGC;
-        if (v == 0) {
-            PSW |= FLAGZ;
-        }
         if (v & msb<len>()) {
             PSW |= FLAGN;
         }
+        if (v == 0) {
+            PSW |= FLAGZ;
+        }
+        PSW |= FLAGC;
     }
 
-    template <uint8_t l> void BIC(const uint16_t instr) {
-        auto val1 = SS<l>(instr);
-        auto da = DA<l>(instr);
-        auto val2 = read<l>(da);
-        auto uval = (max<l>() ^ val1) & val2;
+    template <auto l> void BIC(const uint16_t instr) {
+        const auto src = SS<l>(instr);
+        const auto da = DA<l>(instr);
+        const auto dst = read<l>(da);
+        auto uval = (max<l>() ^ src) & dst;
         write<l>(da, uval);
         PSW &= 0xFFF1;
         setZ(uval == 0);
@@ -269,11 +286,11 @@ class KB11 {
         }
     }
 
-    template <uint8_t l> void BIS(const uint16_t instr) {
-        auto val1 = SS<l>(instr);
-        auto da = DA<l>(instr);
-        auto val2 = read<l>(da);
-        auto uval = val1 | val2;
+    template <auto l> void BIS(const uint16_t instr) {
+        const auto src = SS<l>(instr);
+        const auto da = DA<l>(instr);
+        const auto dst = read<l>(da);
+        auto uval = src | dst;
         write<l>(da, uval);
         PSW &= 0xFFF1;
         setZ(uval == 0);
@@ -283,50 +300,57 @@ class KB11 {
     }
 
     // CLR 0050DD, CLRB 1050DD
-    template <uint8_t l> void CLR(const uint16_t instr) {
+    template <auto l> void CLR(const uint16_t instr) {
+        write<l>(DA<l>(instr), 0);
         PSW &= 0xFFF0;
         PSW |= FLAGZ;
-        write<l>(DA<l>(instr), 0);
     }
 
     // COM 0051DD, COMB 1051DD
-    template <uint8_t l> void COM(const uint16_t instr) {
-        auto da = DA<l>(instr);
-        auto dst = ~read<l>(da);
+    template <auto l> void COM(const uint16_t instr) {
+        const auto da = DA<l>(instr);
+        const auto dst = ~read<l>(da);
         write<l>(da, dst);
-        setNZC<l>(dst);
+        PSW &= 0xFFF0;
+        if ((dst & msb<l>()) == 0) {
+            PSW |= FLAGN;
+        }
+        if ((dst & max<l>()) == 0) {
+            PSW |= FLAGZ;
+        }
+        PSW |= FLAGC;
     }
 
     // DEC 0053DD, DECB 1053DD
-    template <uint8_t l> void _DEC(const uint16_t instr) {
-        auto da = DA<l>(instr);
-        auto uval = (read<l>(da) - 1) & max<l>();
+    template <auto l> void _DEC(const uint16_t instr) {
+        const auto da = DA<l>(instr);
+        const auto uval = (read<l>(da) - 1) & max<l>();
         write<l>(da, uval);
         setNZV<l>(uval);
     }
 
     // NEG 0054DD, NEGB 1054DD
-    template <uint8_t l> void NEG(const uint16_t instr) {
-        auto da = DA<l>(instr);
-        int32_t sval = (-read<l>(da)) & max<l>();
-        write<l>(da, sval);
+    template <auto l> void NEG(const uint16_t instr) {
+        const auto da = DA<l>(instr);
+        const auto dst = (-read<l>(da)) & max<l>();
+        write<l>(da, dst);
         PSW &= 0xFFF0;
-        if (sval & msb<l>()) {
+        if (dst & msb<l>()) {
             PSW |= FLAGN;
         }
-        if (sval == 0) {
+        if ((dst & max<l>()) == 0) {
             PSW |= FLAGZ;
         } else {
             PSW |= FLAGC;
         }
-        if (sval == msb<2>()) {
+        if (dst == msb<l>()) {
             PSW |= FLAGV;
         }
     }
 
-    template <uint8_t l> void _ADC(const uint16_t instr) {
-        auto da = DA<l>(instr);
-        auto uval = read<l>(da);
+    template <auto l> void _ADC(const uint16_t instr) {
+        const auto da = DA<l>(instr);
+        const auto uval = read<l>(da);
         if (PSW & FLAGC) {
             write<l>(da, (uval + 1) & max<l>());
             PSW &= 0xFFF0;
@@ -349,9 +373,9 @@ class KB11 {
         }
     }
 
-    template <uint8_t l> void SBC(const uint16_t instr) {
-        auto da = DA<l>(instr);
-        int32_t sval = read<l>(da);
+    template <auto l> void SBC(const uint16_t instr) {
+        const auto da = DA<l>(instr);
+        const auto sval = read<l>(da);
         if (C()) {
             write<l>(da, (sval - 1) & max<l>());
             PSW &= 0xFFF0;
@@ -378,30 +402,32 @@ class KB11 {
         }
     }
 
-    template <uint8_t l> void ROR(const uint16_t instr) {
-        auto da = DA<l>(instr);
-        int32_t sval = read<l>(da);
+    template <auto l> void ROR(const uint16_t instr) {
+        const auto da = DA<l>(instr);
+        const auto dst = read<l>(da);
+        auto result = dst >> 1;
         if (PSW & FLAGC) {
-            sval |= max<l>() + 1;
+            result |= max<l>() + 1;
         }
+        write<l>(da, result);
         PSW &= 0xFFF0;
-        if (sval & 1) {
+        if ((dst & 1) > 0) {
+            // shift lsb into carry
             PSW |= FLAGC;
         }
-        // watch out for integer wrap around
-        if (sval & (max<l>() + 1)) {
+        if ((result & msb<l>()) > 0) {
             PSW |= FLAGN;
         }
-        setZ(!(sval & max<l>()));
-        if ((sval & 1) xor (sval & (max<l>() + 1))) {
+        if ((result & max<l>()) == 0) {
+            PSW |= FLAGZ;
+        }
+        if (((result & msb<l>()) > 0) != ((dst & 1) > 0)) {
             PSW |= FLAGV;
         }
-        sval >>= 1;
-        write<l>(da, sval);
     }
 
-    template <uint8_t l> void ROL(const uint16_t instr) {
-        auto da = DA<l>(instr);
+    template <auto l> void ROL(const uint16_t instr) {
+        const auto da = DA<l>(instr);
         int32_t sval = read<l>(da) << 1;
         if (PSW & FLAGC) {
             sval |= 1;
@@ -421,8 +447,8 @@ class KB11 {
         write<l>(da, sval);
     }
 
-    template <uint8_t l> void ASR(const uint16_t instr) {
-        auto da = DA<l>(instr);
+    template <auto l> void ASR(const uint16_t instr) {
+        const auto da = DA<l>(instr);
         auto uval = read<l>(da);
         PSW &= 0xFFF0;
         if (uval & 1) {
@@ -439,8 +465,8 @@ class KB11 {
         write<l>(da, uval);
     }
 
-    template <uint8_t l> void ASL(const uint16_t instr) {
-        auto da = DA<l>(instr);
+    template <auto l> void ASL(const uint16_t instr) {
+        const auto da = DA<l>(instr);
         // TODO(dfc) doesn't need to be an sval
         int32_t sval = read<l>(da);
         PSW &= 0xFFF0;
@@ -459,27 +485,26 @@ class KB11 {
     }
 
     // INC 0052DD, INCB 1052DD
-    template <uint16_t l> void INC(const uint16_t instr) {
-        auto da = DA<l>(instr);
-        auto dst = read<l>(da);
-        auto result = dst + 1;
-        write<l>(da, result);
-        setNZV<l>(result);
+    template <auto l> void INC(const uint16_t instr) {
+        const auto da = DA<l>(instr);
+        const auto dst = read<l>(da) + 1;
+        write<l>(da, dst);
+        setNZV<l>(dst);
     }
 
     // BIT 03SSDD, BITB 13SSDD
-    template <uint16_t l> void BIT(const uint16_t instr) {
-        auto src = SS<l>(instr);
-        auto dst = read<l>(DA<l>(instr));
-        auto result = src & dst;
+    template <auto l> void BIT(const uint16_t instr) {
+        const auto src = SS<l>(instr);
+        const auto dst = read<l>(DA<l>(instr));
+        const auto result = src & dst;
         setNZ<l>(result);
     }
 
     // TST 0057DD, TSTB 1057DD
-    template <uint16_t l> void TST(const uint16_t instr) {
-        auto dst = read<l>(DA<l>(instr));
+    template <auto l> void TST(const uint16_t instr) {
+        const auto dst = read<l>(DA<l>(instr));
         PSW &= 0xFFF0;
-        if (dst == 0) {
+        if ((dst & max<l>()) == 0) {
             PSW |= FLAGZ;
         }
         if (dst & msb<l>()) {
@@ -488,14 +513,11 @@ class KB11 {
     }
 
     // MOV 01SSDD, MOVB 11SSDD
-    template <uint16_t len> void MOV(const uint16_t instr) {
-        auto src = SS<len>(instr);
+    template <auto len> void MOV(const uint16_t instr) {
+        const auto src = SS<len>(instr);
         if (!(instr & 0x38) && (len == 1)) {
-            if (src & 0200) {
-                // Special case: movb sign extends register to word size
-                src |= 0xFF00;
-            }
-            R[instr & 7] = src;
+            // Special case: movb sign extends register to word size
+            R[instr & 7] = src & 0x80 ? 0xff00 | src : src;
             setNZ<len>(src);
             return;
         }

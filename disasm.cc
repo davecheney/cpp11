@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <stdio.h>
+#include <array>
 
 #include "avr11.h"
 #include "kb11.h"
@@ -7,7 +8,7 @@
 
 extern KB11 cpu;
 
-const char *rs[] = {"R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC"};
+constexpr std::array<const char *, 8> rs = {"R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC"};
 
 struct D {
     uint16_t mask;
@@ -21,7 +22,7 @@ enum { DD = 1 << 1, S = 1 << 2, RR = 1 << 3, O = 1 << 4, N = 1 << 5 };
 
 extern KB11 cpu;
 
-const D disamtable[] = {
+constexpr D disamtable[] = {
     {0177777, 0000001, "WAIT", 0, false},
     {0177777, 0000002, "RTI", 0, false},
     {0177777, 0000003, "BPT", 0, false},

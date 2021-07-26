@@ -4,7 +4,7 @@
 
 uint16_t KT11::read16(const uint32_t a) {
     // printf("kt11:read16: %06o\n", a);
-    auto i = ((a & 017) >> 1);
+    const auto i = ((a & 017) >> 1);
     switch (a & ~037) {
     case 0772200:
         return pages[01][i].pdr;

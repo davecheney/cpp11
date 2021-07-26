@@ -11,7 +11,6 @@
 extern KB11 cpu;
 
 void LP11::poll() {
-    
     if (!(lps & 0x80)) {
         if (++count > 3000) {
             fputc(lpb & 0x7f, stdout);

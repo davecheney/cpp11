@@ -16,7 +16,7 @@ enum {
     RKNXS = (1 << 5)
 };
 
-uint16_t RK11::read16(uint32_t a) {
+uint16_t RK11::read16(const uint32_t a) {
     switch (a) {
     case 0777400:
         // 777400 Drive Status
@@ -146,14 +146,14 @@ void RK11::readwrite() {
 }
 
 void RK11::seek() {
-    uint32_t pos = (cylinder * 24 + surface * 12 + sector) * 512;
+    const uint32_t pos = (cylinder * 24 + surface * 12 + sector) * 512;
     if (fseek(rkdata, pos, SEEK_SET)) {
         printf("rkstep: failed to seek\n");
         std::abort();
     }
 }
 
-void RK11::write16(uint32_t a, uint16_t v) {
+void RK11::write16(const uint32_t a, const uint16_t v) {
     // printf("rk11:write16: %06o %06o\n", a, v);
     switch (a) {
     case 0777404:
